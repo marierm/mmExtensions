@@ -52,6 +52,7 @@ PresetInterpolatorView {
 		view.mouseDownAction = {
 			arg v, x, y, modifiers, buttonNumber, clickCount;
 			var scaled;
+			var origin; //where the new window will appear
 // 			[x,y,modifiers,buttonNumber,clickCount].postln;
 			scaled = space.currentPoint.pos * scalePoint;
 			space.points.do{|point,i|
@@ -94,7 +95,6 @@ PresetInterpolatorView {
 			};
 		
 			if (clickCount == 2) { //doubleclick adds a point
-				var origin; //where the new window will appear
 				if (grabbed) {
 					// first close all other windows.
 					// so that there is only one preset gui at the
@@ -139,6 +139,7 @@ PresetInterpolatorView {
 		view.mouseMoveAction = {
 			arg v, x, y, modifiers, buttonNumber, clickCount;
 			var newVal;  
+			var newPos;
 		
 			if (grabbed) {
 				if (grabbedPoint == -1) {
@@ -147,7 +148,6 @@ PresetInterpolatorView {
 						(Point(x,y) - diff).constrain(view.bounds) / scalePoint
 					);
 				}{
-					var newPos;
 					newPos = (Point(x,y) - diff).constrain(view.bounds) / scalePoint;
 					//check if two points have the same position.
 					if (space.points.collect(_.pos).indexOfEqual(newPos).notNil){
@@ -476,8 +476,8 @@ Preset {
 	}
 	
 	removeAt { |index|
+		var paramRef;
 		if ( index < parameters.size && parameters.size > 1) {
-			var paramRef;
 			paramRef = parameters[index]; // keep ref to param being removed
 			parameters.removeAt(index);
 			if (gui.notNil) {
@@ -715,12 +715,12 @@ ParameterGui {
 		
 		mouseDownFunc = {
 			arg view, x, y, modifiers, buttonNumber, clickCount;
-			var win;
+			var win, text;
 			win = w.parent ? w;
 			// if (buttonNumber == 1 && specWindow.isNil){ //cocoa right click
 			// Using swing : left=1, mid=2, right=3
 			// Using cocoa : left=0, mid=2, right=1 
-			if (buttonNumber == 3 && specWindow.isNil){ // swing right click
+			if (clickCount == 2 && specWindow.isNil){ // swing right click
 				specWindow = param.spec.makeWindow(
 					x: win.findWindow.bounds.right,
 					y: win.findWindow.bounds.bottom - w.bounds.bottom,
@@ -733,10 +733,9 @@ ParameterGui {
 					specWindow = nil;
 				});
 			};
-			if (modifiers bitAnd: 524288 != 0) { //alt key is pressed
+			if (modifiers == 524288) { //alt key is pressed
 				// Using swing : middleClick (button 2) acts like alt
 				// is pressed
-				var text;
 				textViewWindow = Window(
 					param.name.asString + "action",
 					Rect(
@@ -801,8 +800,7 @@ ParameterGui {
 				slider.value_(nb.value);
 				param.value_(unmapped.value);
 				mapped.value_(param.mapped);
-			})
-			.mouseDownAction_(mouseDownFunc);
+			});
 		StaticText(w, 70@16)
 			.string_("mapped")
 			.resize_(2)
@@ -815,10 +813,8 @@ ParameterGui {
 				unmapped.value_(param.spec.unmap(nb.value));
 				param.value_(unmapped.value);
 				slider.value_(param.value);
-			})
-			.mouseDownAction_(mouseDownFunc);
+			});
 
-		
 		w.onClose_({
 			param.action_(param.action.removeFunc(refreshFunc));
 			try {
