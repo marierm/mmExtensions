@@ -5,7 +5,7 @@ PresetInterpolatorView {
 	*new { |parent, bounds|
 		bounds = bounds ? Rect(0,0,400,400);
 		parent = parent ? Window(
-			"preset interpolator", bounds
+			"Preset Interpolator", bounds
 		).front;
 		^super.new.init(parent, bounds);
 	}
@@ -66,40 +66,41 @@ PresetInterpolatorView {
 			};
 
 			if (((x - scaled.x).abs < 6) && ((y - scaled.y).abs < 6)){
-				//if click on current position
-				if ((modifiers bitAnd: 524288 != 0)) { //alt key is pressed
+				// user clicked on the cursor
+				if ((modifiers == 524288)) { //alt key (only) is pressed
 					space.copyCurrentPoint;
 					grabbed = true;
 					grabbedPoint = space.points.size - 1;
-				} { //alt key is not pressed
-					grabbed = true;
-					grabbedPoint = -1;
-					diff = Point((x - scaled.x), (y - scaled.y));
-				};
-			
-			} {
-				if ((modifiers bitAnd: 524288 != 0) && grabbed) {
-					//alt key is pressed and selection is not current pos
-					if (modifiers bitAnd: 131072 != 0) {
-						//alt and shift are both pressed
-						space.removePoint(grabbedPoint);
-					} { //only alt is pressed
-						space.copyPoint(grabbedPoint);
-						grabbedPoint = space.points.size - 1;
+				} { 
+					if (modifiers == 0) {
+						// no modifier keys are pressed
+						grabbed = true;
+						grabbedPoint = -1;
+						diff = Point((x - scaled.x), (y - scaled.y));
 					}
 				};
-				if ((buttonNumber == 3) && grabbed) {
-					space.removePoint(grabbedPoint);
+			} {
+				if ((modifiers == 524288) && grabbed) {
+					// user clicked on a preset (not on the cursor)
+					// holding the alt key (only the alt key!)
+					space.copyPoint(grabbedPoint);
+					grabbedPoint = space.points.size - 1;
+				} {
+					if (modifiers == 655360) {
+						//alt and shift are both pressed
+						space.removePoint(grabbedPoint);
+					}
 				};
 			};
 		
-			if (clickCount == 2) { //doubleclick adds or remove a point
-				var origin; //where goes the new window
+			if (clickCount == 2) { //doubleclick adds a point
+				var origin; //where the new window will appear
 				if (grabbed) {
 					// first close all other windows.
 					// so that there is only one preset gui at the
 					// time.
-					// Also, store origin to draw new Win at the same place
+					// Also, store origin to draw new Window
+					//  on the same postion
 					if(space.currentPreset.gui.notNil){
 						origin = space.currentPreset.gui.w.findWindow
 						    .bounds.origin;
@@ -112,15 +113,9 @@ PresetInterpolatorView {
 						}
 					};
 					if (grabbedPoint != -1) {
-						// if (space.presets[grabbedPoint].gui.isNil) {
 							space.presets[grabbedPoint].makeGui(origin:origin);
-						// }{
-						// 	space.presets[grabbedPoint].gui.w.findWindow.front;
-						// }
 					}{
-						// if (space.currentPreset.gui.isNil) {
 							space.currentPreset.makeGui(origin:origin);
-						// }
 					}
 				} {
 					space.addPoint(Point(x,y) / scalePoint);
@@ -131,7 +126,6 @@ PresetInterpolatorView {
 	
 		view.mouseUpAction =  {
 			arg v, x, y, modifiers;
-// 			mouseUpAction.value(this, x, y, modifiers);
 			grabbed = false;
 			grabbedPoint=0;
 			space.moveAction.value(
@@ -148,6 +142,7 @@ PresetInterpolatorView {
 		
 			if (grabbed) {
 				if (grabbedPoint == -1) {
+					// user grabbed the cursor
 					space.currentPoint.pos_(
 						(Point(x,y) - diff).constrain(view.bounds) / scalePoint
 					);
@@ -247,11 +242,11 @@ PresetInterpolator { //Inspired by Marije Baalman's ParameterSpace
 			presets.add(
 				Preset(
 					Parameter().action_({
-							//changing the parameter value updates currentPreset
-							moveAction.value(
-								points, currentPoint, presets, currentPreset
-							);
-						})
+						//changing the parameter value updates currentPreset
+						moveAction.value(
+							points, currentPoint, presets, currentPreset
+						);
+					})
 				).color_(Color.hsv(0,0.5,0.7,1))
 			);
 			this.refreshRads;
