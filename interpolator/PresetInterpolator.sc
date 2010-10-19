@@ -70,7 +70,7 @@ PresetInterpolatorView {
 
 			if (((x - scaled.x).abs < 6) && ((y - scaled.y).abs < 6)){
 				// user clicked on the cursor
-				if ((modifiers == 524288)) { //alt key (only) is pressed
+				if ((modifiers bitAnd: 524288 != 0)) { //alt key is pressed
 					space.copyCurrentPoint;
 					grabbed = true;
 					grabbedPoint = space.points.size - 1;
@@ -83,15 +83,15 @@ PresetInterpolatorView {
 					}
 				};
 			} {
-				if ((modifiers == 524288) && grabbed) {
+				if ((modifiers bitAnd: 524288 != 0) && grabbed) {
 					// user clicked on a preset (not on the cursor)
-					// holding the alt key (only the alt key!)
-					space.copyPoint(grabbedPoint);
-					grabbedPoint = space.points.size - 1;
-				} {
-					if (modifiers == 655360) {
+					if (modifiers bitAnd: 131072 != 0) {
 						//alt and shift are both pressed
 						space.removePoint(grabbedPoint);
+					} {
+						// holding the alt key only
+						space.copyPoint(grabbedPoint);
+						grabbedPoint = space.points.size - 1;
 					}
 				};
 			};
@@ -735,7 +735,7 @@ ParameterGui {
 					specWindow = nil;
 				});
 			};
-			if (modifiers == 524288) { //alt key is pressed
+			if (modifiers bitAnd: 524288 != 0) { //alt key is pressed
 				// Using swing : middleClick (button 2) acts like alt
 				// is pressed
 				textViewWindow = Window(
