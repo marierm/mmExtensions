@@ -1,3 +1,5 @@
+// Copyright 2010 Martin Marier
+
 ArrayWarp : LinearWarp {
 	var <>array, <>interpolate=false, <w, step, <ms;
 	*initClass {

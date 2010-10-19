@@ -1,3 +1,5 @@
+// Copyright 2010 Martin Marier
+
 PresetInterpolatorView {
 	var colors, <space, scalePoint, <>grabbed, <>grabbedPoint, 
 	diff, <view;

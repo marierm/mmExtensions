@@ -1,3 +1,5 @@
+// Copyright 2010 Martin Marier
+
 Circle {
 	var <>pos, <>rad;
 	

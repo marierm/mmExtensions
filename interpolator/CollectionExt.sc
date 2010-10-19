@@ -1,3 +1,5 @@
+// Copyright 2010 Martin Marier
+
 + Collection {
 	// for this to make any sense, Collections have to be coordinates.
 	dist { |coll|

@@ -1,3 +1,5 @@
+// Copyright 2010 Martin Marier
+
 HyperInterpolator { //More than 2 dimensions (uses KDTree)
 	var <>points,  <rads, <presets, <>currentPreset, <>currentPoint, <>currentRad,
 	<>moveAction, <weights, <interPoints, n;

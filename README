@@ -1,0 +1,117 @@
+The mmExtensions for SuperCollider
+==================================
+
+At this point, this repository contains the .sc files necessary to use the
+PresetInterpolator object.  More extensions will be added soon.
+
+
+Installation
+============
+
+These sc files go inside your SuperCollider Extensions directory:
+
+~/share/SuperCollider/Extensions/	    	                 (Linux)
+~/Library/Application\ Support/SuperCollider/Extensions/	 (Mac OSX)
+
+
+Dependencies
+============
+
+- SenseWorld DataNetwork Quark (by Marije Baalman)
+- wslib Quark (by Wouter Snoei)
+
+
+Description
+===========
+
+PresetInterpolator() is a preset interpolation system similar in concept to
+the Metasurface found in AudioMulch (created by Ross Bencina) or the max patch
+SpaceMaster (by Ali Momeni and David Wessel).
+
+
+How to use it
+=============
+
+These classes are not documented yet, but here are a few notes to get you
+started.
+
+x = PresetInterpolator();
+x.makeGui;
+// The grey dot is the cursor;
+// The colored dots represent presets;
+// The size of the transparent circles around the presets is proportional to
+// the weight of that preset;
+
+// In the Preset Interpolator window:
+// ==================================
+// Double-click in the area to add new presets (colored points);
+// Alt-click and drag to duplicate a preset;
+// Alt-click and drag also works on the cursor (the grey point);
+// Alt-shift-click deletes a presets;
+// Double-click on a preset to edit it;
+
+// In preset window:
+// ================= 
+// Click on the '+' to add more parameters. (That's the wide button at the top
+// of the window, the '+' is hardly visible in Cocoa.)
+// The presets can have any number of parameters and these parameters can
+// represent anything.
+// Double-click on the slider to edit the parameter's ControlSpec.
+// Alt-click on the slider to edit the parameter's action.
+// Parameters can be named
+
+// parameters can also be added like this:
+x.addParameter; // execute this many times
+x.presets[0].parameters;
+x.presets[1].parameters;// Each preset has the same number of parameters.
+x.presets[2].parameters;// 
+
+x.currentPreset; // this 'preset' represents the cursor
+
+// When adding an action to the currentPreset's parameters, moving the cursor
+// does something! (this action can also be added in the GUI)
+(
+x.currentPreset.parameters[0].action_({|mapped, unmapped|
+	"Parameter 0: ".post;
+	mapped.postln;
+});
+)
+// Each parameter has a ControlSpec (it can be edited in the GUI as well)
+x.currentPreset.parameters[0].spec_(ControlSpec(20,20000,\exp));
+x.currentPreset.parameters[0].spec_(\midi); //this works too.
+
+// This should be enough to get experienced users started.  Sorry for the less
+// experienced ones... proper doc is on the way.
+
+
+
+
+The algorithm
+=============
+
+It is not a planetary model (weight = inverse of distance).  It is not natural
+neighbour interpolation (like in the metasurface).  It is based on
+intersecting circles.  Here is how it works (briefly):
+
+1- A (invisible) circle is drawn around each points (including the cursor).
+The radius of each circle is equal to the distance to the nearest neighbour.
+This means that the size of the circles varies when points are moved.
+
+2- The points that have a circle that intersects the cursor's circle have a
+weight.  (Not all points do, but at least one does.)
+
+3- The weight of each point is calculated like this: (intersecting area of the 2 circles) / (total area of the circle).
+
+4- Then we do a weighted sum using these weights.
+
+I know, it is not very clear.  Just look at the code!
+
+
+... and it works in spaces with more than 2D (I tried up to 6D).  It is
+implemented in the HyperInterpolator class.
+
+
+Cheers!
+
+Martin Marier
+
