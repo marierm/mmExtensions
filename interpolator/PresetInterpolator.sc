@@ -75,7 +75,7 @@ PresetInterpolatorView {
 					grabbed = true;
 					grabbedPoint = space.points.size - 1;
 				} { 
-					if (modifiers == 0) {
+					if (modifiers bitAnd: 917504 == 0) {
 						// no modifier keys are pressed
 						grabbed = true;
 						grabbedPoint = -1;
