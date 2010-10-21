@@ -7,8 +7,9 @@ PresetInterpolatorView {
 	*new { |parent, bounds|
 		bounds = bounds ? Rect(0,0,400,400);
 		parent = parent ? Window(
-			"Preset Interpolator", bounds
+			"Preset Interpolator", bounds.copy
 		).front;
+		bounds.postln;
 		^super.new.init(parent, bounds);
 	}
 	
@@ -36,7 +37,7 @@ PresetInterpolatorView {
 				Pen.stroke;
 			};
 			space.interPoints.do{ |i,j|
-				Pen.color_(space.presets[i].color).alpha_(0.2);
+				Pen.color_(space.presets[i].color.copy.alpha_(0.7));
 				Pen.fillOval(Rect.aboutPoint(
 					space.points[i].pos * scalePoint,
 					space.weights[j] * scalePoint.x * 0.2 + 5,
@@ -70,12 +71,12 @@ PresetInterpolatorView {
 
 			if (((x - scaled.x).abs < 6) && ((y - scaled.y).abs < 6)){
 				// user clicked on the cursor
-				if ((modifiers bitAnd: 524288 != 0)) { //alt key is pressed
+				if ((modifiers bitAnd: 134217728 != 0)) { //alt key is pressed
 					space.copyCurrentPoint;
 					grabbed = true;
 					grabbedPoint = space.points.size - 1;
 				} { 
-					if (modifiers bitAnd: 917504 == 0) {
+					if (modifiers bitAnd: 234881024 == 0) {
 						// no modifier keys are pressed
 						grabbed = true;
 						grabbedPoint = -1;
@@ -83,9 +84,9 @@ PresetInterpolatorView {
 					}
 				};
 			} {
-				if ((modifiers bitAnd: 524288 != 0) && grabbed) {
+				if ((modifiers bitAnd: 134217728 != 0) && grabbed) {
 					// user clicked on a preset (not on the cursor)
-					if (modifiers bitAnd: 131072 != 0) {
+					if (modifiers bitAnd: 33554432 != 0) {
 						//alt and shift are both pressed
 						space.removePoint(grabbedPoint);
 					} {
@@ -104,13 +105,12 @@ PresetInterpolatorView {
 					// Also, store origin to draw new Window
 					//  on the same postion
 					if(space.currentPreset.gui.notNil){
-						origin = space.currentPreset.gui.w.findWindow
-						    .bounds.origin;
+						origin = space.currentPreset.gui.w.bounds.origin;
 						space.currentPreset.gui.close;
 					};
 					space.presets.do{|i,j|
 						if(i.gui.notNil){
-							origin = i.gui.w.findWindow.bounds.origin;
+							origin = i.gui.w.bounds.origin;
 							i.gui.close;
 						}
 					};
@@ -190,7 +190,7 @@ PresetInterpolatorView {
 	}
 
 	close {
-		view.getParents.last.findWindow.close;
+		view.getParents.last.close;
 		// view.parent.close;
 	}
 }
@@ -537,7 +537,7 @@ PresetGui {
 			w.view.decorator = FlowLayout(
 				Rect(0, 0, w.bounds.width, w.bounds.height), 2@2, 2@2
 			);
-			w.view.hasHorizontalScroller_(false);
+			// w.view.hasHorizontalScroller_(false);
 		};
 		
 		background = col ? Color.new255(167, 167, 167);
@@ -553,13 +553,13 @@ PresetGui {
 			i.gui.background_(background);
 		};
 
-		w.findWindow.onClose_({
+		w.onClose_({
 			preset.gui_(nil);
 		});
 	}
 	
 	close {
-		w.findWindow.close;
+		w.close;
 	}
 }
 
@@ -724,8 +724,8 @@ ParameterGui {
 			// Using cocoa : left=0, mid=2, right=1 
 			if (clickCount == 2 && specWindow.isNil){ // swing right click
 				specWindow = param.spec.makeWindow(
-					x: win.findWindow.bounds.right,
-					y: win.findWindow.bounds.bottom - w.bounds.bottom,
+					x: win.bounds.right,
+					y: win.bounds.bottom - w.bounds.bottom,
 					action: { |spec|
 						this.refresh;
 						this.param.refreshSiblings;
@@ -735,14 +735,14 @@ ParameterGui {
 					specWindow = nil;
 				});
 			};
-			if (modifiers bitAnd: 524288 != 0) { //alt key is pressed
+			if (modifiers bitAnd: 134217728 != 0) { //alt key is pressed
 				// Using swing : middleClick (button 2) acts like alt
 				// is pressed
 				textViewWindow = Window(
 					param.name.asString + "action",
 					Rect(
-						win.findWindow.bounds.right,
-						win.findWindow.bounds.bottom - w.bounds.bottom,
+						win.bounds.right,
+						win.bounds.bottom - w.bounds.bottom,
 						400,
 						400
 					)
