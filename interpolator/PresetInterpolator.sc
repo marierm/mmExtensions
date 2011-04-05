@@ -1,4 +1,4 @@
-// Copyright 2010 Martin Marier
+// Copyright 2010-2011 Martin Marier
 
 PresetInterpolatorView {
 	var colors, <space, scalePoint, <>grabbed, <>grabbedPoint, 
@@ -559,7 +559,7 @@ PresetGui {
 	}
 	
 	close {
-		w.close;
+		w.findWindow.close;
 	}
 }
 
