@@ -267,7 +267,7 @@ HyperInterpolatorGui {
 	
 	init { | interpolator, pos |
 		var grabbed;
-		pos = pos ? Point(30,100);
+		pos = pos ? Point(550,400);
 		space = interpolator ? HyperInterpolator();
 		w = try { CompositeView(w, Rect().origin_(pos).extent_(300@85)) }
 			?? { 
@@ -306,7 +306,12 @@ HyperInterpolatorGui {
 			if(space.currentPreset.gui.notNil){
 				space.currentPreset.gui.close;
 			} {
-				space.currentPreset.makeGui;
+				space.currentPreset.makeGui(
+					origin: Point(
+						this.w.findWindow.bounds.right,
+						this.w.findWindow.bounds.top
+					)
+				);
 			}
 		});
 
@@ -348,7 +353,12 @@ HyperInterpolatorGui {
 				if(space.presets[i].gui.notNil){
 					space.presets[i].gui.close;
 				} {
-					space.presets[i].makeGui;
+					space.presets[i].makeGui(
+						origin: Point(
+							this.w.findWindow.bounds.right,
+							this.w.findWindow.bounds.top
+						)
+					);
 				}
 			});
 			// grab buttons

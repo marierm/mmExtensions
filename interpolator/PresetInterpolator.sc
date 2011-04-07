@@ -525,13 +525,18 @@ PresetGui {
 	*new { |preset, w, x, y, color| 
 		^super.new.w_(w).preset_(preset).init(x, y, color);
 	}
-	
+ 
 	init { arg x=400, y=900, col;
 		var v;
 		w = w ?? { 
 			w = Window(
 				preset.name, 
-				Rect(x, y, 324, (90 * preset.size) + 17),
+				Rect(
+					x,
+					y - 17 - (90 * preset.size),
+					324,
+					(90 * preset.size) + 17
+				),
 				scroll:true
 			).alwaysOnTop_(false).front; 
 			w.view.decorator = FlowLayout(
