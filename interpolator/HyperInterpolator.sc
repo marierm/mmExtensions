@@ -3,7 +3,8 @@
 HyperInterpolator { //More than 2 dimensions (uses KDTree)
 
 	var <>points, <rads, <presets, <>currentPreset, <>currentPoint,
-	<>currentRad, <>moveAction, <weights, <interPoints, <n, <>gui;
+	<>currentRad, <>moveAction, <weights, <interPoints, <n, <>gui,
+	<>grabbed;
 	
 	*new{ |numDim = 3|
 		^super.new.init(numDim);
@@ -14,7 +15,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			//find points that intersect with currentPoint
 			//calculate weights
 			if(points.indexOfEqual(currentPoint).notNil) {
-				//if currentPoint is exactly on a preset
+				// if currentPoint is exactly on a preset
 				interPoints = [ points.indexOfEqual(currentPoint) ];
 				currentPreset.parameters.do{ |i,j|
 					i.value_(presets[interPoints[0]].parameters[j].value);
@@ -24,26 +25,14 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 				interPoints = points.selectIndex({ |i,j|
 					i.dist(currentPoint) <= (currentRad + rads[j])
 				});
-				// weights = points[interPoints].collect({ |i,j|
-				// 	((
-				// 		(
-				// 			(4 * i.dist(currentPoint).squared * currentRad.squared) -
-				// 			(
-				// 				i.dist(currentPoint).squared -
-				// 				rads[interPoints[j]].squared +
-				// 				currentRad.squared
-				// 			).squared;
-				// 		) / 4 * i.dist(currentPoint).squared
-				// 	).sqrt )/rads[interPoints[j]];
-				// }).normalizeSum;
-				if (interPoints.size == 1) {
-					weights = [1];
-				}{
-					weights = points[interPoints].collect({ |i,j|
-						i.intersectArea(rads[interPoints[j]], currentPoint, currentRad)
-						/ (pi * rads[interPoints[j]].squared);
-					}).normalizeSum;
-				};
+				// if (interPoints.size == 1) {
+				// 	weights = [1];
+				// }{
+				weights = points[interPoints].collect({ |i,j|
+					i.intersectArea(rads[interPoints[j]], currentPoint, currentRad)
+					/ (pi * rads[interPoints[j]].squared);
+				}).normalizeSum;
+				// };
 				currentPreset.parameters.do{ |i,j|
 					//to each parameters of current Preset
 					i.value_( //assign the value
@@ -58,6 +47,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 		n = numDim;
 		points = List.new;
 		rads = List.new;
+		grabbed = List.new;
 		presets = List.new;
 		currentPoint = 0!n;
 		this.addFirstPoint;
@@ -67,6 +57,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 	addFirstPoint {
 		points.add( 1!n );
 		rads.add(0);
+		grabbed.add(false);
 		presets.add(
 			Preset(
 				Parameter().action_({
@@ -91,6 +82,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			
 			points.add( point );
 			rads.add( 0 );
+			grabbed.add(false);
 			this.refreshRads;
 			presets.add(Preset.newFromSibling(presets[0])
 				.color_(presets.last.color.copy.hue_(
@@ -132,6 +124,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			points.removeAt(i);
 			presets.removeAt(i);
 			rads.removeAt(i);
+			grabbed.removeAt(i);
 			this.refreshRads;
 			moveAction.value(
 				points, currentPoint, presets, currentPreset, rads, currentRad
@@ -140,7 +133,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 	}
 	
 	copyPoint{ |id|
-		this.addPoint( points[id].pos );
+		this.addPoint( points[id] );
 		//copy all parameter values
 		presets.last.parameters.do({|i,j|
 			i.value_(presets[id].parameters[j].value;)
@@ -150,7 +143,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 	copyCurrentPoint {
 		var vals;
 		vals = currentPreset.parameters.collect(_.value);
-		this.addPoint( currentPoint.pos );
+		this.addPoint( currentPoint );
 		//copy all parameter values
 		presets.last.parameters.do({|i,j|
 			i.value_(vals[j];)
@@ -158,9 +151,10 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 		
 	}
 
-	learn {
+	learn { // Not so useful: like copyCurrentPoint but does not copy parameter
+			// values.
 		var newPoint;
-		newPoint = currentPoint.pos;
+		newPoint = currentPoint;
 		this.addPoint( newPoint );
 		("Added a new point at" + newPoint).postln;
 	}
@@ -168,6 +162,57 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 	moveCurrentPoint { |pos|
 		if (pos.size == n) {
 			currentPoint = pos;
+			this.refreshRads;
+			moveAction.value(
+				points,
+				currentPoint,
+				presets,
+				currentPreset,
+				rads,
+				currentRad
+			);
+			// Check if a point is grabbed and move it along with the current
+			// point.
+			grabbed.indicesOfEqual(true).do{ |point|
+				this.movePoint(point, pos);
+				if (gui.notNil) {
+					gui.matrix[point].do{|numBox, i|
+						numBox.value_(points[point][i]);
+					};
+				}
+			};
+		} {
+			"Position must be an array of size %".format(n).postln;
+		}
+	}
+	
+	// Makes a point move along with the currentPoint(cursor).  Very handy to
+	// place a point the a multi dimensional space using an interface (the
+	// sponge!)
+	grab { |point| 
+		grabbed[point] = true;
+	}
+
+	ungrab { |point| 
+		grabbed[point] = false;
+	}
+
+	changeCoord { |point, coord, val|
+		points[point][coord] = val;
+		this.refreshRads;
+		moveAction.value(
+			points,
+			currentPoint,
+			presets,
+			currentPreset,
+			rads,
+			currentRad
+		);
+	}
+
+	movePoint { |point, pos|
+		if (pos.size == n) {
+			points[point] = pos;
 			this.refreshRads;
 			moveAction.value(
 				points,
@@ -188,11 +233,14 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			var a;
 			a = points.deepCopy;
 			a.removeAt(j);
-			a = a ++ currentPoint;
+			a = a ++ [currentPoint];
 			rads[j] = i.nearestDist(a);
 		}
 	}
 	
+
+	// Does not save if a point is grabbed at the moment.
+	// but is it useful anyway?
 	save { |path|
 		path = path ? (Platform.userAppSupportDir ++"/presetInterpolator.pri");
 		[
@@ -203,7 +251,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			rads,
 			currentRad,
 			n
-		].writeArchive(path);
+		].writeArchive(path)
 		// // close the guis before saving because there are too many open
 		// // functions. If I don't close them, I get only warnings when I save,
 		// // but it is impossible to load the object : literal > 256...
@@ -265,7 +313,7 @@ HyperInterpolatorGui {
 		^super.new.w_(w).init(interpolator, pos);
 	}
 	
-	init { | interpolator, pos |
+ 	init { | interpolator, pos |
 		var grabbed;
 		pos = pos ? Point(550,400);
 		space = interpolator ? HyperInterpolator();
@@ -372,10 +420,14 @@ HyperInterpolatorGui {
 			.action_({|but|
 				if (but.value == 0) {
 					ungrabAction.value(i, but);
+					space.ungrab(i);
 					grabbed = nil;
 				} {
+					// grabbed buttons are exclusive in the gui, but not
+					// necessarily in the model.  Not sure if it makes sense.
 					try{grabbed.valueAction_(0)};
 					grabAction.value(i,but);
+					space.grab(i);
 					grabbed = but;
 				}
 			});
@@ -386,7 +438,8 @@ HyperInterpolatorGui {
 						.origin_(((j*50)+101)@((i*17)+20))
 						.extent_(50@15))
 					.value_(point[j])
-					.action_({|num|
+					.action_({|nb|
+						space.changeCoord(i, j, nb.value);
 					});
 				})
 			);
