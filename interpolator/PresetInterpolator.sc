@@ -533,7 +533,8 @@ PresetGui {
 				preset.name, 
 				Rect(
 					x,
-					y - 17 - (90 * preset.size),
+					y - (90 * preset.size), //qt
+					// y -17 - (90 * preset.size), //swing
 					324,
 					(90 * preset.size) + 17
 				),

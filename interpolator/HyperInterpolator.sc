@@ -405,8 +405,8 @@ HyperInterpolatorGui {
 				} {
 					space.presets[i].makeGui(
 						origin: Point(
-							this.w.bounds.right,
-							this.w.bounds.top
+							w.bounds.right,
+							w.bounds.bottom //.top for swing
 						)
 					);
 				}
@@ -440,6 +440,7 @@ HyperInterpolatorGui {
 						.origin_(((j*50)+101)@((i*17)+20))
 						.extent_(50@15))
 					.value_(point[j])
+					.decimals_(3)
 					.action_({|nb|
 						space.changeCoord(i, j, nb.value);
 					});
