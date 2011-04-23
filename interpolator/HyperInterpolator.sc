@@ -11,7 +11,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 	}
 	
 	init{ |numDim|
-		moveAction = { |points, currentPoint, presets, currentPreset, rads, currentRad|
+		moveAction = { |points, currentPoint, presets, currentPreset, rads, currentnnRad|
 			//find points that intersect with currentPoint
 			//calculate weights
 			if(points.indexOfEqual(currentPoint).notNil) {
@@ -307,26 +307,28 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 
 HyperInterpolatorGui {
 
-	var <>w, <>x, <>y, <>space, <>grabAction, <>ungrabAction, <>matrix;
+	var <>w, <>space, <>grabAction, <>ungrabAction, <>matrix;
 	
 	*new { |interpolator, w, pos| 
 		^super.new.w_(w).init(interpolator, pos);
+	}
+
+	calculateViewBounds { |pos|
+		^Rect().origin_(pos).extent_(
+			((52*space.n) + 105)@(18*(space.points.size + 1))
+		);
 	}
 	
  	init { | interpolator, pos |
 		var grabbed;
 		pos = pos ? Point(550,400);
 		space = interpolator ? HyperInterpolator();
-		w = try { CompositeView(w, Rect().origin_(pos).extent_(300@85)) }
-			?? { 
-				w = Window(
-					"HyperInterpolator",
-					Rect().origin_(pos).extent_(
-						((52*space.n) + 105)@(18*(space.points.size + 1))
-					)
-				).alwaysOnTop_(false).front; 
-				w.view;
-			};
+		w = Window(
+			"HyperInterpolator",
+			this.calculateViewBounds(pos)
+		).alwaysOnTop_(false).front; 
+
+
 		matrix = List[];
 
 		// add button
@@ -337,9 +339,9 @@ HyperInterpolatorGui {
 		.states_([["add"]])
 		.action_({|b|
 			var origin;
-			origin = this.w.findWindow.bounds.origin;
-			origin = origin - (0@18);
-			this.w.findWindow.close;
+			origin = this.w.bounds.origin;
+			origin = origin - (1@3);
+			this.w.close;
 			space.addPoint(1!space.n);
 			space.makeGui(origin);
 		});
@@ -356,8 +358,8 @@ HyperInterpolatorGui {
 			} {
 				space.currentPreset.makeGui(
 					origin: Point(
-						this.w.findWindow.bounds.right,
-						this.w.findWindow.bounds.top
+						this.w.bounds.right,
+						this.w.bounds.top
 					)
 				);
 			}
@@ -383,9 +385,9 @@ HyperInterpolatorGui {
 		.states_([["load"]])
 		.action_({
 			var origin;
-			origin = this.w.findWindow.bounds.origin;
+			origin = this.w.bounds.origin;
 			Dialog.getPaths({ arg paths;
-				this.w.findWindow.close;
+				this.w.close;
 				space.load(paths[0]);
 				space.makeGui(origin);
 			});
@@ -403,8 +405,8 @@ HyperInterpolatorGui {
 				} {
 					space.presets[i].makeGui(
 						origin: Point(
-							this.w.findWindow.bounds.right,
-							this.w.findWindow.bounds.top
+							this.w.bounds.right,
+							this.w.bounds.top
 						)
 					);
 				}
@@ -452,9 +454,8 @@ HyperInterpolatorGui {
 			.action_({
 				if (space.points.size > 1) {
 					var origin;
-					origin = this.w.findWindow.bounds.origin;
-					origin = origin + (0@18);
-					this.w.findWindow.close;
+					origin = this.w.bounds.origin + (-1@33);
+					this.w.close;
 					space.removePoint(i);
 					space.makeGui(origin);
 				}

@@ -9,7 +9,16 @@ SpongeBee {
 		^super.new.init(portName, baudRate);
 	}
 	init { arg pn, br;
-		port = SerialPort(pn, br);
+		port = SerialPort(
+			port:pn,
+			baudrate:br,
+			databits:8,
+			stopbit:true,
+			parity:nil,
+			crtscts:false,
+			xonxoff:false,
+			exclusive:false
+		);
 		inputThread= fork {
 			// SPONGEBEE BYTE PARSING
 			// ======================
