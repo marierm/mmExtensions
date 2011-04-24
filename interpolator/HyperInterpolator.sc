@@ -325,16 +325,30 @@ HyperInterpolatorGui {
 		^super.new.w_(w).init(interpolator, pos);
 	}
 
-	calculateViewBounds { |pos, butHeight|
+	calculateViewBounds { |pos|
 		^Rect().origin_(pos).extent_(
-			((52*space.n) + 185)@((butHeight+3)*(space.points.size + 1))
+			this.calculateWindowSize
 		);
+	}
+
+	calculateLayout {
+		var width, height;
+		width = ((52*space.n) + 155);
+		height = ((butHeight+3)*(space.points.size + 1));
+		^Rect(0,0,width,height);
+	}
+
+	calculateWindowSize {
+		var width, height;
+		width = this.calculateLayout.width.clip(360,800);
+		height = this.calculateLayout.height.clip(40,700);
+		^Point(width,height);
 	}
 	
 	newWindowPosition{
 		^Point(
 			w.bounds.right,
-			w.bounds.bottom - 3//.top for swing
+			w.bounds.bottom - 3//.top when using swing
 		)
 	}
 
@@ -397,12 +411,15 @@ HyperInterpolatorGui {
 			Button( w, (butHeight@butHeight))
 			.states_([["X"]])
 			.action_({
-				//				if (space.points.size > 1) {
-					space.removePoint(i);
-				//				}
+				space.removePoint(i);
 			});
 		]);
 		layout.nextLine;
+		// Resize the window
+		w.setInnerExtent(
+			this.calculateWindowSize.x,
+			this.calculateWindowSize.y
+		)
 	}
 	
  	init { | interpolator, pos |
@@ -412,11 +429,13 @@ HyperInterpolatorGui {
 		space = interpolator ? HyperInterpolator();
 		w = Window(
 			"HyperInterpolator",
-			this.calculateViewBounds(pos, butHeight)
+			this.calculateViewBounds(pos),
+			scroll: true
 		).alwaysOnTop_(false).front; 
 		
-		layout = w.addFlowLayout( 2@2, 2@2 );
-
+		layout = FlowLayout( this.calculateLayout, 2@2, 2@2 );
+		w.view.decorator = layout;
+		
 		guiItems = List[];
 
 		// add button
@@ -498,6 +517,11 @@ HyperInterpolatorGui {
 			(i..space.points.size-1).do { |j,k|
 				this.addPresetLine(space.points[j],j);
 			};
-		}
+		};
+		// Resize the window
+		w.setInnerExtent(
+			this.calculateWindowSize.x,
+			this.calculateWindowSize.y
+		)
 	}
 }
