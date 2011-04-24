@@ -318,19 +318,19 @@ HyperInterpolatorGui {
 
 	calculateViewBounds { |pos, butHeight|
 		^Rect().origin_(pos).extent_(
-			((52*space.n) + 105)@((butHeight+3)*(space.points.size + 1))
+			((52*space.n) + 185)@((butHeight+3)*(space.points.size + 1))
 		);
 	}
 	
 	newWindowPosition{
 		^Point(
 			w.bounds.right,
-			w.bounds.bottom //.top for swing
+			w.bounds.bottom - 3//.top for swing
 		)
 	}
 	
  	init { | interpolator, pos |
-		var grabbed, butHeight=18;
+		var grabbed, butHeight=18, layout;
 		pos = pos ? Point(550,400);
 		space = interpolator ? HyperInterpolator();
 		w = Window(
@@ -338,30 +338,23 @@ HyperInterpolatorGui {
 			this.calculateViewBounds(pos, butHeight)
 		).alwaysOnTop_(false).front; 
 		
-		//		w.view.decorator = FlowLayout( w.view.bounds, 3@3, 2@2 );
-		
+		layout = w.addFlowLayout( 3@3, 2@2 );
+
 		matrix = List[];
 
 		// add button
-		Button(w, Rect()
-			.origin_(2@2)
-			.extent_(97@butHeight)
-		)
-		.states_([["add"]])
+		Button(w, 97@butHeight)
+		.states_([["Add Preset"]])
 		.action_({|b|
 			var origin;
-			origin = this.w.bounds.origin;
-			origin = origin - (1@3);
+			origin = this.w.bounds.origin - (1@6);
 			this.w.close;
 			space.addPoint(1!space.n);
 			space.makeGui(origin);
 		});
 
 		// show interpolation point button
-		Button(w, Rect()
-			.origin_(101@2)
-			.extent_(100@butHeight)
-		)
+		Button(w, 100@butHeight)
 		.states_([["interpolPoint"]])
 		.action_({
 			if(space.currentPreset.gui.notNil){
@@ -374,10 +367,7 @@ HyperInterpolatorGui {
 		});
 
 		// save button
-		Button(w, Rect()
-			.origin_(203@2)
-			.extent_(50@butHeight)
-		)
+		Button(w, 50@butHeight)
 		.states_([["save"]])
 		.action_({
 			Dialog.savePanel({ arg path;
@@ -386,10 +376,7 @@ HyperInterpolatorGui {
 		});
 
 		// load button
-		Button(w, Rect()
-			.origin_(255@2)
-			.extent_(50@butHeight)
-		)
+		Button(w, 50@butHeight)
 		.states_([["load"]])
 		.action_({
 			var origin;
@@ -400,13 +387,25 @@ HyperInterpolatorGui {
 				space.makeGui(origin);
 			});
 		});
+
+		// new line
+		layout.nextLine;
 		
-		// edit buttons
+		// One line for each preset;
 		space.points.do{|point, i|
-			Button(w, Rect()
-				.origin_(2@((i*17)+20))
-				.extent_(40@butHeight))
-			.states_([["edit", Color.black, space.presets[i].color]])
+			// preset name
+			TextField(w, 80@butHeight)
+			.string_(space.presets[i].name)
+			.background_(space.presets[i].color)
+			.action_({ |text|
+				space.presets[i].name_(text.value)
+			});
+			// edit buttons
+			Button(w, butHeight@butHeight)
+			.states_([
+				["e", Color.black, space.presets[i].color],
+				["e", Color.black, space.presets[i].color.add(Color.black, 0.5)]
+			])
 			.action_({
 				if(space.presets[i].gui.notNil){
 					space.presets[i].gui.close;
@@ -417,12 +416,10 @@ HyperInterpolatorGui {
 				}
 			});
 			// grab buttons
-			Button(w, Rect()
-				.origin_(44@((i*17)+20))
-				.extent_(15@butHeight))
+			Button(w, butHeight@butHeight)
 			.states_([
 				["g", Color.black, space.presets[i].color],
-				["g", Color.black, Color.clear]
+				["g", Color.black, space.presets[i].color.add(Color.black, 0.5)]
 			])
 			.action_({|but|
 				if (but.value == 0) {
@@ -441,9 +438,7 @@ HyperInterpolatorGui {
 			// coordinates
 			matrix.add(
 				Array.fill(point.size, {|j|
-					NumberBox(w, Rect()
-						.origin_(((j*50)+101)@((i*17)+20))
-						.extent_(50@butHeight))
+					NumberBox(w, 50@butHeight)
 					.value_(point[j])
 					.decimals_(3)
 					.action_({|nb|
@@ -453,19 +448,21 @@ HyperInterpolatorGui {
 			);
 
 			// remove button
-			Button( w, Rect()
-				.origin_((101+(50 * space.n))@((i*17)+20))
-				.extent_(butHeight@butHeight))
+			Button( w, (butHeight@butHeight))
 			.states_([["X"]])
 			.action_({
 				if (space.points.size > 1) {
 					var origin;
-					origin = this.w.bounds.origin + (-1@33);
+					origin = this.w.bounds.origin + (-1@36);
 					this.w.close;
 					space.removePoint(i);
 					space.makeGui(origin);
 				}
 			});
+			
+			// next line
+			layout.nextLine;
+			
 		};
 	}
 }
