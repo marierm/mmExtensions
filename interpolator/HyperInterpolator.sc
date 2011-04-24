@@ -100,6 +100,9 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 					);
 				});
 			});
+			if (gui.notNil){
+				gui.addPresetLine(points.last, points.size -1);
+			};
 			moveAction.value(
 				points, currentPoint, presets, currentPreset, rads, currentRad
 			);
@@ -132,9 +135,14 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			moveAction.value(
 				points, currentPoint, presets, currentPreset, rads, currentRad
 			);
+			if (gui.notNil){
+				gui.removeLine(i);
+			}
+		} {
+			"This Point cannot be removed".warn;
 		}
 	}
-	
+
 	copyPoint{ |id|
 		this.addPoint( points[id] );
 		//copy all parameter values
@@ -179,7 +187,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			grabbed.indicesOfEqual(true).do{ |point|
 				this.movePoint(point, pos);
 				if (gui.notNil) {
-					gui.matrix[point].do{|numBox, i|
+					gui.guiItems[3][point].do{|numBox, i|
 						numBox.value_(points[point][i]);
 					};
 				}
@@ -310,7 +318,8 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 
 HyperInterpolatorGui {
 
-	var <>w, <>space, <>grabAction, <>ungrabAction, <>matrix;
+	var <>w, <>space, <>grabAction, <>ungrabAction, <>guiItems, butHeight,
+	grabbed, layout;
 	
 	*new { |interpolator, w, pos| 
 		^super.new.w_(w).init(interpolator, pos);
@@ -328,9 +337,77 @@ HyperInterpolatorGui {
 			w.bounds.bottom - 3//.top for swing
 		)
 	}
+
+	addPresetLine{ |point, i|
+		//guiItems contains arrays of guiItems:
+		//[[presetName,editBut,grabBut,[coords],removeBut],...]
+		guiItems.add([ 
+			// preset name
+			TextField(w, 80@butHeight)
+			.string_(space.presets[i].name)
+			.background_(space.presets[i].color)
+			.action_({ |text|
+				space.presets[i].name_(text.value)
+			}),
+			// edit buttons
+			Button(w, butHeight@butHeight)
+			.states_([
+				["e", Color.black, space.presets[i].color],
+				["e", Color.black, space.presets[i].color.add(Color.black, 0.5)]
+			])
+			.action_({
+				if(space.presets[i].gui.notNil){
+					space.presets[i].gui.close;
+				} {
+					space.presets[i].makeGui(
+						origin: this.newWindowPosition
+					);
+				}
+			}),
+			// grab buttons
+			Button(w, butHeight@butHeight)
+			.states_([
+				["g", Color.black, space.presets[i].color],
+				["g", Color.black, space.presets[i].color.add(Color.black, 0.5)]
+			])
+			.action_({|but|
+				if (but.value == 0) {
+					ungrabAction.value(i, but);
+					space.ungrab(i);
+					grabbed = nil;
+				} {
+					// grabbed buttons are exclusive in the gui, but not
+					// necessarily in the model.  Not sure if it makes sense.
+					try{grabbed.valueAction_(0)};
+					grabAction.value(i,but);
+					space.grab(i);
+					grabbed = but;
+				}
+			}),
+			// coordinates
+			Array.fill(point.size, {|j|
+				NumberBox(w, 50@butHeight)
+				.value_(point[j])
+				.decimals_(3)
+				.action_({|nb|
+					space.changeCoord(i, j, nb.value);
+				});
+			}),
+			// remove button
+			Button( w, (butHeight@butHeight))
+			.states_([["X"]])
+			.action_({
+				//				if (space.points.size > 1) {
+					space.removePoint(i);
+				//				}
+			});
+		]);
+		layout.nextLine;
+	}
 	
  	init { | interpolator, pos |
-		var grabbed, butHeight=18, layout;
+		butHeight = 18;
+		grabbed = nil;
 		pos = pos ? Point(550,400);
 		space = interpolator ? HyperInterpolator();
 		w = Window(
@@ -338,19 +415,18 @@ HyperInterpolatorGui {
 			this.calculateViewBounds(pos, butHeight)
 		).alwaysOnTop_(false).front; 
 		
-		layout = w.addFlowLayout( 3@3, 2@2 );
+		layout = w.addFlowLayout( 2@2, 2@2 );
 
-		matrix = List[];
+		guiItems = List[];
 
 		// add button
 		Button(w, 97@butHeight)
 		.states_([["Add Preset"]])
 		.action_({|b|
-			var origin;
-			origin = this.w.bounds.origin - (1@6);
-			this.w.close;
+			// var origin;
+			// origin = this.w.bounds.origin - (1@6);
+			// this.w.close;
 			space.addPoint(1!space.n);
-			space.makeGui(origin);
 		});
 
 		// show interpolation point button
@@ -393,76 +469,35 @@ HyperInterpolatorGui {
 		
 		// One line for each preset;
 		space.points.do{|point, i|
-			// preset name
-			TextField(w, 80@butHeight)
-			.string_(space.presets[i].name)
-			.background_(space.presets[i].color)
-			.action_({ |text|
-				space.presets[i].name_(text.value)
-			});
-			// edit buttons
-			Button(w, butHeight@butHeight)
-			.states_([
-				["e", Color.black, space.presets[i].color],
-				["e", Color.black, space.presets[i].color.add(Color.black, 0.5)]
-			])
-			.action_({
-				if(space.presets[i].gui.notNil){
-					space.presets[i].gui.close;
-				} {
-					space.presets[i].makeGui(
-						origin: this.newWindowPosition
-					);
-				}
-			});
-			// grab buttons
-			Button(w, butHeight@butHeight)
-			.states_([
-				["g", Color.black, space.presets[i].color],
-				["g", Color.black, space.presets[i].color.add(Color.black, 0.5)]
-			])
-			.action_({|but|
-				if (but.value == 0) {
-					ungrabAction.value(i, but);
-					space.ungrab(i);
-					grabbed = nil;
-				} {
-					// grabbed buttons are exclusive in the gui, but not
-					// necessarily in the model.  Not sure if it makes sense.
-					try{grabbed.valueAction_(0)};
-					grabAction.value(i,but);
-					space.grab(i);
-					grabbed = but;
-				}
-			});
-			// coordinates
-			matrix.add(
-				Array.fill(point.size, {|j|
-					NumberBox(w, 50@butHeight)
-					.value_(point[j])
-					.decimals_(3)
-					.action_({|nb|
-						space.changeCoord(i, j, nb.value);
-					});
-				})
-			);
-
-			// remove button
-			Button( w, (butHeight@butHeight))
-			.states_([["X"]])
-			.action_({
-				if (space.points.size > 1) {
-					var origin;
-					origin = this.w.bounds.origin + (-1@36);
-					this.w.close;
-					space.removePoint(i);
-					space.makeGui(origin);
-				}
-			});
-			
-			// next line
-			layout.nextLine;
-			
+			this.addPresetLine(point,i);
 		};
+	}
+
+	redrawLines {
+		guiItems.do{|line| line.flatten.do(_.remove)};
+		layout.top_((butHeight + 3));
+		guiItems = List[];
+		space.points.do{|point, i|
+			this.addPresetLine(point,i);
+		};
+	}
+
+	removeLine {|i|
+		// Remove all lines starting from the line to be removed.
+		(i..guiItems.size - 1).do { |j|
+			guiItems[j].flatten.do{ |guiItem|
+				guiItem.remove;
+			}
+		};
+		// Remove the objects in guiItems
+		guiItems = guiItems.keep(i);
+		// Reset layout postion so that new lines appear at the right place.
+		layout.top_((butHeight+2)*(guiItems.size) + (butHeight + 3));
+		// Redraw lines
+		if (space.points.size != i) {
+			(i..space.points.size-1).do { |j,k|
+				this.addPresetLine(space.points[j],j);
+			};
+		}
 	}
 }
