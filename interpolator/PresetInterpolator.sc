@@ -438,7 +438,8 @@ Preset {
 	
 	init { arg params;
 		name = "Preset";
-		color = Color.new255(167,167,167);
+		// color = Color.new255(167,167,167);
+		color = Color.clear;
 		parameters = List[];
 		params.do({ |i, j|
 			this.add(i);
@@ -449,6 +450,7 @@ Preset {
 	initFromSibling { arg params, sblng;
 		name = "Preset";
 		parameters = List[];
+		color = Color.clear;
 		params.do { |i, j|
 			this.add(Parameter.newFromSibling(i));
 		};
@@ -711,7 +713,8 @@ ParameterGui {
 			Rect(0, 0, w.bounds.width, w.bounds.height), 2@2, 2@2
 		);
 				
-		w.background = color ? Color.new255(167, 167, 167);
+		// w.background = color ? Color.new255(167, 167, 167);
+		w.background = color ? Color.clear;
 		
 		refreshFunc = { |mapped, value|
 			this.refresh;

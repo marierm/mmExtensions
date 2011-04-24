@@ -51,7 +51,8 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 		presets = List.new;
 		currentPoint = 0!n;
 		this.addFirstPoint;
-		currentPreset = Preset.newFromSibling(presets[0]);
+		currentPreset = Preset.newFromSibling(
+			presets[0]).name_("Interpolation Point");
 	}
 	
 	addFirstPoint {
@@ -67,6 +68,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 					);
 				})
 			).color_(Color.hsv(0,0.5,0.7,1))
+			.name_("Preset" + points.size);
 		);
 		this.refreshRads;
 	}
@@ -86,8 +88,9 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			this.refreshRads;
 			presets.add(Preset.newFromSibling(presets[0])
 				.color_(presets.last.color.copy.hue_(
-					presets.last.color.hue + 0.094117647058824 % 1)
-				)
+					presets.last.color.hue + 0.1843137254902 % 1))
+					// old value was 0.094117647058824
+				.name_("Preset" + points.size)
 			);
 			presets.last.parameters.do({ |i,j|
 				//add the moveAction to all parameters
@@ -313,28 +316,36 @@ HyperInterpolatorGui {
 		^super.new.w_(w).init(interpolator, pos);
 	}
 
-	calculateViewBounds { |pos|
+	calculateViewBounds { |pos, butHeight|
 		^Rect().origin_(pos).extent_(
-			((52*space.n) + 105)@(18*(space.points.size + 1))
+			((52*space.n) + 105)@((butHeight+3)*(space.points.size + 1))
 		);
 	}
 	
+	newWindowPosition{
+		^Point(
+			w.bounds.right,
+			w.bounds.bottom //.top for swing
+		)
+	}
+	
  	init { | interpolator, pos |
-		var grabbed;
+		var grabbed, butHeight=18;
 		pos = pos ? Point(550,400);
 		space = interpolator ? HyperInterpolator();
 		w = Window(
 			"HyperInterpolator",
-			this.calculateViewBounds(pos)
+			this.calculateViewBounds(pos, butHeight)
 		).alwaysOnTop_(false).front; 
-
-
+		
+		//		w.view.decorator = FlowLayout( w.view.bounds, 3@3, 2@2 );
+		
 		matrix = List[];
 
 		// add button
 		Button(w, Rect()
 			.origin_(2@2)
-			.extent_(97@15)
+			.extent_(97@butHeight)
 		)
 		.states_([["add"]])
 		.action_({|b|
@@ -349,7 +360,7 @@ HyperInterpolatorGui {
 		// show interpolation point button
 		Button(w, Rect()
 			.origin_(101@2)
-			.extent_(100@15)
+			.extent_(100@butHeight)
 		)
 		.states_([["interpolPoint"]])
 		.action_({
@@ -357,10 +368,7 @@ HyperInterpolatorGui {
 				space.currentPreset.gui.close;
 			} {
 				space.currentPreset.makeGui(
-					origin: Point(
-						this.w.bounds.right,
-						this.w.bounds.top
-					)
+					origin: this.newWindowPosition
 				);
 			}
 		});
@@ -368,7 +376,7 @@ HyperInterpolatorGui {
 		// save button
 		Button(w, Rect()
 			.origin_(203@2)
-			.extent_(50@15)
+			.extent_(50@butHeight)
 		)
 		.states_([["save"]])
 		.action_({
@@ -380,7 +388,7 @@ HyperInterpolatorGui {
 		// load button
 		Button(w, Rect()
 			.origin_(255@2)
-			.extent_(50@15)
+			.extent_(50@butHeight)
 		)
 		.states_([["load"]])
 		.action_({
@@ -397,27 +405,24 @@ HyperInterpolatorGui {
 		space.points.do{|point, i|
 			Button(w, Rect()
 				.origin_(2@((i*17)+20))
-				.extent_(40@15))
+				.extent_(40@butHeight))
 			.states_([["edit", Color.black, space.presets[i].color]])
 			.action_({
 				if(space.presets[i].gui.notNil){
 					space.presets[i].gui.close;
 				} {
 					space.presets[i].makeGui(
-						origin: Point(
-							w.bounds.right,
-							w.bounds.bottom //.top for swing
-						)
+						origin: this.newWindowPosition
 					);
 				}
 			});
 			// grab buttons
 			Button(w, Rect()
 				.origin_(44@((i*17)+20))
-				.extent_(55@15))
+				.extent_(15@butHeight))
 			.states_([
-				["grab", Color.black, space.presets[i].color],
-				["grabbed"]
+				["g", Color.black, space.presets[i].color],
+				["g", Color.black, Color.clear]
 			])
 			.action_({|but|
 				if (but.value == 0) {
@@ -438,7 +443,7 @@ HyperInterpolatorGui {
 				Array.fill(point.size, {|j|
 					NumberBox(w, Rect()
 						.origin_(((j*50)+101)@((i*17)+20))
-						.extent_(50@15))
+						.extent_(50@butHeight))
 					.value_(point[j])
 					.decimals_(3)
 					.action_({|nb|
@@ -450,7 +455,7 @@ HyperInterpolatorGui {
 			// remove button
 			Button( w, Rect()
 				.origin_((101+(50 * space.n))@((i*17)+20))
-				.extent_(15@15))
+				.extent_(butHeight@butHeight))
 			.states_([["X"]])
 			.action_({
 				if (space.points.size > 1) {
