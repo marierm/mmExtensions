@@ -89,8 +89,18 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 			presets.add(Preset.newFromSibling(presets[0])
 				.color_(presets.last.color.copy.hue_(
 					presets.last.color.hue + 0.1843137254902 % 1))
-					// old value was 0.094117647058824
-				.name_("Preset" + points.size)
+				// old value was 0.094117647058824
+
+				//assign name intelligently.  Finds the name that has the form
+				//"Preset xx" with the highest number and increments it.
+				.name_(
+					"Preset" + 
+					(presets.collect(_.name).select({|i|
+						"Preset [0-9]+".matchRegexp(i)
+					}).collect({|i|
+						i.split($ )[1].asInt;
+					}).maxItem + 1);
+				)
 			);
 			presets.last.parameters.do({ |i,j|
 				//add the moveAction to all parameters
@@ -325,6 +335,31 @@ HyperInterpolatorGui {
 		^super.new.w_(w).init(interpolator, pos);
 	}
 
+	init { | interpolator, pos |
+		butHeight = 18;
+		grabbed = nil;
+		pos = pos ? Point(550,400);
+		space = interpolator ? HyperInterpolator();
+		w = Window(
+			"HyperInterpolator",
+			this.calculateViewBounds(pos),
+			scroll: true
+		).alwaysOnTop_(false).front; 
+		
+		layout = FlowLayout( this.calculateLayout, 2@2, 2@2 );
+		w.view.decorator = layout;
+		
+		guiItems = List[];
+
+		// Add buttons on top of the GUI: add preset, interpolation point,
+		// load, save.
+		this.drawHeader;
+		// Draw one line for each preset;
+		space.points.do{|point, i|
+			this.addPresetLine(point,i);
+		};
+	}
+
 	calculateViewBounds { |pos|
 		^Rect().origin_(pos).extent_(
 			this.calculateWindowSize
@@ -341,7 +376,7 @@ HyperInterpolatorGui {
 	calculateWindowSize {
 		var width, height;
 		width = this.calculateLayout.width.clip(360,800);
-		height = this.calculateLayout.height.clip(40,700);
+		height = this.calculateLayout.height.clip(60,600);
 		^Point(width,height);
 	}
 	
@@ -350,6 +385,56 @@ HyperInterpolatorGui {
 			w.bounds.right,
 			w.bounds.bottom - 3//.top when using swing
 		)
+	}
+
+	drawHeader {
+		// add button
+		Button(w, 97@butHeight)
+		.states_([["Add Preset"]])
+		.action_({|b|
+			// var origin;
+			// origin = this.w.bounds.origin - (1@6);
+			// this.w.close;
+			space.addPoint(1!space.n);
+		});
+
+		// show interpolation point button
+		Button(w, 100@butHeight)
+		.states_([["interpolPoint"]])
+		.action_({
+			if(space.currentPreset.gui.notNil){
+				space.currentPreset.gui.close;
+			} {
+				space.currentPreset.makeGui(
+					origin: this.newWindowPosition
+				);
+			}
+		});
+
+		// save button
+		Button(w, 50@butHeight)
+		.states_([["save"]])
+		.action_({
+			Dialog.savePanel({ arg path;
+				space.save(path);
+			});
+		});
+
+		// load button
+		Button(w, 50@butHeight)
+		.states_([["load"]])
+		.action_({
+			var origin;
+			origin = this.w.bounds.origin;
+			Dialog.getPaths({ arg paths;
+				this.w.close;
+				space.load(paths[0]);
+				space.makeGui(origin);
+			});
+		});
+
+		// new line
+		layout.nextLine;
 	}
 
 	addPresetLine{ |point, i|
@@ -422,76 +507,6 @@ HyperInterpolatorGui {
 		)
 	}
 	
- 	init { | interpolator, pos |
-		butHeight = 18;
-		grabbed = nil;
-		pos = pos ? Point(550,400);
-		space = interpolator ? HyperInterpolator();
-		w = Window(
-			"HyperInterpolator",
-			this.calculateViewBounds(pos),
-			scroll: true
-		).alwaysOnTop_(false).front; 
-		
-		layout = FlowLayout( this.calculateLayout, 2@2, 2@2 );
-		w.view.decorator = layout;
-		
-		guiItems = List[];
-
-		// add button
-		Button(w, 97@butHeight)
-		.states_([["Add Preset"]])
-		.action_({|b|
-			// var origin;
-			// origin = this.w.bounds.origin - (1@6);
-			// this.w.close;
-			space.addPoint(1!space.n);
-		});
-
-		// show interpolation point button
-		Button(w, 100@butHeight)
-		.states_([["interpolPoint"]])
-		.action_({
-			if(space.currentPreset.gui.notNil){
-				space.currentPreset.gui.close;
-			} {
-				space.currentPreset.makeGui(
-					origin: this.newWindowPosition
-				);
-			}
-		});
-
-		// save button
-		Button(w, 50@butHeight)
-		.states_([["save"]])
-		.action_({
-			Dialog.savePanel({ arg path;
-				space.save(path);
-			});
-		});
-
-		// load button
-		Button(w, 50@butHeight)
-		.states_([["load"]])
-		.action_({
-			var origin;
-			origin = this.w.bounds.origin;
-			Dialog.getPaths({ arg paths;
-				this.w.close;
-				space.load(paths[0]);
-				space.makeGui(origin);
-			});
-		});
-
-		// new line
-		layout.nextLine;
-		
-		// One line for each preset;
-		space.points.do{|point, i|
-			this.addPresetLine(point,i);
-		};
-	}
-
 	redrawLines {
 		guiItems.do{|line| line.flatten.do(_.remove)};
 		layout.top_((butHeight + 3));
