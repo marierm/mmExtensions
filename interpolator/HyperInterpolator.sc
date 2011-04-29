@@ -11,7 +11,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 	}
 	
 	init{ |numDim|
-		moveAction = { |points, currentPoint, presets, currentPreset, rads, currentnnRad|
+		moveAction = { |points, currentPoint, presets, currentPreset, rads, currentRad|
 			//find points that intersect with currentPoint
 			//calculate weights
 			if(points.indexOfEqual(currentPoint).notNil) {
@@ -318,8 +318,8 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 		moveAction.value(points, currentPoint, presets, currentPreset, rads, currentRad);
 	}
 
-	makeGui { |pos, parent|
-		gui = HyperInterpolatorGui(this, parent, pos);
+	makeGui { |pos|
+		gui = HyperInterpolatorGui(this, pos);
 		// moveAction.value(points, currentPoint, presets, currentPreset);
 		^gui;
 	}
@@ -331,8 +331,8 @@ HyperInterpolatorGui {
 	var <>w, <>space, <>grabAction, <>ungrabAction, <>guiItems, butHeight,
 	grabbed, layout;
 	
-	*new { |interpolator, w, pos| 
-		^super.new.w_(w).init(interpolator, pos);
+	*new { |interpolator, pos| 
+		^super.new.init(interpolator, pos);
 	}
 
 	init { | interpolator, pos |
