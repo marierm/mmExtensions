@@ -166,20 +166,45 @@ InterpolatorGui : AbstractInterpolatorGui {
 
 
 Interpolator2DGui : AbstractInterpolatorGui {
-	var uv, x, y, grabbed, grabbedPoint, diff, bounds;
+	var uv, x, y, grabbed, grabbedPoint, diff, bounds, pointsSpec, xSpec,
+	ySpec;
+
+	gui { arg parent, bounds ... args;
+		var layout, title;
+		bounds = bounds ?? this.calculateLayoutSize;
+		args.notNil.if{
+			title = model.asString ++ args.asString;
+		};
+		layout=this.guify(parent, bounds, title);
+		layout.flow({ arg layout;
+			this.view = layout;
+			this.writeName(layout);
+			this.performList(\guiBody,[layout] ++ args);
+		},bounds).background_(this.background);
+		//if you created it, front it
+		if(parent.isNil,{
+			layout.resizeToFit(true,true);
+			layout.front;
+		});
+		^layout;
+	}
 
 	init {
 		actions = IdentityDictionary[
 			\weights -> {|model, what, interPoints, weights|
+				this.calculateSpecs();
 				uv.refresh;
 			},
 			\pointAdded -> {|model, what, point|
+				this.calculateSpecs();
 				uv.refresh;
 			},
 			\pointRemoved -> {|model, what, i|
+				this.calculateSpecs();
 				uv.refresh;
 			},
 			\pointMoved -> {|model, what, i, point|
+				this.calculateSpecs();
 				uv.refresh;
 			}
 		];
@@ -189,31 +214,16 @@ Interpolator2DGui : AbstractInterpolatorGui {
 		^Rect(0,0,400,400)
 	}
 
-	scale { |point, padding=0.1|
-		var flop, range, min, max;
-		flop = (model.points ++ [model.cursor]).flop;
-		// flop = (model.points).flop;
-		// min = Point(flop[x].minItem, flop[y].minItem);
-		// max = Point(flop[x].maxItem, flop[y].maxItem);
-		min = flop.flatten.minItem;
-		max = flop.flatten.maxItem;
-		range = max - min;
-		^((point - min)/range * bounds.extent * (1-padding)) + (bounds.extent * padding * 0.5)
+	scale { |point|
+		point = pointsSpec.unmap(point);
+		^Point(xSpec.map(point.x), ySpec.map(point.y))
 	}
 
-	unscale { |point, padding=0.1|
-		var flop, range, min, max;
-		flop = (model.points ++ [model.cursor]).flop;
-		// flop = (model.points).flop;
-		// min = Point(flop[x].minItem, flop[y].minItem);
-		// max = Point(flop[x].maxItem, flop[y].maxItem);
-		min = flop.flatten.minItem;
-		max = flop.flatten.maxItem;
-		range = max - min;
-		(range == 0).if {range = 1.0};
-		^((point - (bounds.extent * padding * 0.5)) / (bounds.extent * (1 - padding)) * range) + min
+	unscale { |point|
+		point.x = xSpec.unmap(point.x);
+		point.y = ySpec.unmap(point.y);
+		^pointsSpec.map(point)
 	}
-
 	getPoint { |i|  //which dimensions are we drawing?
 		// 2DGui can be used to visualize 2 axies of an N dimension
 		// Interpolator.  This creates returns the right point.
@@ -224,15 +234,21 @@ Interpolator2DGui : AbstractInterpolatorGui {
 		}
 	}
 
-	duplicatePoint { |i, padding = 0.1|
-		var point;
+	duplicatePoint { |i, padding = 5|
+		var point, tmp;
 		(i != \cursor).if({
+			// Because there cannot be two points with the same coordinates,
+			// we need to offset the point a bit.  Padding is in pixels.
 			point = model.points[i].copy;
+			tmp = this.unscale(this.scale(Point(point[x],point[y])) + padding);
 		},{
+			// If cursor is duplicated, position is not padded. The new point
+			// appears exactly at cursur position.
 			point = model.cursor.copy;
+			tmp = this.unscale(this.scale(Point(point[x],point[y])));
 		});
-		point[x] = point[x] + padding;
-		point[y] = point[y] + padding;
+		point[x] = tmp.x;
+		point[y] = tmp.y;
 		model.add(point);
 	}
 
@@ -244,21 +260,41 @@ Interpolator2DGui : AbstractInterpolatorGui {
 		model.add(point);
 	}
 
+	movePoint{ |i, newPos|
+		newPos = this.unscale(newPos);
+		model.changeCoord(i, x, newPos.x);
+		model.changeCoord(i, y, newPos.y);
+	}
 
+	moveCursor { |newPos|
+		var point;
+		point = model.cursor.copy;
+		newPos = this.unscale(newPos);
+		point[x] = newPos.x;
+		point[y] = newPos.y;
+		model.cursor_(point);
+	}
+
+	calculateSpecs { |padding = 0.1|
+		var flop;
+		flop = (model.points ++ [model.cursor]).flop;
+		pointsSpec = ControlSpec(flop.flatten.minItem, flop.flatten.maxItem);
+		xSpec = ControlSpec(bounds.width * padding * 0.5, bounds.width * (1 - (padding * 0.5)));
+		ySpec = ControlSpec(bounds.height * padding * 0.5, bounds.height * (1 - (padding * 0.5)));
+	}
+	
 	getColor { |i|
 		^Color.red;
 	}
 
-	guiBody { |lay, bnds, xAxis = 0, yAxis = 1|
+	guiBody { |lay, xAxis = 0, yAxis = 1|
+		var flop;
 		x = xAxis;
 		y = yAxis;
 		layout = lay;
-		// bnds = layout.innerBounds.insetAll(0,0,20,0);
 		bounds = layout.bounds;
-		// bounds = bnds;
-		// scalePoint = this.calculateScalePoint();
-
-		uv = UserView( layout, bounds );//.resize_(5);
+		this.calculateSpecs(padding:0.1);
+		uv = UserView( layout, bounds );
 
 		uv.drawFunc =  {
 			Pen.fillColor_(Color.grey(0.2));
@@ -328,6 +364,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 					if (modifiers bitAnd: 33554432 != 0) {
 						//alt and shift are both pressed
 						model.remove(grabbedPoint);
+						grabbed = false;
 					} {
 						// holding the alt key only
 						this.duplicatePoint(grabbedPoint);
@@ -374,37 +411,16 @@ Interpolator2DGui : AbstractInterpolatorGui {
 	
 		uv.mouseMoveAction = {
 			arg v, x, y, modifiers, buttonNumber, clickCount;
-			var newVal;  
-			var newPos;
-		
 			grabbed.if {
 				(grabbedPoint == -1).if {
 					// user grabbed the cursor
-					model.cursor_(
-						this.unscale(
-							((Point(x,y) - diff).constrain(uv.bounds))
-						).asArray;
-					);
+					this.moveCursor((Point(x,y) - diff));
 				}{
-					newPos = this.unscale(
-						(Point(x,y) - diff).constrain(uv.bounds)
-					);
-
-					// //check if two points have the same position.
-					// (model.points.indexOfEqual(newPos).notNil).if{
-					// 	newPos.x_(newPos.x + 0.001);
-					// 	//ensures weights array does not contain nan.
-					// };
-					model.movePoint(grabbedPoint, newPos.asArray);
+					// newPos = this.unscale(
+					// 	(Point(x,y) - diff).constrain(uv.bounds)
+					// );
+					this.movePoint(grabbedPoint, (Point(x,y) - diff));
 				};
-				// model.refreshRads;
-				
-				// model.moveAction.value(
-				// 	model.points,
-				// 	model.currentPoint,
-				// 	model.presets,
-				// 	model.currentPreset
-				// );
 			};
 		
 		};

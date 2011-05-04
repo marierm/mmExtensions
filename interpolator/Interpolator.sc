@@ -123,7 +123,9 @@ Interpolator { //More than 2 dimensions
 	guiClass { ^InterpolatorGui }
 
 	gui2D { arg  ... args;
-		^Interpolator2DGui.new(this).performList(\gui,args);
+		^Interpolator2DGui.new(this).performList(
+			\gui,args
+		);
 	}
 
 }
