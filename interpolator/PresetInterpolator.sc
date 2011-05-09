@@ -418,433 +418,433 @@ PresetInterpolator { //Inspired by Marije Baalman's ParameterSpace
 	}
 }
 
-Preset {
-	var <parameters, <>name, <>siblings, <>gui, <>color;
+// Preset {
+// 	var <parameters, <>name, <>siblings, <>gui, <>color;
 
-	saveable {
-		^[name, color, parameters.collect(_.saveable)];
-	}
+// 	saveable {
+// 		^[name, color, parameters.collect(_.saveable)];
+// 	}
 	
-	*new { arg ...params;
-		^super.new.init(params);
-	}
+// 	*new { arg ...params;
+// 		^super.new.init(params);
+// 	}
 	
-	*newFromSibling { arg sibling;
-		^super.new.initFromSibling(
-			sibling.parameters,
-			sibling
-		);
-	}
+// 	*newFromSibling { arg sibling;
+// 		^super.new.initFromSibling(
+// 			sibling.parameters,
+// 			sibling
+// 		);
+// 	}
 	
-	init { arg params;
-		name = "Preset";
-		// color = Color.new255(167,167,167);
-		color = Color.clear;
-		parameters = List[];
-		params.do({ |i, j|
-			this.add(i);
-		});
-		siblings = List[];
-	}
+// 	init { arg params;
+// 		name = "Preset";
+// 		// color = Color.new255(167,167,167);
+// 		color = Color.clear;
+// 		parameters = List[];
+// 		params.do({ |i, j|
+// 			this.add(i);
+// 		});
+// 		siblings = List[];
+// 	}
 	
-	initFromSibling { arg params, sblng;
-		name = "Preset";
-		parameters = List[];
-		color = Color.clear;
-		params.do { |i, j|
-			this.add(Parameter.newFromSibling(i));
-		};
-		siblings = List[];
-		siblings.array_(sblng.siblings ++ [sblng]);
-		siblings.do{ |i|
-			i.siblings.add(this);
-		}
-	}
+// 	initFromSibling { arg params, sblng;
+// 		name = "Preset";
+// 		parameters = List[];
+// 		color = Color.clear;
+// 		params.do { |i, j|
+// 			this.add(Parameter.newFromSibling(i));
+// 		};
+// 		siblings = List[];
+// 		siblings.array_(sblng.siblings ++ [sblng]);
+// 		siblings.do{ |i|
+// 			i.siblings.add(this);
+// 		}
+// 	}
 	
-	add { |thing|
-		if (thing.class == Parameter) {
-			parameters.add(thing.preset_(this).id_(parameters.size));
-			if (gui.notNil) {
-				parameters.last.makeGui(gui.w).background_(color);
-			};
-			siblings.do { |i|
-				if (i.parameters.size != parameters.size) {
-					i.add(
-						Parameter.newFromSibling(thing);
-					);
-				}
-			};
-		} {
-			"Not a Parameter".warn;
-		}
-	}
+// 	add { |thing|
+// 		if (thing.class == Parameter) {
+// 			parameters.add(thing.preset_(this).id_(parameters.size));
+// 			if (gui.notNil) {
+// 				parameters.last.makeGui(gui.w).background_(color);
+// 			};
+// 			siblings.do { |i|
+// 				if (i.parameters.size != parameters.size) {
+// 					i.add(
+// 						Parameter.newFromSibling(thing);
+// 					);
+// 				}
+// 			};
+// 		} {
+// 			"Not a Parameter".warn;
+// 		}
+// 	}
 	
-	removeAt { |index|
-		var paramRef;
-		if ( index < parameters.size && parameters.size > 1) {
-			paramRef = parameters[index]; // keep ref to param being removed
-			parameters.removeAt(index);
-			if (gui.notNil) {
-				paramRef.gui.w.remove;
-				gui.w.decorator.top_((82*(parameters.size-1))+24);
-			};
-			if (parameters.size != index) {
-				// if removed parameter was not the last one.
-				// not parameters.size - 1 because parameters.size is
-				// is already shrunk (item was removed 8 lines above).
-				(index..parameters.size-1).do { |id|
-					parameters[id].id_(id); // give the right id (renumber)
-					if (gui.notNil) {
-						parameters[id].gui.w.remove;
-						gui.w.decorator.top_((82*(id-1))+24);
-						parameters[id].makeGui(gui.w).background_(color);
-					};
-				};
-			};
-			siblings.do { |i|
-				if (i.parameters.size != parameters.size) {
-					i.removeAt(index);
-				}
-			};
-		} {
-			"This Parameter cannot be removed".warn;
-		}
-	}
+// 	removeAt { |index|
+// 		var paramRef;
+// 		if ( index < parameters.size && parameters.size > 1) {
+// 			paramRef = parameters[index]; // keep ref to param being removed
+// 			parameters.removeAt(index);
+// 			if (gui.notNil) {
+// 				paramRef.gui.w.remove;
+// 				gui.w.decorator.top_((82*(parameters.size-1))+24);
+// 			};
+// 			if (parameters.size != index) {
+// 				// if removed parameter was not the last one.
+// 				// not parameters.size - 1 because parameters.size is
+// 				// is already shrunk (item was removed 8 lines above).
+// 				(index..parameters.size-1).do { |id|
+// 					parameters[id].id_(id); // give the right id (renumber)
+// 					if (gui.notNil) {
+// 						parameters[id].gui.w.remove;
+// 						gui.w.decorator.top_((82*(id-1))+24);
+// 						parameters[id].makeGui(gui.w).background_(color);
+// 					};
+// 				};
+// 			};
+// 			siblings.do { |i|
+// 				if (i.parameters.size != parameters.size) {
+// 					i.removeAt(index);
+// 				}
+// 			};
+// 		} {
+// 			"This Parameter cannot be removed".warn;
+// 		}
+// 	}
 	
-	size {
-		^parameters.size;
-	}
+// 	size {
+// 		^parameters.size;
+// 	}
 	
-	makeGui { arg w, origin = Point(400,900);
-		gui = PresetGui.new(this, w, origin.x, origin.y, color);
-		^gui;
-	}
-}
+// 	makeGui { arg w, origin = Point(400,900);
+// 		gui = PresetGui.new(this, w, origin.x, origin.y, color);
+// 		^gui;
+// 	}
+// }
 
-PresetGui { 
-	var <>w, <>preset, <>x, <>y, <>background, <>addButton;
+// PresetGui { 
+// 	var <>w, <>preset, <>x, <>y, <>background, <>addButton;
 	
-	*new { |preset, w, x, y, color| 
-		^super.new.w_(w).preset_(preset).init(x, y, color);
-	}
+// 	*new { |preset, w, x, y, color| 
+// 		^super.new.w_(w).preset_(preset).init(x, y, color);
+// 	}
  
-	init { arg x=400, y=900, col;
-		var v;
-		w = w ?? { 
-			w = Window(
-				preset.name, 
-				Rect(
-					x,
-					y - (90 * preset.size), //qt
-					// y -17 - (90 * preset.size), //swing
-					324,
-					(90 * preset.size) + 17
-				),
-				scroll:true
-			).alwaysOnTop_(false).front; 
-			w.view.decorator = FlowLayout(
-				Rect(0, 0, w.bounds.width, w.bounds.height), 2@2, 2@2
-			);
-			// w.view.hasHorizontalScroller_(false);
-		};
+// 	init { arg x=400, y=900, col;
+// 		var v;
+// 		w = w ?? { 
+// 			w = Window(
+// 				preset.name, 
+// 				Rect(
+// 					x,
+// 					y - (90 * preset.size), //qt
+// 					// y -17 - (90 * preset.size), //swing
+// 					324,
+// 					(90 * preset.size) + 17
+// 				),
+// 				scroll:true
+// 			).alwaysOnTop_(false).front; 
+// 			w.view.decorator = FlowLayout(
+// 				Rect(0, 0, w.bounds.width, w.bounds.height), 2@2, 2@2
+// 			);
+// 			// w.view.hasHorizontalScroller_(false);
+// 		};
 		
-		background = col ? Color.new255(167, 167, 167);
+// 		background = col ? Color.new255(167, 167, 167);
 
-		addButton = Button(w, 300@18).states_(
-			[["+", background]]
-		).action_({
-			preset.add(Parameter())
-		});
+// 		addButton = Button(w, 300@18).states_(
+// 			[["+", background]]
+// 		).action_({
+// 			preset.add(Parameter())
+// 		});
 				
-		preset.parameters.do{|i, j|
-			i.makeGui(w);
-			i.gui.background_(background);
-		};
+// 		preset.parameters.do{|i, j|
+// 			i.makeGui(w);
+// 			i.gui.background_(background);
+// 		};
 
-		w.onClose_({
-			preset.gui_(nil);
-		});
-	}
+// 		w.onClose_({
+// 			preset.gui_(nil);
+// 		});
+// 	}
 	
-	close {
-		w.findWindow.close;
-	}
-}
+// 	close {
+// 		w.findWindow.close;
+// 	}
+// }
 
-Parameter {
-	var <name, <value, <spec, <>action, <siblings, <>gui, <>preset, <id,
-	<>nameIsId, <>actionString, textViewAction;
-	//value is unmapped (between 0 and 1);
+// Parameter {
+// 	var <name, <value, <spec, <>action, <siblings, <>gui, <>preset, <id,
+// 	<>nameIsId, <>actionString, textViewAction;
+// 	//value is unmapped (between 0 and 1);
 	
-	*new { |name, spec, value|
-		^super.new.init(name, spec, value);
-	}
+// 	*new { |name, spec, value|
+// 		^super.new.init(name, spec, value);
+// 	}
 
-	saveable {
-		^[name,value,spec,actionString];
-	}
+// 	saveable {
+// 		^[name,value,spec,actionString];
+// 	}
 	
-	*newFromSibling { |sibling|
-		//Parameters can have siblings that will share spec, name
-		//(but not value)
-		^super.new.init(
-			nam: sibling.name,
-			sp: sibling.spec,
-			sblng: sibling,
-			id: sibling.id
-		).nameIsId_(sibling.nameIsId);
-	}
+// 	*newFromSibling { |sibling|
+// 		//Parameters can have siblings that will share spec, name
+// 		//(but not value)
+// 		^super.new.init(
+// 			nam: sibling.name,
+// 			sp: sibling.spec,
+// 			sblng: sibling,
+// 			id: sibling.id
+// 		).nameIsId_(sibling.nameIsId);
+// 	}
 	
-	init { |nam, sp, val, sblng, id|
-		//try {nam = nam.asString};
-		name = nam;// ? String();
-		if (name.isNil) {nameIsId = true}{nameIsId = false};
-		siblings = List[];
-		try {sp = sp.asSpec};
-		spec = sp ? ControlSpec();
-		try {val = val.clip(0,1)};
-		value = val ? spec.unmap(spec.default);
-		if (sblng.notNil) {
-			siblings.array_(sblng.siblings ++ [sblng]);
-			siblings.do{ |i|
-				i.siblings.add(this);
-			}
-		};
-		actionString = "{|mapped, unmapped|\n\t\n}";
-	}
+// 	init { |nam, sp, val, sblng, id|
+// 		//try {nam = nam.asString};
+// 		name = nam;// ? String();
+// 		if (name.isNil) {nameIsId = true}{nameIsId = false};
+// 		siblings = List[];
+// 		try {sp = sp.asSpec};
+// 		spec = sp ? ControlSpec();
+// 		try {val = val.clip(0,1)};
+// 		value = val ? spec.unmap(spec.default);
+// 		if (sblng.notNil) {
+// 			siblings.array_(sblng.siblings ++ [sblng]);
+// 			siblings.do{ |i|
+// 				i.siblings.add(this);
+// 			}
+// 		};
+// 		actionString = "{|mapped, unmapped|\n\t\n}";
+// 	}
 	
-	setActionString { |string|
-		action = action.removeFunc(textViewAction);
-		textViewAction = string.interpret;
-		action = action.addFunc(textViewAction);
-		actionString = string;
-	}
+// 	setActionString { |string|
+// 		action = action.removeFunc(textViewAction);
+// 		textViewAction = string.interpret;
+// 		action = action.addFunc(textViewAction);
+// 		actionString = string;
+// 	}
 	
-	id_ { |i|
-		id = i;
-		if (nameIsId) {name = id.asString};
-	}
+// 	id_ { |i|
+// 		id = i;
+// 		if (nameIsId) {name = id.asString};
+// 	}
 	
-	sibling_ { |sblng|
-		this.init(
-			nam: sblng.name,
-			sp: sblng.spec,
-			val: value,
-			sblng: sblng,
-			id: sblng.id
-		);
-	}
+// 	sibling_ { |sblng|
+// 		this.init(
+// 			nam: sblng.name,
+// 			sp: sblng.spec,
+// 			val: value,
+// 			sblng: sblng,
+// 			id: sblng.id
+// 		);
+// 	}
 	
-	spec_ { |sp|
-		spec = sp.asSpec.deepCopy;
-		siblings.do{ |param|
-			if (param.spec != spec) {
-				param.spec_(spec);
-			}
-		};
-		this.refresh;
-	}
+// 	spec_ { |sp|
+// 		spec = sp.asSpec.deepCopy;
+// 		siblings.do{ |param|
+// 			if (param.spec != spec) {
+// 				param.spec_(spec);
+// 			}
+// 		};
+// 		this.refresh;
+// 	}
 	
-	name_ { |na|
-		name = na;
-		nameIsId = false;
-		siblings.do{ |param|
-			if (param.name != name) {
-				param.name_(name);
-				param.nameIsId_(false);
-			}
-		};
-		this.refresh;
-	}
+// 	name_ { |na|
+// 		name = na;
+// 		nameIsId = false;
+// 		siblings.do{ |param|
+// 			if (param.name != name) {
+// 				param.name_(name);
+// 				param.nameIsId_(false);
+// 			}
+// 		};
+// 		this.refresh;
+// 	}
 
-	mapped {
-		^spec.map(value);
-	}
+// 	mapped {
+// 		^spec.map(value);
+// 	}
 	
-	mapped_ { |val|
-		this.value_(spec.unmap(val));
-	}
+// 	mapped_ { |val|
+// 		this.value_(spec.unmap(val));
+// 	}
 	
-	value_ { |val|
-		value = val;
-		action.value(this.mapped, value);
-	}
+// 	value_ { |val|
+// 		value = val;
+// 		action.value(this.mapped, value);
+// 	}
 	
-	makeGui { arg w, x=30, y=900, color;
-		gui = ParameterGui.new(this, w, x, y, color);
-		^gui;
-	}
+// 	makeGui { arg w, x=30, y=900, color;
+// 		gui = ParameterGui.new(this, w, x, y, color);
+// 		^gui;
+// 	}
 	
-	refresh {
-		if (gui.notNil) {
-			gui.refresh;
-		}
-	}
+// 	refresh {
+// 		if (gui.notNil) {
+// 			gui.refresh;
+// 		}
+// 	}
 	
-	refreshSiblings {
-		siblings.do{|i|
-			i.refresh;
-		};
-	}
-}
+// 	refreshSiblings {
+// 		siblings.do{|i|
+// 			i.refresh;
+// 		};
+// 	}
+// }
 
-ParameterGui { 
+// ParameterGui { 
 	
-	var <>w, <>param, <>x, <>y, mapped, unmapped, slider, name,
-	refreshFunc, <specWindow, textViewAction,
-	textViewWindow;
+// 	var <>w, <>param, <>x, <>y, mapped, unmapped, slider, name,
+// 	refreshFunc, <specWindow, textViewAction,
+// 	textViewWindow;
 	
-	*new { |param, w, x, y, color| 
-		^super.new.w_(w).param_(param).init(x, y, color);
-	}
+// 	*new { |param, w, x, y, color| 
+// 		^super.new.w_(w).param_(param).init(x, y, color);
+// 	}
 	
-	init {
-		arg x=30, y=900, color;
-		var mouseDownFunc;
-		w = try { CompositeView(w, Rect(0,0, 300, 80)) }
-			?? { 
-				w = Window( param.name , Rect(x, y, 300, 85))
-					.alwaysOnTop_(true)
-					.front; 
-				w.view;
-			};
-		w.resize_(6);
-		w.decorator = FlowLayout(
-			Rect(0, 0, w.bounds.width, w.bounds.height), 2@2, 2@2
-		);
+// 	init {
+// 		arg x=30, y=900, color;
+// 		var mouseDownFunc;
+// 		w = try { CompositeView(w, Rect(0,0, 300, 80)) }
+// 			?? { 
+// 				w = Window( param.name , Rect(x, y, 300, 85))
+// 					.alwaysOnTop_(true)
+// 					.front; 
+// 				w.view;
+// 			};
+// 		w.resize_(6);
+// 		w.decorator = FlowLayout(
+// 			Rect(0, 0, w.bounds.width, w.bounds.height), 2@2, 2@2
+// 		);
 				
-		// w.background = color ? Color.new255(167, 167, 167);
-		w.background = color ? Color.clear;
+// 		// w.background = color ? Color.new255(167, 167, 167);
+// 		w.background = color ? Color.clear;
 		
-		refreshFunc = { |mapped, value|
-			this.refresh;
-		};
-		textViewAction = {};
+// 		refreshFunc = { |mapped, value|
+// 			this.refresh;
+// 		};
+// 		textViewAction = {};
 		
-		param.action_( param.action.addFunc(refreshFunc) );
-		param.action_( param.action.addFunc(textViewAction) );
+// 		param.action_( param.action.addFunc(refreshFunc) );
+// 		param.action_( param.action.addFunc(textViewAction) );
 		
-		mouseDownFunc = {
-			arg view, x, y, modifiers, buttonNumber, clickCount;
-			var win, text;
-			win = w.parent ? w;
-			// if (buttonNumber == 1 && specWindow.isNil){ //cocoa right click
-			// Using swing : left=1, mid=2, right=3
-			// Using cocoa : left=0, mid=2, right=1 
-			if (clickCount == 2 && specWindow.isNil){ // swing right click
-				specWindow = param.spec.makeWindow(
-					x: win.bounds.right,
-					y: win.bounds.bottom - w.bounds.bottom,
-					action: { |spec|
-						this.refresh;
-						this.param.refreshSiblings;
-					},
-					name: param.name.asString + "Spec"
-				).onClose_({
-					specWindow = nil;
-				});
-			};
-			if (modifiers bitAnd: 134217728 != 0) { //alt key is pressed
-				// Using swing : middleClick (button 2) acts like alt
-				// is pressed
-				textViewWindow = Window(
-					param.name.asString + "action",
-					Rect(
-						win.bounds.right,
-						win.bounds.bottom - w.bounds.bottom,
-						400,
-						400
-					)
-				).front.onClose_({
-					param.setActionString(text.string);
-					// param.action_(
-					// 	param.action.removeFunc(textViewAction)
-					// ); 
-					// textViewAction = text.string.interpret;
-					// param.action_(
-					// 	param.action.addFunc(textViewAction)
-					// );
-					// actionString = text.string;
-				});
-				text = TextView(textViewWindow, Rect(0,0,400,400))
-				// 	.usesTabToFocusNextView_(false) // doesn't work in swing?
-					.string_(param.actionString);
-			};
-		};
+// 		mouseDownFunc = {
+// 			arg view, x, y, modifiers, buttonNumber, clickCount;
+// 			var win, text;
+// 			win = w.parent ? w;
+// 			// if (buttonNumber == 1 && specWindow.isNil){ //cocoa right click
+// 			// Using swing : left=1, mid=2, right=3
+// 			// Using cocoa : left=0, mid=2, right=1 
+// 			if (clickCount == 2 && specWindow.isNil){ // swing right click
+// 				specWindow = param.spec.makeWindow(
+// 					x: win.bounds.right,
+// 					y: win.bounds.bottom - w.bounds.bottom,
+// 					action: { |spec|
+// 						this.refresh;
+// 						this.param.refreshSiblings;
+// 					},
+// 					name: param.name.asString + "Spec"
+// 				).onClose_({
+// 					specWindow = nil;
+// 				});
+// 			};
+// 			if (modifiers bitAnd: 134217728 != 0) { //alt key is pressed
+// 				// Using swing : middleClick (button 2) acts like alt
+// 				// is pressed
+// 				textViewWindow = Window(
+// 					param.name.asString + "action",
+// 					Rect(
+// 						win.bounds.right,
+// 						win.bounds.bottom - w.bounds.bottom,
+// 						400,
+// 						400
+// 					)
+// 				).front.onClose_({
+// 					param.setActionString(text.string);
+// 					// param.action_(
+// 					// 	param.action.removeFunc(textViewAction)
+// 					// ); 
+// 					// textViewAction = text.string.interpret;
+// 					// param.action_(
+// 					// 	param.action.addFunc(textViewAction)
+// 					// );
+// 					// actionString = text.string;
+// 				});
+// 				text = TextView(textViewWindow, Rect(0,0,400,400))
+// 				// 	.usesTabToFocusNextView_(false) // doesn't work in swing?
+// 					.string_(param.actionString);
+// 			};
+// 		};
 		
-		name = TextField( w, (w.bounds.width - 22)@16 )
-			.string_(param.name)
-			.align_(\left)
-			.background_(Color.clear)
-			.resize_(2)
-			.action_({ |tf|
-				param.name_(tf.value);
-			});
-		Button( w, 16@16)
-			.states_([["X"]])
-			.resize_(3)
-			.action_({
-				if (param.preset.notNil) {
-					param.preset.removeAt(param.id);
-				} {
-					w.findWindow.close;
-				}
-			});
-		slider = Slider(w, (w.bounds.width - 4)@16)
-			.value_(param.value)
-			.resize_(2)
-			.action_({ |sl|
-				unmapped.value_(sl.value);
-				param.value_(unmapped.value);
-				mapped.value_(param.mapped);
-			})
-			.mouseDownAction_(mouseDownFunc);
-		StaticText(w, 70@16)
-			.string_("unmapped")
-			.resize_(2)
-			.align_(\right);
-		unmapped = NumberBox(w, (w.decorator.indentedRemaining.width)@16)
-			.value_(param.value)
-			.resize_(3)
-			.action_({ |nb|
-				nb.value_(param.spec.unmap(param.spec.map(nb.value)));
-				slider.value_(nb.value);
-				param.value_(unmapped.value);
-				mapped.value_(param.mapped);
-			});
-		StaticText(w, 70@16)
-			.string_("mapped")
-			.resize_(2)
-			.align_(\right);
-		mapped = NumberBox(w, (w.decorator.indentedRemaining.width)@16)
-			.value_(param.spec.map(param.value))
-			.resize_(3)
-			.action_({ |nb|
-				nb.value_(param.spec.constrain(nb.value));
-				unmapped.value_(param.spec.unmap(nb.value));
-				param.value_(unmapped.value);
-				slider.value_(param.value);
-			});
+// 		name = TextField( w, (w.bounds.width - 22)@16 )
+// 			.string_(param.name)
+// 			.align_(\left)
+// 			.background_(Color.clear)
+// 			.resize_(2)
+// 			.action_({ |tf|
+// 				param.name_(tf.value);
+// 			});
+// 		Button( w, 16@16)
+// 			.states_([["X"]])
+// 			.resize_(3)
+// 			.action_({
+// 				if (param.preset.notNil) {
+// 					param.preset.removeAt(param.id);
+// 				} {
+// 					w.findWindow.close;
+// 				}
+// 			});
+// 		slider = Slider(w, (w.bounds.width - 4)@16)
+// 			.value_(param.value)
+// 			.resize_(2)
+// 			.action_({ |sl|
+// 				unmapped.value_(sl.value);
+// 				param.value_(unmapped.value);
+// 				mapped.value_(param.mapped);
+// 			})
+// 			.mouseDownAction_(mouseDownFunc);
+// 		StaticText(w, 70@16)
+// 			.string_("unmapped")
+// 			.resize_(2)
+// 			.align_(\right);
+// 		unmapped = NumberBox(w, (w.decorator.indentedRemaining.width)@16)
+// 			.value_(param.value)
+// 			.resize_(3)
+// 			.action_({ |nb|
+// 				nb.value_(param.spec.unmap(param.spec.map(nb.value)));
+// 				slider.value_(nb.value);
+// 				param.value_(unmapped.value);
+// 				mapped.value_(param.mapped);
+// 			});
+// 		StaticText(w, 70@16)
+// 			.string_("mapped")
+// 			.resize_(2)
+// 			.align_(\right);
+// 		mapped = NumberBox(w, (w.decorator.indentedRemaining.width)@16)
+// 			.value_(param.spec.map(param.value))
+// 			.resize_(3)
+// 			.action_({ |nb|
+// 				nb.value_(param.spec.constrain(nb.value));
+// 				unmapped.value_(param.spec.unmap(nb.value));
+// 				param.value_(unmapped.value);
+// 				slider.value_(param.value);
+// 			});
 
-		w.onClose_({
-			param.action_(param.action.removeFunc(refreshFunc));
-			try {
-				specWindow.close;
-				textViewWindow.close;
-			};
-			param.gui_(nil);
-		});
-	}
+// 		w.onClose_({
+// 			param.action_(param.action.removeFunc(refreshFunc));
+// 			try {
+// 				specWindow.close;
+// 				textViewWindow.close;
+// 			};
+// 			param.gui_(nil);
+// 		});
+// 	}
 	
-	refresh {
-		slider.value_(param.value);
-		unmapped.value_(param.value);
-		mapped.value_(param.mapped);
-		name.string_(param.name);
-	}
+// 	refresh {
+// 		slider.value_(param.value);
+// 		unmapped.value_(param.value);
+// 		mapped.value_(param.mapped);
+// 		name.string_(param.name);
+// 	}
 	
-	background_ { |color|
-		w.background_(color);
-	}
-}
+// 	background_ { |color|
+// 		w.background_(color);
+// 	}
+// }
 

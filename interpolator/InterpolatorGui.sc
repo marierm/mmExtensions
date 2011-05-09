@@ -192,19 +192,21 @@ Interpolator2DGui : AbstractInterpolatorGui {
 	init {
 		actions = IdentityDictionary[
 			\weights -> {|model, what, interPoints, weights|
-				this.calculateSpecs();
 				uv.refresh;
 			},
 			\pointAdded -> {|model, what, point|
-				this.calculateSpecs();
+				((pointsSpec.minval > point.minItem) or: (pointsSpec.maxval < point.maxItem)).if {
+					this.calculateSpecs();
+				};
 				uv.refresh;
 			},
 			\pointRemoved -> {|model, what, i|
-				this.calculateSpecs();
 				uv.refresh;
 			},
 			\pointMoved -> {|model, what, i, point|
-				this.calculateSpecs();
+				((pointsSpec.minval > point.minItem) or: (pointsSpec.maxval < point.maxItem)).if {
+					this.calculateSpecs();
+				};
 				uv.refresh;
 			}
 		];
@@ -243,7 +245,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 			tmp = this.unscale(this.scale(Point(point[x],point[y])) + padding);
 		},{
 			// If cursor is duplicated, position is not padded. The new point
-			// appears exactly at cursur position.
+			// appears exactly at cursor position.
 			point = model.cursor.copy;
 			tmp = this.unscale(this.scale(Point(point[x],point[y])));
 		});
@@ -275,25 +277,28 @@ Interpolator2DGui : AbstractInterpolatorGui {
 		model.cursor_(point);
 	}
 
-	calculateSpecs { |padding = 0.1|
-		var flop;
-		flop = (model.points ++ [model.cursor]).flop;
-		pointsSpec = ControlSpec(flop.flatten.minItem, flop.flatten.maxItem);
-		xSpec = ControlSpec(bounds.width * padding * 0.5, bounds.width * (1 - (padding * 0.5)));
-		ySpec = ControlSpec(bounds.height * padding * 0.5, bounds.height * (1 - (padding * 0.5)));
+	calculateSpecs { |spec|
+		var min, max, padding;
+		min = (model.points ++ [model.cursor]).flop.flatten.minItem;
+		max = (model.points ++ [model.cursor]).flop.flatten.maxItem;
+		pointsSpec = spec ? ControlSpec(min, max);
+		xSpec = ControlSpec(6, bounds.width - 6);
+		ySpec = ControlSpec(6, bounds.height - 6);
+		// xSpec = ControlSpec(bounds.width * padding * 0.5, bounds.width * (1 - (padding * 0.5)));
+		// ySpec = ControlSpec(bounds.height * padding * 0.5, bounds.height * (1 - (padding * 0.5)));
 	}
 	
 	getColor { |i|
 		^Color.red;
 	}
 
-	guiBody { |lay, xAxis = 0, yAxis = 1|
+	guiBody { |lay, xAxis = 0, yAxis = 1, spec|
 		var flop;
 		x = xAxis;
 		y = yAxis;
 		layout = lay;
 		bounds = layout.bounds;
-		this.calculateSpecs(padding:0.1);
+		this.calculateSpecs(spec);
 		uv = UserView( layout, bounds );
 
 		uv.drawFunc =  {
