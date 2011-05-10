@@ -23,6 +23,9 @@ Preset {
 		actions = IdentityDictionary[
 			\paramRemoved -> {|model, what|
 				this.remove(model);
+			},
+			\value -> {|param, what, val|
+				this.changed(\paramValue, param, parameters.indexOf(param), val);
 			}
 		];
 	}
@@ -37,6 +40,9 @@ Preset {
 		actions = IdentityDictionary[
 			\paramRemoved -> {|model, what|
 				this.remove(model);
+			},
+			\value -> {|param, what, val|
+				this.changed(\paramValue, param, val);
 			}
 		];
 		siblings = List[];
@@ -108,6 +114,6 @@ Preset {
 	size {
 		^parameters.size;
 	}
-	
+
 	guiClass { ^PresetGui }
 }

@@ -4,3 +4,5 @@ interpolator/ParameterGui.sc~
 interpolator/Preset.sc~
 interpolator/PresetGui.sc~
 interpolator/guiQT.sc~
+interpolator/ColorList.sc~
+interpolator/PresetInterpolatorGui.sc~

@@ -66,7 +66,18 @@ Interpolator { //More than 2 dimensions
 			"Point must be an array of size %".format(n).postln;
 		}
 	}
-	
+
+	duplicatePoint { |point, pointId|
+		points.add( point );
+		rads.add( 0 );
+		(pointId == \cursor).if {
+			this.changed(\cursorDuplicated);
+		} {
+			this.changed(\pointDuplicated, pointId);
+		};
+		moveAction.value();
+	}
+
 	remove { |i|
 		if (points.size > 1) {
 			points.removeAt(i);
@@ -108,6 +119,14 @@ Interpolator { //More than 2 dimensions
 		}
 	}
 	
+	makePointGui { |grabbedPoint|
+		(grabbedPoint == -1).if {
+			this.changed(\makeCursorGui);
+		} {
+			this.changed(\makePointGui, grabbedPoint);
+		}
+	}
+
 	refreshRads{
 		cursorRad = (cursor.nearestDist(points));
 		points.do { |i,j|

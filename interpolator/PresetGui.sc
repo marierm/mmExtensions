@@ -19,7 +19,7 @@ PresetGui : AbstractInterpolatorGui {
 
 	guiBody {|lay|
 		layout = lay;		
-		background = Color.new255(167, 167, 167);
+		// background = ColorList.get(3);
 
 		addButton = Button(layout, 300@18).states_(
 			[["+", background]]

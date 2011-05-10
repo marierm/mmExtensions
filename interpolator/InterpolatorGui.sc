@@ -251,7 +251,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 		});
 		point[x] = tmp.x;
 		point[y] = tmp.y;
-		model.add(point);
+		model.duplicatePoint(point, i);
 	}
 
 	addPoint { |i|
@@ -289,7 +289,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 	}
 	
 	getColor { |i|
-		^Color.red;
+		^ColorList.get(i);
 	}
 
 	guiBody { |lay, xAxis = 0, yAxis = 1, spec|
@@ -395,11 +395,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 					// 		i.gui.close;
 					// 	}
 					// };
-					// if (grabbedPoint != -1) {
-					// 		model.presets[grabbedPoint].makeGui(origin:origin);
-					// }{
-					// 		model.currentPreset.makeGui(origin:origin);
-					// }
+					model.makePointGui(grabbedPoint);
 				} {
 					this.addPoint(this.unscale(Point(x,y)));
 				}
