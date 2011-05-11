@@ -279,6 +279,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 
 	calculateSpecs { |spec|
 		var min, max, padding;
+		spec = spec.asSpec;
 		min = (model.points ++ [model.cursor]).flop.flatten.minItem;
 		max = (model.points ++ [model.cursor]).flop.flatten.maxItem;
 		pointsSpec = spec ? ControlSpec(min, max);
