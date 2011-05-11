@@ -9,6 +9,13 @@ Preset {
 		^super.new.initFromSibling(sibling, name);
 	}
 	
+	*load { |path|
+		//does not consider siblings
+		var e;
+		e = path.load;
+		^this.new(e.at(\parameters), e.at(\name));
+	}
+
 	initFromSibling { arg sibling, nm;
 		name = nm ? "Preset";
 		parameters = List[];
@@ -113,6 +120,10 @@ Preset {
 
 	size {
 		^parameters.size;
+	}
+
+	saveable {
+		^(name: name, parameters: parameters);
 	}
 
 	guiClass { ^PresetGui }

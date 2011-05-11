@@ -17,6 +17,29 @@ PresetGui : AbstractInterpolatorGui {
 		];
 	}
 
+	gui { arg parent, bounds ... args;
+		var layout, title;
+		bounds = bounds ?? this.calculateLayoutSize;
+		title = model.name ? model.asString;
+		layout=this.guify(parent, bounds, title);
+		layout.flow({ arg layout;
+			this.view = layout;
+			this.writeName(layout);
+			this.performList(\guiBody,[layout] ++ args);
+		},bounds).background_(this.background);
+		//if you created it, front it
+		if(parent.isNil,{
+			layout.resizeToFit(true,true);
+			layout.front;
+		});
+		^layout;
+	}
+
+	calculateLayoutSize{
+		^Rect(0,0,300,400);
+	}
+
+
 	guiBody {|lay|
 		layout = lay;		
 		// background = ColorList.get(3);

@@ -1,5 +1,5 @@
-ParameterGui : AbstractInterpolatorGui { 
-	var <name, <slider, <mapped, <unmapped, mouseDownFunc;
+bParameterGui : AbstractInterpolatorGui { 
+	var <name, <slider, <mapped, <unmapped, mouseDownFunc, specWindow;
 
 	calculateLayoutSize {
 		^Rect(0,0,300,80)
@@ -28,19 +28,16 @@ ParameterGui : AbstractInterpolatorGui {
 			// // if (buttonNumber == 1 && specWindow.isNil){ //cocoa right click
 			// // Using swing : left=1, mid=2, right=3
 			// // Using cocoa : left=0, mid=2, right=1 
-			// if (clickCount == 2 && specWindow.isNil){ // swing right click
-			// 	specWindow = param.spec.makeWindow(
-			// 		x: win.bounds.right,
-			// 		y: win.bounds.bottom - w.bounds.bottom,
-			// 		action: { |spec|
-			// 			this.refresh;
-			// 			this.param.refreshSiblings;
-			// 		},
-			// 		name: param.name.asString + "Spec"
-			// 	).onClose_({
-			// 		specWindow = nil;
-			// 	});
-			// };
+			if (clickCount == 2){ // swing right click
+				model.spec.makeWindow(
+					x: this.bounds.right,
+					y: this.bounds.bottom - this.bounds.bottom,
+					action: { |spec|
+						model.spec_(spec);
+					},
+					name: model.name.asString + "Spec"
+				)
+			};
 			// if (modifiers bitAnd: 134217728 != 0) { //alt key is pressed
 			// 	// Using swing : middleClick (button 2) acts like alt
 			// 	// is pressed
