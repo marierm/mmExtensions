@@ -114,92 +114,202 @@ ArrayWarp : LinearWarp {
 + ControlSpec {
 	makeWindow { arg x=30, y=900, action, name="Control Spec";
 		var w, return, widgets, curve;
-		w = Window(name , Rect(x, y, 290, 70), false)
+		w = Window(name)
 			.alwaysOnTop_(true);
-		w.addFlowLayout( 10@10, 5@2 );
-		[\minval,\maxval,\warp,\step,\default,\units].do{ |i|
-			StaticText(w, 40@15).string_(i.asString).align_(\center);
-		};
-		//return = this.deepCopy;
-		widgets = [
-			NumberBox(w, 40@18).value_(this.minval)
-				.action_({|i|
-					this.minval_(i.value);
-					this.init;
-					this.warp.class.switch(
-						CurveWarp, { this.warp.init(curve.value) }
-					);
-					action.value(this);
-				}),
-			NumberBox(w, 40@18).value_(this.maxval)
-				.action_({|i|
-					this.maxval_(i.value);
-					this.init;
-					this.warp.class.switch(
-						CurveWarp, { this.warp.init(curve.value) }
-					);
-					action.value(this);
-				}),
-			PopUpMenu(w, 40@18).items_(Warp.warps.keys.asArray ++ [\curve])
-				.value_(
-					if (this.warp.class == CurveWarp) {
-						Warp.warps.keys.asArray.size;
-					}{
-						Warp.warps.keys.asArray.indexOf(this.warp.asSpecifier)
+		// w.addFlowLayout( 10@10, 5@2 );
+		w.layout = QVLayout(
+			QHLayout(
+				*(["minval","maxval","warp","step","default","units"]
+					.collect{ |i|
+						StaticText().string_(i).align_(\center);
 					}
 				)
-				.action_({|i|
-					try {this.warp.w.close};
-					if (i.item == \curve) {
-						curve.enabled_(true);
-						this.warp_(curve.value.asWarp(this));
+			),
+			QHLayout(
+				*(widgets = [
+					NumberBox().value_(this.minval)
+					.action_({|i|
+						this.minval_(i.value);
 						this.init;
-						this.warp.init(curve.value);
-					}{
-						curve.enabled_(false);
-						this.warp_(i.item.asWarp(this));
+						this.warp.class.switch(
+							CurveWarp, { this.warp.init(curve.value) }
+						);
+						action.value(this);
+					}),
+					NumberBox().value_(this.maxval)
+					.action_({|i|
+						this.maxval_(i.value);
 						this.init;
-						if (i.item == \array) {
-							this.init;
-							this.warp.init;
-							this.warp.makeWindow(
-								w.bounds.left + 290,
-								w.bounds.top,
-								action,
-								name
-							);
+						this.warp.class.switch(
+							CurveWarp, { this.warp.init(curve.value) }
+						);
+						action.value(this);
+					}),
+					PopUpMenu().items_(Warp.warps.keys.asArray ++ [\curve])
+					.value_(
+						if (this.warp.class == CurveWarp) {
+							Warp.warps.keys.asArray.size;
+						}{
+							Warp.warps.keys.asArray.indexOf(this.warp.asSpecifier)
 						}
+					)
+					.action_({|i|
+						try {this.warp.w.close};
+						if (i.item == \curve) {
+							curve.enabled_(true);
+							this.warp_(curve.value.asWarp(this));
+							this.init;
+							this.warp.init(curve.value);
+						}{
+							curve.enabled_(false);
+							this.warp_(i.item.asWarp(this));
+							this.init;
+							if (i.item == \array) {
+								this.init;
+								this.warp.init;
+								this.warp.makeWindow(
+									w.bounds.left + 290,
+									w.bounds.top,
+									action,
+									name
+								);
+							}
+						};
+						action.value(this);
+					}),
+					NumberBox().value_(this.step)
+					.action_({|i|
+						this.step_(i.value);
+						this.warp.class.switch(
+							ArrayWarp, {this.warp.step_}
+						);
+						action.value(this);
+					}),
+					NumberBox().value_(this.default)
+					.action_({|i|
+						this.default_(i.value);
+						action.value(this);
+					}),
+					TextField().value_(this.units)
+					.action_({|i|
+						this.units_(i.value.asString);
+						action.value(this);
+					})
+				]
+				)
+			),
+			QHLayout(
+				StaticText(),
+				StaticText(),
+				curve = NumberBox().value_(2)
+				.action_({|i|
+					this.warp_(i.value.asWarp(this));
+					this.init;
+					this.warp.init(i.value);
+					action.value(this);
+				}),
+				StaticText(),
+				PopUpMenu(w, 85@18).items_(
+					[\presets] ++ Spec.specs.select({|i|
+						(i.class == ControlSpec)
+					}).keys.asArray.sort
+				)
+				.value_(0)
+				.action_({|i|
+					var args;
+					try {this.warp.w.close};
+					if (i.value != 0) {
+						args = i.item.asSymbol.asSpec.storeArgs;
+						widgets.do({ |j,k|
+							if (k == 2) {
+								j.value_(
+									Warp.warps.keys.asArray.indexOf(
+										args[k]
+									);
+								);
+								this.warp_(args[k].asWarp(this));
+							}{
+								j.valueAction_(args[k]);
+							}
+						});
 					};
-					action.value(this);
-				}),
-			NumberBox(w, 40@18).value_(this.step)
-				.action_({|i|
-					this.step_(i.value);
-					this.warp.class.switch(
-						ArrayWarp, {this.warp.step_}
-					);
-					action.value(this);
-				}),
-			NumberBox(w, 40@18).value_(this.default)
-				.action_({|i|
-					this.default_(i.value);
-					action.value(this);
-				}),
-			TextField(w, 40@18).value_(this.units)
-				.action_({|i|
-					this.units_(i.value.asString);
-					action.value(this);
+					action.value;
 				})
-		];
-		StaticText(w, 40@18);
-		StaticText(w, 40@18);
-		curve = NumberBox(w, 40@18).value_(2)
-			.action_({|i|
-				this.warp_(i.value.asWarp(this));
-				this.init;
-				this.warp.init(i.value);
-				action.value(this);
-			});
+			)
+		);
+		// [\minval,\maxval,\warp,\step,\default,\units].do{ |i|
+		// 	StaticText(w, 40@15).string_(i.asString).align_(\center);
+		// };
+		//return = this.deepCopy;
+		
+			// NumberBox(w, 40@18).value_(this.minval)
+			// 	.action_({|i|
+			// 		this.minval_(i.value);
+			// 		this.init;
+			// 		this.warp.class.switch(
+			// 			CurveWarp, { this.warp.init(curve.value) }
+			// 		);
+			// 		action.value(this);
+			// 	}),
+			// NumberBox(w, 40@18).value_(this.maxval)
+			// 	.action_({|i|
+			// 		this.maxval_(i.value);
+			// 		this.init;
+			// 		this.warp.class.switch(
+			// 			CurveWarp, { this.warp.init(curve.value) }
+			// 		);
+			// 		action.value(this);
+			// 	}),
+			// PopUpMenu(w, 40@18).items_(Warp.warps.keys.asArray ++ [\curve])
+			// 	.value_(
+			// 		if (this.warp.class == CurveWarp) {
+			// 			Warp.warps.keys.asArray.size;
+			// 		}{
+			// 			Warp.warps.keys.asArray.indexOf(this.warp.asSpecifier)
+			// 		}
+			// 	)
+			// 	.action_({|i|
+			// 		try {this.warp.w.close};
+			// 		if (i.item == \curve) {
+			// 			curve.enabled_(true);
+			// 			this.warp_(curve.value.asWarp(this));
+			// 			this.init;
+			// 			this.warp.init(curve.value);
+			// 		}{
+			// 			curve.enabled_(false);
+			// 			this.warp_(i.item.asWarp(this));
+			// 			this.init;
+			// 			if (i.item == \array) {
+			// 				this.init;
+			// 				this.warp.init;
+			// 				this.warp.makeWindow(
+			// 					w.bounds.left + 290,
+			// 					w.bounds.top,
+			// 					action,
+			// 					name
+			// 				);
+			// 			}
+			// 		};
+			// 		action.value(this);
+			// 	}),
+			// NumberBox(w, 40@18).value_(this.step)
+			// 	.action_({|i|
+			// 		this.step_(i.value);
+			// 		this.warp.class.switch(
+			// 			ArrayWarp, {this.warp.step_}
+			// 		);
+			// 		action.value(this);
+			// 	}),
+			// NumberBox(w, 40@18).value_(this.default)
+			// 	.action_({|i|
+			// 		this.default_(i.value);
+			// 		action.value(this);
+			// 	}),
+			// TextField(w, 40@18).value_(this.units)
+			// 	.action_({|i|
+			// 		this.units_(i.value.asString);
+			// 		action.value(this);
+			// 	})
 		this.warp.class.switch(
 			CurveWarp, {
 				curve.enabled_(true);
@@ -216,34 +326,6 @@ ArrayWarp : LinearWarp {
 			},
 			{curve.enabled_(false);}			
 		);
-
-		StaticText(w, 40@18);
-		PopUpMenu(w, 85@18).items_(
-			[\presets] ++ Spec.specs.select({|i|
-				(i.class == ControlSpec)
-			}).keys.asArray.sort
-		)
-			.value_(0)
-			.action_({|i|
-				var args;
-				try {this.warp.w.close};
-				if (i.value != 0) {
-					args = i.item.asSymbol.asSpec.storeArgs;
-					widgets.do({ |j,k|
-						if (k == 2) {
-							j.value_(
-								Warp.warps.keys.asArray.indexOf(
-									args[k]
-								);
-							);
-							this.warp_(args[k].asWarp(this));
-						}{
-							j.valueAction_(args[k]);
-						}
-					});
-				};
-				action.value;
-			});
 		w.front;
 		w.onClose_({
 			try {warp.w.close};
