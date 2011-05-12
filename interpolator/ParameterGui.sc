@@ -1,4 +1,4 @@
-bParameterGui : AbstractInterpolatorGui { 
+ParameterGui : AbstractInterpolatorGui { 
 	var <name, <slider, <mapped, <unmapped, mouseDownFunc, specWindow;
 
 	calculateLayoutSize {
