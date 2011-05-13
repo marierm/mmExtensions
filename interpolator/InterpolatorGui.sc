@@ -56,7 +56,7 @@ InterpolatorGui : AbstractInterpolatorGui {
 				guiItems.do{ |guiItem, i|
 					interPoints.includes(i).if{
 						guiItem[3].string_(
-							weights[interPoints.indexOf(i)].asString
+							weights[interPoints.indexOf(i)].trunc(0.0001).asString
 						);
 					} {
 						guiItem[3].string_("0");
@@ -381,21 +381,6 @@ Interpolator2DGui : AbstractInterpolatorGui {
 		
 			if (clickCount == 2) { //doubleclick adds a point
 				if (grabbed) {
-					// // first close all other windows.
-					// // so that there is only one preset gui at the
-					// // time.
-					// // Also, store origin to draw new Window
-					// //  on the same postion
-					// if(model.currentPreset.gui.notNil){
-					// 	origin = model.currentPreset.gui.w.bounds.origin;
-					// 	model.currentPreset.gui.close;
-					// };
-					// model.presets.do{|i,j|
-					// 	if(i.gui.notNil){
-					// 		origin = i.gui.w.bounds.origin;
-					// 		i.gui.close;
-					// 	}
-					// };
 					model.makePointGui(grabbedPoint);
 				} {
 					this.addPoint(this.unscale(Point(x,y)));

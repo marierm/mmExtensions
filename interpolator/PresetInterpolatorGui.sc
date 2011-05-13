@@ -1,8 +1,13 @@
 PresetInterpolatorGui : AbstractInterpolatorGui {
+
+	calculateLayoutSize {
+		^Rect(0,0,800,400)
+	}
+
 	guiBody{ |lay|
 		layout = lay;
-		model.gui(layout);
+		model.interpolatorGui(layout);
 		model.gui2D(layout);
-		layout.resizeToFit(true, true);
+		// layout.resizeToFit(true, true);
 	}
 }

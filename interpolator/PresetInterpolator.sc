@@ -124,10 +124,13 @@ PresetInterpolator : SimpleController {
 
 	guiClass { ^PresetInterpolatorGui }
 
+	interpolatorGui { arg  ... args;
+		^InterpolatorGui.new(model).performList(\gui,args);
+	}
+
+
 	gui2D { arg  ... args;
-		^Interpolator2DGui.new(model).performList(
-			\gui,args
-		);
+		^Interpolator2DGui.new(model).performList(\gui,args);
 	}
 
 }

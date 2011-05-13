@@ -60,7 +60,7 @@ Interpolator { //More than 2 dimensions
 				this.changed(\pointAdded, point);
 				moveAction.value();
 			} {
-				"There is already a point at %".format(point).postln;
+				"There is already a point at %".format(point).warn;
 			}
 		} {
 			"Point must be an array of size %".format(n).postln;
@@ -68,8 +68,7 @@ Interpolator { //More than 2 dimensions
 	}
 
 	duplicatePoint { |point, pointId|
-		points.add( point );
-		rads.add( 0 );
+		this.add( point );
 		(pointId == \cursor).if {
 			this.changed(\cursorDuplicated);
 		} {
@@ -102,23 +101,30 @@ Interpolator { //More than 2 dimensions
 	
 	// change only one coordinate
 	changeCoord { |i, j, val|
-		points[i][j] = val;
-		this.changed(\pointMoved, i, points[i]);
-		moveAction.value();
+		var newPos;
+		newPos = points[i];
+		newPos[j] = val;
+		this.movePoint(i, newPos);
 	}
 
 	movePoint { |i, pos|
+		var otherPoints;
 		(pos.size == n).if {
-			points.indexOfEqual(pos).isNil.if {
+			otherPoints = points.copy;
+			otherPoints.removeAt(i);
+			otherPoints.indexOfEqual(pos).isNil.if {
 				points[i] = pos;
 				this.changed(\pointMoved, i, points[i]);
 				moveAction.value();
+			} {
+				"There cannot be two points at the same position".warn;
 			}
 		} {
-			"Position must be an array of size %".format(n).postln;
+			"Position must be an array of size %".format(n).warn;
 		}
 	}
 	
+	// when a point is double clicked in the 2DGui, this is called.
 	makePointGui { |grabbedPoint|
 		(grabbedPoint == -1).if {
 			this.changed(\makeCursorGui);
