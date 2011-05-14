@@ -290,7 +290,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 	}
 	
 	getColor { |i|
-		^ColorList.get(i);
+		^model.colors[i];
 	}
 
 	guiBody { |lay, xAxis = 0, yAxis = 1, spec|
@@ -380,7 +380,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 			};
 		
 			if (clickCount == 2) { //doubleclick adds a point
-				if (grabbed) {
+				if (grabbed) { // if double click on a point, open Preset Gui.
 					model.makePointGui(grabbedPoint);
 				} {
 					this.addPoint(this.unscale(Point(x,y)));

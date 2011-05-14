@@ -16,6 +16,13 @@ PresetInterpolator : SimpleController {
 		).init.initWithEvent(e);
 	}
 
+	// used by .load
+	// e should be structured like this:
+	// (
+	// points: [point,point,...],
+	// cursor: cursor,
+	// presets: [preset.saveable, preset.saveable, ...]
+	// )
 	initWithEvent { |e|
 		model.cursor_(e.at(\cursor));
 		//add the points
@@ -96,8 +103,8 @@ PresetInterpolator : SimpleController {
 			\makeCursorGui -> {|model, what|
 				cursor.gui.background_(Color.clear);
 			},
-			\makePointGui -> {|model, what, point|
-				presets[point].gui.background_(ColorList.get(point));
+			\makePointGui -> {|model, what, point, color|
+				presets[point].gui.background_(color);
 			},
 			\paramValue -> {|preset, what, param, paramId, val|
 				model.moveAction.value;

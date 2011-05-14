@@ -3,7 +3,7 @@
 Interpolator { //More than 2 dimensions
 
 	var <points, <rads, <cursor, <cursorRad, <>moveAction,
-	<weights, <interPoints, <n;
+	<weights, <interPoints, <n, <colors;
 	
 	*new{ |numDim = 2|
 		^super.new.init(numDim);
@@ -30,6 +30,7 @@ Interpolator { //More than 2 dimensions
 			this.changed(\weights, interPoints, weights);
 		};
 		n = numDim;
+		colors = List[];
 		points = List.new;
 		rads = List.new;
 		cursor = 0.5!n;
@@ -37,6 +38,7 @@ Interpolator { //More than 2 dimensions
 	}
 	
 	addFirstPoint {
+		colors.add(Color.getPresetColor(0));
 		points.add( 0!n );
 		rads.add(0);
 		moveAction.value();
@@ -55,6 +57,7 @@ Interpolator { //More than 2 dimensions
 			//check if point has pos identical to another point.
 			//points cannot share the same position.
 			points.indexOfEqual(point).isNil.if{
+				colors.add(Color.getNextPresetColor(colors.last));
 				points.add( point );
 				rads.add( 0 );
 				this.changed(\pointAdded, point);
@@ -79,6 +82,7 @@ Interpolator { //More than 2 dimensions
 
 	remove { |i|
 		if (points.size > 1) {
+			colors.removeAt(i);
 			points.removeAt(i);
 			rads.removeAt(i);
 			// this.refreshRads;
@@ -124,12 +128,14 @@ Interpolator { //More than 2 dimensions
 		}
 	}
 	
-	// when a point is double clicked in the 2DGui, this is called.
+	// when a point is double clicked in the 2DGui, this is called.  When an
+	// Interpolator is used inside a preset interpolator, the preset's gui is
+	// opened.
 	makePointGui { |grabbedPoint|
 		(grabbedPoint == -1).if {
 			this.changed(\makeCursorGui);
 		} {
-			this.changed(\makePointGui, grabbedPoint);
+			this.changed(\makePointGui, grabbedPoint, colors[grabbedPoint]);
 		}
 	}
 
