@@ -3,7 +3,7 @@
 Interpolator { //More than 2 dimensions
 
 	var <points, <rads, <cursor, <cursorRad, <>moveAction,
-	<weights, <interPoints, <n, <colors;
+	<weights, <interPoints, <n, <>colors, <>action;
 	
 	*new{ |numDim = 2|
 		^super.new.init(numDim);
@@ -28,6 +28,7 @@ Interpolator { //More than 2 dimensions
 				}).normalizeSum;
 			};
 			this.changed(\weights, interPoints, weights);
+			action.value(interPoints, weights);
 		};
 		n = numDim;
 		colors = List[];

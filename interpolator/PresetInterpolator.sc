@@ -8,7 +8,6 @@ PresetInterpolator : SimpleController {
 	}
 
 	*load { |path|
-		// Colors may differ when loading a saved PresetInterpolator.
 		var e;
 		e = path.load;
 		^super.newCopyArgs(
@@ -22,33 +21,33 @@ PresetInterpolator : SimpleController {
 	// points: [point,point,...],
 	// cursor: cursor,
 	// presets: [preset.saveable, preset.saveable, ...]
+	// colors: [color, color, ...]
 	// )
 	initWithEvent { |e|
 		model.cursor_(e.at(\cursor));
-		//add the points
+		//move point 0 (it is already there) and remove it from the event.
 		model.movePoint(0, e.at(\points)[0]);
 		e.at(\points).removeAt(0);
+		// add all other points
 		e.at(\points).do{|i|
 			model.add(i);
 		};
-
+		// add parameters to cursor.
+		// they will be added to other points as well (they are siblings).
 		e.at(\presets)[0].at(\parameters).do{|i|
 			cursor.add(
 				Parameter().name_(i.name).spec_(i.spec);
 			)
 		};
+		// name presets set their parameter values.
 		presets.do{ |i,j|
 			i.name_(e.at(\presets)[j].at(\name));
 			i.parameters.do{|k,l|
 				k.value_(e.at(\presets)[j].at(\parameters)[l].value);
-			}
+			};
 		};
-		// presets.do{ |i|
-		// 	// make the interpolator refresh the weights when a preset is
-		// 	// modified.
-		// 	i.addDependant(this);
-		// };
-		// this.initActions;
+		// set colors
+		model.colors_(e.at(\colors));
 	}
 
 	init {
@@ -116,6 +115,7 @@ PresetInterpolator : SimpleController {
 		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
 		(
 			points: model.points,
+			colors: model.colors,
 			cursor: model.cursor,
 			presets: presets.collect(_.saveable)
 		).writeArchive(path);
