@@ -40,20 +40,20 @@
 	// Here, I (can) use the same formula on n-spheres... I am not sure it makes
 	// any sense...
 	intersectArea { |rad, coll, collRad|
-		var x, y, z;
-		x = rad.squared * acos(
-				(this.dist(coll).squared + rad.squared - collRad.squared) /
-				(2 * this.dist(coll) * rad)
-			);
+		var x, y, z, w, dist;
+		dist = this.dist(coll);
+		w = ((dist.squared + rad.squared - collRad.squared) /(2 * dist * rad));
+		if ( (w > 1) || (w < -1) ){"WARNING: a NaN was caught.".postln;};
+		x = rad.squared * acos( w );
 		y = collRad.squared * acos(
-				(this.dist(coll).squared + collRad.squared - rad.squared) /
-				(2 * this.dist(coll) * collRad)
-			);
+			(dist.squared + collRad.squared - rad.squared) /
+			(2 * dist * collRad)
+		);
 		z = 0.5 * (
-			((this.dist(coll) * -1) + rad + collRad) *
-			(this.dist(coll) + rad - collRad) *
-			(this.dist(coll) - rad + collRad) *
-			(this.dist(coll) + rad + collRad)
+			((dist * -1) + rad + collRad) *
+			(dist + rad - collRad) *
+			(dist - rad + collRad) *
+			(dist + rad + collRad)
 		).sqrt;
 		^(x + y - z);
 	}

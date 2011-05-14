@@ -2,7 +2,7 @@ The mmExtensions for SuperCollider
 ==================================
 
 At this point, this repository contains the .sc files necessary to use the
-PresetInterpolator object.  More extensions will be added soon.
+PresetInterpolator HyperInterpolator objects.
 
 
 Installation
@@ -94,13 +94,15 @@ neighbour interpolation (like in the metasurface).  It is based on
 intersecting circles.  Here is how it works (briefly):
 
 1- A (invisible) circle is drawn around each points (including the cursor).
-The radius of each circle is equal to the distance to the nearest neighbour.
-This means that the size of the circles varies when points are moved.
+   The radius of each circle is equal to the distance to the nearest
+   neighbour.  This means that the size of the circles varies when points are
+   moved.
 
-2- The points that have a circle that intersects the cursor's circle have a
-weight.  (Not all points do, but at least one does.)
+2- The points which have a circle that intersects the cursor's circle have a
+   weight.  (Not all points do, but at least one does.)
 
-3- The weight of each point is calculated like this: (intersecting area of the 2 circles) / (total area of the circle).
+3- The weight of each point is calculated like this: (intersecting area of the
+   2 circles) / (total area of the circle).
 
 4- Then we do a weighted sum using these weights.
 
