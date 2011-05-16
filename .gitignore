@@ -7,3 +7,6 @@ interpolator/guiQT.sc~
 interpolator/ColorList.sc~
 interpolator/PresetInterpolatorGui.sc~
 interpolator/Color.sc~
+interpolator/PresetInterpolatorFullGui.sc~
+interpolator/PresetInterpolatorGuiExtras.sc~
+interpolator/todo.org~
