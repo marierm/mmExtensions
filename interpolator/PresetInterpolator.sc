@@ -119,14 +119,6 @@ PresetInterpolator : SimpleController {
 			cursor: model.cursor,
 			presets: presets.collect(_.saveable)
 		).writeArchive(path);
-		// // close the guis before saving because there are too many open
-		// // functions. If I don't close them, I get only warnings when I save,
-		// // but it is impossible to load the object : literal > 256...
-		// presets.do{|i,j| if(i.gui.notNil){i.gui.close}};
-		// if(currentPreset.gui.notNil){currentPreset.gui.close};
-		// [points, presets, currentPoint, currentPreset].writeArchive(path);
-		// //Archive.global.put(name, this);
-		// //this.writeArchive(path);
 	}
 
 	guiClass { ^PresetInterpolatorGui }
@@ -134,7 +126,6 @@ PresetInterpolator : SimpleController {
 	interpolatorGui { arg  ... args;
 		^InterpolatorGui.new(model).performList(\gui,args);
 	}
-
 
 	gui2D { arg  ... args;
 		^Interpolator2DGui.new(model).performList(\gui,args);
