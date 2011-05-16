@@ -81,23 +81,29 @@ PresetInterpolator : SimpleController {
 			\pointAdded -> {|interpolator, what, point|
 				presets.add(Preset.newFromSibling(cursor));
 				presets.last.addDependant(this);
+				this.changed(\presetAdded, presets.last);
 			},
-			\pointDuplicated -> {|interpolator, what, pointId|
-				presets.add(Preset.newFromSibling(cursor));
-				presets.last.addDependant(this);
+			\pointDuplicated -> {|interpolator, what, point, pointId|
+				var paramValues;
+				paramValues = presets[pointId].parameters.collect(_.value);
+				model.add(point);
 				presets.last.parameters.do{ |i,j|
-					i.value_(presets[pointId].parameters[j].value);
+					i.value_(paramValues[j].value);
 				};
+				this.changed(\presetAdded, presets.last);
 			},
-			\cursorDuplicated ->{|interpolator, what|
-				presets.add(Preset.newFromSibling(cursor));
-				presets.last.addDependant(this);
+			\cursorDuplicated ->{|interpolator, what, point, pointId|
+				var paramValues;
+				paramValues = cursor.parameters.collect(_.value);
+				model.add(point);
 				presets.last.parameters.do{ |i,j|
-					i.value_(cursor.parameters[j].value);
+					i.value_(paramValues[j].value);
 				};
+				this.changed(\presetAdded, presets.last);
 			},
 			\pointRemoved -> {|interpolator, what, i|
 				presets.removeAt(i);
+				this.changed(\presetRemoved, i);
 			},
 			\makeCursorGui -> {|model, what|
 				cursor.gui.background_(Color.clear);
@@ -107,6 +113,11 @@ PresetInterpolator : SimpleController {
 			},
 			\paramValue -> {|preset, what, param, paramId, val|
 				model.moveAction.value;
+			},
+			\presetName -> {|preset, what, name|
+				this.changed(
+					\presetName, presets.indexOf(preset), name
+				);
 			}
 		];
 	}
@@ -121,7 +132,11 @@ PresetInterpolator : SimpleController {
 		).writeArchive(path);
 	}
 
-	guiClass { ^PresetInterpolatorGui }
+	getPresetColor {|i|
+		^model.colors[i];
+	}
+
+	guiClass { ^PresetInterpolatorFullGui }
 
 	interpolatorGui { arg  ... args;
 		^InterpolatorGui.new(model).performList(\gui,args);
@@ -130,5 +145,10 @@ PresetInterpolator : SimpleController {
 	gui2D { arg  ... args;
 		^Interpolator2DGui.new(model).performList(\gui,args);
 	}
+
+	namesGui { arg  ... args;
+		^PresetInterpolatorGui.new(this).performList(\gui,args);
+	}
+
 
 }

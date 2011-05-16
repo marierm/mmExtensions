@@ -72,13 +72,11 @@ Interpolator { //More than 2 dimensions
 	}
 
 	duplicatePoint { |point, pointId|
-		this.add( point );
 		(pointId == \cursor).if {
-			this.changed(\cursorDuplicated);
+			this.changed(\cursorDuplicated, point, pointId);
 		} {
-			this.changed(\pointDuplicated, pointId);
+			this.changed(\pointDuplicated, point, pointId);
 		};
-		moveAction.value();
 	}
 
 	remove { |i|

@@ -56,7 +56,8 @@ InterpolatorGui : AbstractInterpolatorGui {
 				guiItems.do{ |guiItem, i|
 					interPoints.includes(i).if{
 						guiItem[3].string_(
-							weights[interPoints.indexOf(i)].trunc(0.0001).asString
+							weights[interPoints.indexOf(i)]
+							.trunc(0.0001).asString
 						);
 					} {
 						guiItem[3].string_("0");
@@ -65,7 +66,7 @@ InterpolatorGui : AbstractInterpolatorGui {
 			},
 			\pointAdded -> {|model, what, point|
 				this.addPresetLine(point, model.points.size - 1);
-				layout.resizeToFit(true,true);
+				layout.resizeToFit();
 			},
 			\pointRemoved -> {|model, what, i|
 				// Remove all lines starting from the line to be removed.
@@ -151,14 +152,6 @@ InterpolatorGui : AbstractInterpolatorGui {
 			.string_("0")
 			// .align_(\right)
 		]);
-	}
-
-	update { arg model, what ... args;
-		var action;
-		action = actions.at(what);
-		if (action.notNil, {
-			action.valueArray(model, what, args);
-		});
 	}
 	// Eventually remove (when QT has drag and drop)
 	writeName {}

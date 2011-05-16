@@ -1,0 +1,6 @@
+* TODO fix: parameter removal in PresetGui.
+* TODO make a send OSC method
+* TODO test Mac OSX
+* TODO make a send MIDI ctl method
+* TODO fix: window name should change when preset name is changed in Gui.
+* TODO fix: scaling gui when points are added or moved outside of frame.
