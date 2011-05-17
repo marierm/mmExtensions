@@ -22,7 +22,7 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 				// Reset layout postion so that new lines appear at the right
 				// place.
 				layout.decorator.top_(
-					(butHeight+4)*(guiItems.size)
+					((butHeight+4)*(guiItems.size)) + 4
 				);
 				// Redraw lines
 				if (model.presets.size != i) {

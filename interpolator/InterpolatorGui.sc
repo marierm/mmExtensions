@@ -80,7 +80,7 @@ InterpolatorGui : AbstractInterpolatorGui {
 				// Reset layout postion so that new lines appear at the right
 				// place.
 				layout.decorator.top_(
-					(butHeight+4)*(guiItems.size)
+					((butHeight+4)*(guiItems.size)) + 4
 				);
 				// Redraw lines
 				if (model.points.size != i) {
@@ -271,8 +271,10 @@ Interpolator2DGui : AbstractInterpolatorGui {
 	}
 
 	calculateSpecs { |spec|
-		var min, max, padding;
-		spec = spec.asSpec;
+		var min, max;
+		spec.notNil.if{
+			spec = spec.asSpec;
+		};
 		min = (model.points ++ [model.cursor]).flop.flatten.minItem;
 		max = (model.points ++ [model.cursor]).flop.flatten.maxItem;
 		pointsSpec = spec ? ControlSpec(min, max);

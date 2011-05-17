@@ -3,4 +3,8 @@
 * TODO test Mac OSX
 * TODO make a send MIDI ctl method
 * TODO fix: window name should change when preset name is changed in Gui.
-* TODO fix: scaling gui when points are added or moved outside of frame.
+* DONE fix: scaling gui when points are added or moved outside of frame.
+  CLOSED: [2011-05-17 Tue 17:26]
+* DONE fix: point removal in FullGui.
+  CLOSED: [2011-05-17 Tue 17:26]
+

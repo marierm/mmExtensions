@@ -136,6 +136,10 @@ PresetInterpolator : SimpleController {
 		^model.colors[i];
 	}
 
+	numDim {
+		^model.n;
+	}
+
 	guiClass { ^PresetInterpolatorFullGui }
 
 	interpolatorGui { arg  ... args;
