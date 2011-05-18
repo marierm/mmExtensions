@@ -132,6 +132,7 @@ PresetInterpolator : SimpleController {
 		).writeArchive(path);
 	}
 
+	// access to model
 	getPresetColor {|i|
 		^model.colors[i];
 	}
@@ -140,6 +141,16 @@ PresetInterpolator : SimpleController {
 		^model.n;
 	}
 
+	cursorPos {
+		^model.cursor;
+	}
+
+	cursorPos_ {|i, pos|
+		model.cursor[i] = (pos);
+		{model.moveAction.value}.defer;
+	}
+
+	// gui stuff
 	guiClass { ^PresetInterpolatorFullGui }
 
 	interpolatorGui { arg  ... args;
@@ -153,6 +164,4 @@ PresetInterpolator : SimpleController {
 	namesGui { arg  ... args;
 		^PresetInterpolatorGui.new(this).performList(\gui,args);
 	}
-
-
 }
