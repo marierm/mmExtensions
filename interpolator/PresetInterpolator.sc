@@ -146,8 +146,22 @@ PresetInterpolator : SimpleController {
 	}
 
 	cursorPos_ {|i, pos|
+		// i is the index of an axis (0 for, 1 for y, 2 for z, ...)
+		// pos is the position on the axis
 		model.cursor[i] = (pos);
-		{model.moveAction.value}.defer;
+		// {model.moveAction.value}.defer;
+	}
+
+	action_ { |function|
+		model.action_(function);
+	}
+
+	attachedPoint_ {|i|
+		model.attachedPoint_(i);
+	}
+
+	attachedPoint {
+		^model.attachedPoint;
 	}
 
 	// gui stuff

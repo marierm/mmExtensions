@@ -69,11 +69,26 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 			.action_({|tf|
 				preset.name_(tf.value);
 			}),
-			// grab buttonbutton
+			// attach button
 			Button( layout, (butHeight@butHeight))
-			.states_([["G"]])
-			.action_({
+			.states_([
+				["A",Color.black, Color.clear], ["A", Color.black, Color.red]
+			])
+			.action_({ |bt|
 				// start moving this points values with cursor values.
+				bt.value.switch(
+					0, {
+						model.attachedPoint_(nil);
+					},
+					1, {
+						guiItems.do{ |a,b|
+							(b != i).if {
+								a[1].value_(0);
+							};
+						};
+						model.attachedPoint_(i);
+					}
+				)
 			}),
 			// edit buttonbutton
 			Button( layout, (butHeight@butHeight))

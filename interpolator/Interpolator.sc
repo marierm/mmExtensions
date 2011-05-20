@@ -3,7 +3,7 @@
 Interpolator { //More than 2 dimensions
 
 	var <points, <rads, <cursor, <cursorRad, <>moveAction,
-	<weights, <interPoints, <n, <>colors, <>action;
+	<weights, <interPoints, <n, <>colors, <>action, <>attachedPoint;
 	
 	*new{ |numDim = 2|
 		^super.new.init(numDim);
@@ -11,24 +11,28 @@ Interpolator { //More than 2 dimensions
 	
 	init{ |numDim|
 		moveAction = {
-			this.refreshRads;
-			//find points that intersect with cursor
-			//calculate weights
-			if(points.indexOfEqual(cursor).notNil) {
-				// if cursor is exactly on a preset
-				interPoints = [ points.indexOfEqual(cursor) ];
-				weights = [1];
-			}{
-				interPoints = points.selectIndex({ |i,j|
-					i.dist(cursor) < (cursorRad + rads[j])
-				});
-				weights = points[interPoints].collect({ |i,j|
-					i.intersectArea(rads[interPoints[j]], cursor, cursorRad)
-					/ (pi * rads[interPoints[j]].squared);
-				}).normalizeSum;
-			};
-			this.changed(\weights, interPoints, weights);
+			// action should not update gui
 			action.value(interPoints, weights);
+			{
+				this.refreshRads;
+				//find points that intersect with cursor
+				//calculate weights
+				if(points.indexOfEqual(cursor).notNil) {
+					// if cursor is exactly on a preset
+					interPoints = [ points.indexOfEqual(cursor) ];
+					weights = [1];
+				}{
+					interPoints = points.selectIndex({ |i,j|
+						i.dist(cursor) < (cursorRad + rads[j])
+					});
+					weights = points[interPoints].collect({ |i,j|
+						i.intersectArea(
+							rads[interPoints[j]], cursor, cursorRad
+						) / (pi * rads[interPoints[j]].squared);
+					}).normalizeSum;
+				};
+				this.changed(\weights, interPoints, weights);
+			}.defer; // gui stuff is defered (just in case);
 		};
 		n = numDim;
 		colors = List[];
@@ -95,6 +99,9 @@ Interpolator { //More than 2 dimensions
 	cursor_ { |pos|
 		if (pos.size == n) {
 			cursor = pos;
+			attachedPoint.notNil.if {
+				this.movePoint(attachedPoint, pos);
+			};
 			// this.refreshRads;
 			moveAction.value();
 		} {
@@ -126,7 +133,6 @@ Interpolator { //More than 2 dimensions
 			"Position must be an array of size %".format(n).warn;
 		}
 	}
-	
 	// when a point is double clicked in the 2DGui, this is called.  When an
 	// Interpolator is used inside a preset interpolator, the preset's gui is
 	// opened.
