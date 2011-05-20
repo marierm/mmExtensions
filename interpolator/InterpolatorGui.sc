@@ -46,11 +46,12 @@ AbstractInterpolatorGui : ObjectGui {
 
 InterpolatorGui : AbstractInterpolatorGui {
 
-	var <>guiItems, butHeight;
+	var <>guiItems, butHeight, footer, axies;
 
 	init {
 		butHeight = 18;
 		guiItems = List[];
+		axies = [0,1];
 		actions = IdentityDictionary[
 			\weights -> {|model, what, interPoints, weights|
 				guiItems.do{ |guiItem, i|
@@ -65,7 +66,17 @@ InterpolatorGui : AbstractInterpolatorGui {
 				}
 			},
 			\pointAdded -> {|model, what, point|
+				// Remove footer.
+				footer.flatten.do{ |guiItem|
+					guiItem.remove;
+				};
+				// Reset layout postion so that new lines appear at the right
+				// place.
+				layout.decorator.top_(
+					((butHeight+4)*(guiItems.size)) + 4
+				);
 				this.addPresetLine(point, model.points.size - 1);
+				this.drawFooter(model.points[0].size);
 				layout.resizeToFit();
 			},
 			\pointRemoved -> {|model, what, i|
@@ -74,6 +85,10 @@ InterpolatorGui : AbstractInterpolatorGui {
 					guiItems[j].flatten.do{ |guiItem|
 						guiItem.remove;
 					}
+				};
+				// removeFooter;
+				footer.flatten.do{ |guiItem|
+					guiItem.remove;
 				};
 				// Remove the objects in guiItems
 				guiItems = guiItems.keep(i);
@@ -88,6 +103,8 @@ InterpolatorGui : AbstractInterpolatorGui {
 						this.addPresetLine(model.points[j],j);
 					};
 				};
+				// redraw footer.
+				this.drawFooter(model.points[0].size);
 			},
 			\pointMoved -> {|model, what, i, point|
 				guiItems[i][1].do{ |numBox, j|
@@ -113,7 +130,8 @@ InterpolatorGui : AbstractInterpolatorGui {
 		model.points.do{|point, i|
 			this.addPresetLine(point, i);
 			// layout.decorator.nextLine;
-		}
+		};
+		this.drawFooter(model.points[0].size);
 	}
 
 	drawHeader {
@@ -152,6 +170,40 @@ InterpolatorGui : AbstractInterpolatorGui {
 			.string_("0")
 			// .align_(\right)
 		]);
+	}
+
+	drawFooter{ |size|
+		footer = [ 
+			StaticText(layout, butHeight@butHeight)
+			.string_(""),
+			// coordinates
+			Array.fill(size, {|j|
+				PopUpMenu( layout, (50@butHeight))
+				.items_(["","x","y"])
+				.action_({ |menu|
+					menu.value.switch(
+						0, {
+						},
+						1, {
+							footer[1][axies[0]].value_(0);
+							axies[0] = j;
+						},
+						2, {
+							footer[1][axies[1]].value_(0);
+							axies[1] = j;
+						}
+					)
+				});
+			}),
+			// Make 2D gui button
+			Button( layout, (72@butHeight))
+			.states_([["2D Gui"]])
+			.action_({
+				model.gui2D(nil,nil,axies[0],axies[1]);
+			})
+		];
+		footer[1][axies[0]].value_(1);
+		footer[1][axies[1]].value_(2);
 	}
 	// Eventually remove (when QT has drag and drop)
 	writeName {}
