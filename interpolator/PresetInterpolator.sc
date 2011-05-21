@@ -164,6 +164,12 @@ PresetInterpolator : SimpleController {
 		^model.attachedPoint;
 	}
 
+	initOSC { |netAd, mess|
+		mess = mess ? "/PresetInterpolator";
+		cursor.parameters.do{|i|
+			i.initOSC(netAd, mess ++ "/" ++ i.name);
+		};
+	}
 	// gui stuff
 	guiClass { ^PresetInterpolatorFullGui }
 

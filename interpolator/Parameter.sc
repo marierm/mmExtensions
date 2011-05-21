@@ -1,5 +1,5 @@
 Parameter {
-	var <name, <value, <spec, <>action, <siblings;
+	var <name, <value, <spec, <>action, <siblings, <sendOSC, netAddr, <oscMess;
 	//value is unmapped (between 0 and 1);
 	
 	*new { |name, spec, value|
@@ -22,6 +22,7 @@ Parameter {
 		spec = sp ? ControlSpec();
 		try {val = val.clip(0,1)};
 		value = val ? spec.unmap(spec.default);
+		sendOSC = false;
 	}
 
 	initFromSibling { |sblng|
@@ -29,6 +30,12 @@ Parameter {
 		siblings.do{ |i|
 			i.siblings.add(this);
 		}
+	}
+
+	initOSC { |netAd, mess|
+		netAddr = netAd ? NetAddr.localAddr;
+		oscMess = mess ? name;
+		sendOSC = true;
 	}
 
 	spec_ { |sp|
@@ -49,6 +56,9 @@ Parameter {
 			}
 		};
 		this.changed(\name, name);
+		sendOSC.if{
+			oscMess = oscMess.dirname ++ "/" ++ name;
+		};
 	}
 
 	mapped {
@@ -60,9 +70,14 @@ Parameter {
 	}
 	
 	value_ { |val|
+		var mapped;
+		mapped = this.mapped;
 		value = val;
-		this.changed(\value, this.mapped, value);
+		this.changed(\value, mapped, value);
 		action.value(this.mapped, value);
+		sendOSC.if{
+			netAddr.sendMsg(oscMess, mapped);
+		};
 	}
 
 	remove {

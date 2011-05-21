@@ -47,9 +47,11 @@ PresetGui : AbstractInterpolatorGui {
 		layout = lay;		
 
 		addButton = Button(layout, 300@18).states_(
-			[["+", background]]
+			[["Add Parameter", background]]
 		).action_({
-			model.add(Parameter())
+			var name;
+			// model.parameters.collect(_.name);
+			model.add(Parameter());
 		});
 				
 		model.parameters.do{|i, j|
