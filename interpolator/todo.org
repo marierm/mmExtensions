@@ -1,3 +1,4 @@
+* TODO make save button.
 * TODO fix: parameter removal in PresetGui.
 * TODO make a send OSC method
 * TODO test Mac OSX
