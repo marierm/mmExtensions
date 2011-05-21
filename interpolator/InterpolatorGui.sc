@@ -1,5 +1,5 @@
-AbstractInterpolatorGui : ObjectGui {
-	var <layout, <>actions;
+AbstractInterpolatorGui : HJHObjectGui {
+	var <>actions;
 
 	*new { arg model;
 		var new;
@@ -77,7 +77,16 @@ InterpolatorGui : AbstractInterpolatorGui {
 				);
 				this.addPresetLine(point, model.points.size - 1);
 				this.drawFooter(model.points[0].size);
-				layout.resizeToFit();
+				layout.view.resizeTo(
+					this.calculateLayoutSize.width,
+					this.calculateLayoutSize.height
+				);
+				iMadeMasterLayout.if {
+					layout.parent.resizeTo(
+						this.calculateLayoutSize.width,
+						this.calculateLayoutSize.height
+					);
+				}
 			},
 			\pointRemoved -> {|model, what, i|
 				// Remove all lines starting from the line to be removed.
@@ -117,7 +126,7 @@ InterpolatorGui : AbstractInterpolatorGui {
 	calculateLayoutSize {
 		var width, height;
 		width = ((54*(model.n + 1)) + ((butHeight+4)*2));
-		height = ((butHeight+4)*(model.points.size + 1)).max(100);
+		height = ((butHeight+4)*(model.points.size + 3)).max(100);
 		^Rect(0,0,width,height);
 	}
 
@@ -258,7 +267,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 	}
 	
 	calculateLayoutSize {
-		^Rect(0,0,400,400)
+		^Rect(0,0,408,408)
 	}
 
 	scale { |point|
@@ -345,7 +354,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 		x = xAxis;
 		y = yAxis;
 		layout = lay;
-		bounds = layout.bounds;
+		bounds = Rect(0,0,layout.bounds.width - 8, layout.bounds.height - 8);
 		this.calculateSpecs(spec);
 		uv = UserView( layout, bounds );
 

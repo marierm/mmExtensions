@@ -1,10 +1,10 @@
 PresetInterpolatorFullGui : AbstractInterpolatorGui {
 	// model is a PresetInterpolator.
 	calculateLayoutSize {
-		var width, butHeight;
-		// width = ((54*(model.numDim + 1)) + ((model.butHeight)*2)) + 150;
-		width = ((54*(model.numDim + 1)) + ((18)*2)) + 166;
-		^Rect(0,0,width,400);
+		var width, height, butHeight=18;
+		width = ((54*(model.numDim + 1)) + (butHeight*2)) + 166;
+		height = ((model.presets.size + 3) * 22);
+		^Rect(0,0,width,height);
 	}
 
 	guiBody{ |lay|
@@ -12,5 +12,15 @@ PresetInterpolatorFullGui : AbstractInterpolatorGui {
 		model.namesGui(layout);
 		model.interpolatorGui(layout);
 		// model.gui2D(layout);
+	}
+
+	init {
+		model.addDependant(this);
+		actions = IdentityDictionary[
+			\presetAdded -> {|presetInterpolator, what, point|
+				layout.view.bounds = this.calculateLayoutSize;
+				layout.parent.bounds = this.calculateLayoutSize;
+			}
+		];
 	}
 }

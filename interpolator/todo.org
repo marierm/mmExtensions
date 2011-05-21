@@ -8,3 +8,5 @@
 * DONE fix: point removal in FullGui.
   CLOSED: [2011-05-17 Tue 17:26]
 
+* DONE fix: gui resize when adding points to InterpolatorGui and FullGui.
+  CLOSED: [2011-05-21 Sat 15:17]

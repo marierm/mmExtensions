@@ -8,7 +8,16 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 		actions = IdentityDictionary[
 			\presetAdded -> {|prInterpolator, what, preset|
 				this.addPresetLine(preset, model.presets.size - 1);
-				layout.resizeToFit();
+				layout.view.resizeTo(
+					this.calculateLayoutSize.width,
+					this.calculateLayoutSize.height
+				);
+				iMadeMasterLayout.if {
+					layout.parent.resizeTo(
+						this.calculateLayoutSize.width,
+						this.calculateLayoutSize.height
+					);
+				};
 			},
 			\presetRemoved -> {|prInterpolator, what, i|
 				// Remove all lines starting from the line to be removed.
@@ -40,7 +49,7 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 	calculateLayoutSize {
 		var width, height;
 		width = 150;
-		height = ((butHeight+4)*(model.presets.size + 1)).max(100);
+		height = ((butHeight+4)*(model.presets.size + 2)).max(100);
 		^Rect(0,0,width,height);
 	}
 
