@@ -33,12 +33,16 @@ SpongeBee {
 			// the 7 buttons.
 			var data, byte, msb, lsb, id, count=0;
 			data = Array.fill(9,0);
+			byte = port.read;
+			while {byte != 0} { // read until we find the first status byte
+				byte = port.read;
+			};
+			msb = port.read % 128;
+			lsb = port.read % 8;
+			data[0] = (msb << 3) + lsb;
 			loop {
 				byte = port.read;
-				while {(byte >> 7) != 0} { // read until we find a status byte
-					byte = port.read;
-				};
-				id = byte % 128;				// get sensor number
+				id = byte;				// get sensor number
 				if (id == 8) { // if it is the button's data
 					msb = port.read % 128;
 					data[id] = msb;
