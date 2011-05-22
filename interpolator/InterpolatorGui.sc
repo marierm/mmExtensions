@@ -77,16 +77,7 @@ InterpolatorGui : AbstractInterpolatorGui {
 				);
 				this.addPresetLine(point, model.points.size - 1);
 				this.drawFooter(model.points[0].size);
-				layout.view.resizeTo(
-					this.calculateLayoutSize.width,
-					this.calculateLayoutSize.height
-				);
-				iMadeMasterLayout.if {
-					layout.parent.resizeTo(
-						this.calculateLayoutSize.width,
-						this.calculateLayoutSize.height
-					);
-				}
+				layout.view.resizeToFit(true,false);
 			},
 			\pointRemoved -> {|model, what, i|
 				// Remove all lines starting from the line to be removed.
