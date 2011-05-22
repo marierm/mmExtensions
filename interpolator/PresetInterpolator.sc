@@ -145,13 +145,13 @@ PresetInterpolator : SimpleController {
 		^model.cursor;
 	}
 
-	cursorPos_ {|i, pos|
-		var newPos;
+	cursorPos_ {|pos|
+		// var newPos;
 		// i is the index of an axis (0 for, 1 for y, 2 for z, ...)
 		// pos is the position on the axis
-		newPos = model.cursor;
-		newPos[i] = pos;
-		model.cursor_(newPos);
+		// newPos = model.cursor;
+		// newPos[i] = pos;
+		model.cursor_(pos);
 	}
 
 	action_ { |function|

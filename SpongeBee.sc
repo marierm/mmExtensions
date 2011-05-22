@@ -78,9 +78,7 @@ SpongeBee {
 	// prInt is expected to be a PresetInterpolator.
 	connect { |prInt|
 		interpAction = { |...msg|
-			msg.keep(prInt.numDim).do{|i,j|
-				prInt.cursorPos_(j, i);
-			}
+			prInt.cursorPos_(msg.keep(prInt.numDim));
 		};
 		action = action.addFunc(interpAction);
 	}
