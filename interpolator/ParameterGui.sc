@@ -24,11 +24,7 @@ ParameterGui : AbstractInterpolatorGui {
 		mouseDownFunc = {
 			arg view, x, y, modifiers, buttonNumber, clickCount;
 			var win, text;
-			// win = w.parent ? w;
-			// // if (buttonNumber == 1 && specWindow.isNil){ //cocoa right click
-			// // Using swing : left=1, mid=2, right=3
-			// // Using cocoa : left=0, mid=2, right=1 
-			if (clickCount == 2){ // swing right click
+			if (clickCount == 2){ // double click
 				model.spec.makeWindow(
 					x: this.bounds.right,
 					y: this.bounds.bottom - this.bounds.bottom,
@@ -38,44 +34,33 @@ ParameterGui : AbstractInterpolatorGui {
 					name: model.name.asString + "Spec"
 				)
 			};
-			// if (modifiers bitAnd: 134217728 != 0) { //alt key is pressed
-			// 	// Using swing : middleClick (button 2) acts like alt
-			// 	// is pressed
-			// 	textViewWindow = Window(
-			// 		param.name.asString + "action",
-			// 		Rect(
-			// 			win.bounds.right,
-			// 			win.bounds.bottom - w.bounds.bottom,
-			// 			400,
-			// 			400
-			// 		)
-			// 	).front.onClose_({
-			// 		param.setActionString(text.string);
-			// 		// param.action_(
-			// 		// 	param.action.removeFunc(textViewAction)
-			// 		// ); 
-			// 		// textViewAction = text.string.interpret;
-			// 		// param.action_(
-			// 		// 	param.action.addFunc(textViewAction)
-			// 		// );
-			// 		// actionString = text.string;
-			// 	});
-			// 	text = TextView(textViewWindow, Rect(0,0,400,400))
-			// 	// 	.usesTabToFocusNextView_(false) // doesn't work in swing?
-			// 	.string_(param.actionString);
-			// };
 		};
 	}
 	
 	guiBody {|lay|
 		layout = lay;
-		name = TextField( layout, (layout.bounds.width - 24)@16 )
+		name = TextField( layout, (layout.bounds.width - 70)@16 )
 		.string_(model.name)
 		.align_(\left)
 		.background_(Color.clear)
 		.resize_(2)
 		.action_({ |tf|
 			model.name_(tf.value);
+		});
+		Button( layout, 16@16)
+		.states_([["O"]])
+		.resize_(3)
+		.action_({
+			OscConfigurationGui.new(model).performList(\gui);
+		});
+		Button( layout, 16@16)
+		.states_([["M"]])
+		.resize_(3)
+		.action_({
+			MIDIClient.initialized.not.if{
+				MIDIClient.init;
+			};
+			MidiConfigurationGui.new(model).performList(\gui);
 		});
 		Button( layout, 16@16)
 		.states_([["X"]])

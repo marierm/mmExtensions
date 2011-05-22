@@ -13,6 +13,9 @@ PresetGui : AbstractInterpolatorGui {
 				layout.reflowAll;
 				// paramLayouts[id].view.resizeToFit(true, true);
 				layout.resizeToFit(true, true);
+			},
+			\presetName -> {|preset, what, name|
+				layout.window.name_(name);
 			}
 		];
 	}
@@ -42,12 +45,13 @@ PresetGui : AbstractInterpolatorGui {
 
 	guiBody {|lay|
 		layout = lay;		
-		// background = ColorList.get(3);
 
 		addButton = Button(layout, 300@18).states_(
-			[["+", background]]
+			[["Add Parameter", background]]
 		).action_({
-			model.add(Parameter())
+			var name;
+			// model.parameters.collect(_.name);
+			model.add(Parameter());
 		});
 				
 		model.parameters.do{|i, j|

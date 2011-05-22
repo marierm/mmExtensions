@@ -3,7 +3,7 @@
 Interpolator { //More than 2 dimensions
 
 	var <points, <rads, <cursor, <cursorRad, <>moveAction,
-	<weights, <interPoints, <n;
+	<weights, <interPoints, <n, <>colors, <>action, <>attachedPoint;
 	
 	*new{ |numDim = 2|
 		^super.new.init(numDim);
@@ -11,6 +11,8 @@ Interpolator { //More than 2 dimensions
 	
 	init{ |numDim|
 		moveAction = {
+			// action should not update gui
+			action.value(interPoints, weights);
 			this.refreshRads;
 			//find points that intersect with cursor
 			//calculate weights
@@ -23,13 +25,17 @@ Interpolator { //More than 2 dimensions
 					i.dist(cursor) < (cursorRad + rads[j])
 				});
 				weights = points[interPoints].collect({ |i,j|
-					i.intersectArea(rads[interPoints[j]], cursor, cursorRad)
-					/ (pi * rads[interPoints[j]].squared);
+					i.intersectArea(
+						rads[interPoints[j]], cursor, cursorRad
+					) / (pi * rads[interPoints[j]].squared);
 				}).normalizeSum;
 			};
-			this.changed(\weights, interPoints, weights);
+			{
+				this.changed(\weights, interPoints, weights);
+			}.defer; // gui stuff is defered;
 		};
 		n = numDim;
+		colors = List[];
 		points = List.new;
 		rads = List.new;
 		cursor = 0.5!n;
@@ -37,6 +43,7 @@ Interpolator { //More than 2 dimensions
 	}
 	
 	addFirstPoint {
+		colors.add(Color.getPresetColor(0));
 		points.add( 0!n );
 		rads.add(0);
 		moveAction.value();
@@ -55,12 +62,13 @@ Interpolator { //More than 2 dimensions
 			//check if point has pos identical to another point.
 			//points cannot share the same position.
 			points.indexOfEqual(point).isNil.if{
+				colors.add(Color.getNextPresetColor(colors.last));
 				points.add( point );
 				rads.add( 0 );
 				this.changed(\pointAdded, point);
 				moveAction.value();
 			} {
-				"There is already a point at %".format(point).postln;
+				"There is already a point at %".format(point).warn;
 			}
 		} {
 			"Point must be an array of size %".format(n).postln;
@@ -68,18 +76,16 @@ Interpolator { //More than 2 dimensions
 	}
 
 	duplicatePoint { |point, pointId|
-		points.add( point );
-		rads.add( 0 );
 		(pointId == \cursor).if {
-			this.changed(\cursorDuplicated);
+			this.changed(\cursorDuplicated, point, pointId);
 		} {
-			this.changed(\pointDuplicated, pointId);
+			this.changed(\pointDuplicated, point, pointId);
 		};
-		moveAction.value();
 	}
 
 	remove { |i|
 		if (points.size > 1) {
+			colors.removeAt(i);
 			points.removeAt(i);
 			rads.removeAt(i);
 			// this.refreshRads;
@@ -93,6 +99,9 @@ Interpolator { //More than 2 dimensions
 	cursor_ { |pos|
 		if (pos.size == n) {
 			cursor = pos;
+			attachedPoint.notNil.if {
+				this.movePoint(attachedPoint, pos);
+			};
 			// this.refreshRads;
 			moveAction.value();
 		} {
@@ -102,28 +111,36 @@ Interpolator { //More than 2 dimensions
 	
 	// change only one coordinate
 	changeCoord { |i, j, val|
-		points[i][j] = val;
-		this.changed(\pointMoved, i, points[i]);
-		moveAction.value();
+		var newPos;
+		newPos = points[i];
+		newPos[j] = val;
+		this.movePoint(i, newPos);
 	}
 
 	movePoint { |i, pos|
+		var otherPoints;
 		(pos.size == n).if {
-			points.indexOfEqual(pos).isNil.if {
+			otherPoints = points.copy;
+			otherPoints.removeAt(i);
+			otherPoints.indexOfEqual(pos).isNil.if {
 				points[i] = pos;
 				this.changed(\pointMoved, i, points[i]);
 				moveAction.value();
+			} {
+				"There cannot be two points at the same position".warn;
 			}
 		} {
-			"Position must be an array of size %".format(n).postln;
+			"Position must be an array of size %".format(n).warn;
 		}
 	}
-	
+	// when a point is double clicked in the 2DGui, this is called.  When an
+	// Interpolator is used inside a preset interpolator, the preset's gui is
+	// opened.
 	makePointGui { |grabbedPoint|
 		(grabbedPoint == -1).if {
 			this.changed(\makeCursorGui);
 		} {
-			this.changed(\makePointGui, grabbedPoint);
+			this.changed(\makePointGui, grabbedPoint, colors[grabbedPoint]);
 		}
 	}
 

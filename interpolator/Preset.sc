@@ -103,8 +103,8 @@ Preset {
 	}	
 
 	name_ { |nm|
-		name = nm;
-		this.changed(\name, nm);
+		name = nm.asString;
+		this.changed(\presetName, nm);
 	}
 
 	at {|i|

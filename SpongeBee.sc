@@ -3,7 +3,7 @@
 SpongeBee {
 	var <port, inputThread, <sensorNames, spec10bits;
 	var <>action, <bus, <>busses, <>synths, busAction;
-	var <dn, <server, <name, <>features;
+	var <dn, <server, <name, <>features, interpAction;
 
 	*new { arg portName="/dev/ttyUSB0", baudRate=19200;
 		^super.new.init(portName, baudRate);
@@ -66,10 +66,25 @@ SpongeBee {
 		// To be able to reference the channels by name :
 		sensorNames.do { |i, ii| busses[i] = bus.subBus(ii,1) };
 		busAction = { |...msg|
+			// sensor data is sent to busses.
+			// values are between 0 and 1.
 			msg = msg.collect({|i,j| spec10bits.unmap(i)});
 			bus.set(*msg);
 		};
 		action = action.addFunc(busAction);
+	}
+
+	// made to send sponge data directly into a PresetInterpolator.
+	// prInt is expected to be a PresetInterpolator.
+	connect { |prInt|
+		interpAction = { |...msg|
+			prInt.cursorPos_(msg.keep(prInt.numDim));
+		};
+		action = action.addFunc(interpAction);
+	}
+
+	disconnect {
+		action = action.removeFunc(interpAction);
 	}
 
 	createAllFeatures {

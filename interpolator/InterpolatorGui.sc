@@ -1,5 +1,5 @@
-AbstractInterpolatorGui : ObjectGui {
-	var <layout, <>actions;
+AbstractInterpolatorGui : HJHObjectGui {
+	var <>actions;
 
 	*new { arg model;
 		var new;
@@ -46,17 +46,19 @@ AbstractInterpolatorGui : ObjectGui {
 
 InterpolatorGui : AbstractInterpolatorGui {
 
-	var <>guiItems, butHeight;
+	var <>guiItems, butHeight, footer, axies;
 
 	init {
 		butHeight = 18;
 		guiItems = List[];
+		axies = [0,1];
 		actions = IdentityDictionary[
 			\weights -> {|model, what, interPoints, weights|
 				guiItems.do{ |guiItem, i|
 					interPoints.includes(i).if{
 						guiItem[3].string_(
-							weights[interPoints.indexOf(i)].asString
+							weights[interPoints.indexOf(i)]
+							.trunc(0.0001).asString
 						);
 					} {
 						guiItem[3].string_("0");
@@ -64,8 +66,27 @@ InterpolatorGui : AbstractInterpolatorGui {
 				}
 			},
 			\pointAdded -> {|model, what, point|
+				// Remove footer.
+				footer.flatten.do{ |guiItem|
+					guiItem.remove;
+				};
+				// Reset layout postion so that new lines appear at the right
+				// place.
+				layout.decorator.top_(
+					((butHeight+4)*(guiItems.size)) + 4
+				);
 				this.addPresetLine(point, model.points.size - 1);
-				layout.resizeToFit(true,true);
+				this.drawFooter(model.points[0].size);
+				layout.view.resizeTo(
+					this.calculateLayoutSize.width,
+					this.calculateLayoutSize.height
+				);
+				iMadeMasterLayout.if {
+					layout.parent.resizeTo(
+						this.calculateLayoutSize.width,
+						this.calculateLayoutSize.height
+					);
+				}
 			},
 			\pointRemoved -> {|model, what, i|
 				// Remove all lines starting from the line to be removed.
@@ -74,12 +95,16 @@ InterpolatorGui : AbstractInterpolatorGui {
 						guiItem.remove;
 					}
 				};
+				// removeFooter;
+				footer.flatten.do{ |guiItem|
+					guiItem.remove;
+				};
 				// Remove the objects in guiItems
 				guiItems = guiItems.keep(i);
 				// Reset layout postion so that new lines appear at the right
 				// place.
 				layout.decorator.top_(
-					(butHeight+4)*(guiItems.size)
+					((butHeight+4)*(guiItems.size)) + 4
 				);
 				// Redraw lines
 				if (model.points.size != i) {
@@ -87,11 +112,15 @@ InterpolatorGui : AbstractInterpolatorGui {
 						this.addPresetLine(model.points[j],j);
 					};
 				};
+				// redraw footer.
+				this.drawFooter(model.points[0].size);
 			},
 			\pointMoved -> {|model, what, i, point|
 				guiItems[i][1].do{ |numBox, j|
 					numBox.value_(point[j]);
 				};
+			},
+			\cursorMoved -> {|model, what, i, point|
 			}
 		];
 	}
@@ -99,7 +128,7 @@ InterpolatorGui : AbstractInterpolatorGui {
 	calculateLayoutSize {
 		var width, height;
 		width = ((54*(model.n + 1)) + ((butHeight+4)*2));
-		height = ((butHeight+4)*(model.points.size + 1)).max(100);
+		height = ((butHeight+4)*(model.points.size + 3)).max(100);
 		^Rect(0,0,width,height);
 	}
 
@@ -112,7 +141,8 @@ InterpolatorGui : AbstractInterpolatorGui {
 		model.points.do{|point, i|
 			this.addPresetLine(point, i);
 			// layout.decorator.nextLine;
-		}
+		};
+		this.drawFooter(model.points[0].size);
 	}
 
 	drawHeader {
@@ -153,12 +183,38 @@ InterpolatorGui : AbstractInterpolatorGui {
 		]);
 	}
 
-	update { arg model, what ... args;
-		var action;
-		action = actions.at(what);
-		if (action.notNil, {
-			action.valueArray(model, what, args);
-		});
+	drawFooter{ |size|
+		footer = [ 
+			StaticText(layout, butHeight@butHeight)
+			.string_(""),
+			// coordinates
+			Array.fill(size, {|j|
+				PopUpMenu( layout, (50@butHeight))
+				.items_(["","x","y"])
+				.action_({ |menu|
+					menu.value.switch(
+						0, {
+						},
+						1, {
+							footer[1][axies[0]].value_(0);
+							axies[0] = j;
+						},
+						2, {
+							footer[1][axies[1]].value_(0);
+							axies[1] = j;
+						}
+					)
+				});
+			}),
+			// Make 2D gui button
+			Button( layout, (72@butHeight))
+			.states_([["2D Gui"]])
+			.action_({
+				model.gui2D(nil,nil,axies[0],axies[1]);
+			})
+		];
+		footer[1][axies[0]].value_(1);
+		footer[1][axies[1]].value_(2);
 	}
 	// Eventually remove (when QT has drag and drop)
 	writeName {}
@@ -208,12 +264,14 @@ Interpolator2DGui : AbstractInterpolatorGui {
 					this.calculateSpecs();
 				};
 				uv.refresh;
+			},
+			\cursorMoved -> {|model, what, i, point|
 			}
 		];
 	}
 	
 	calculateLayoutSize {
-		^Rect(0,0,400,400)
+		^Rect(0,0,408,408)
 	}
 
 	scale { |point|
@@ -278,8 +336,10 @@ Interpolator2DGui : AbstractInterpolatorGui {
 	}
 
 	calculateSpecs { |spec|
-		var min, max, padding;
-		spec = spec.asSpec;
+		var min, max;
+		spec.notNil.if{
+			spec = spec.asSpec;
+		};
 		min = (model.points ++ [model.cursor]).flop.flatten.minItem;
 		max = (model.points ++ [model.cursor]).flop.flatten.maxItem;
 		pointsSpec = spec ? ControlSpec(min, max);
@@ -290,7 +350,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 	}
 	
 	getColor { |i|
-		^ColorList.get(i);
+		^model.colors[i];
 	}
 
 	guiBody { |lay, xAxis = 0, yAxis = 1, spec|
@@ -298,7 +358,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 		x = xAxis;
 		y = yAxis;
 		layout = lay;
-		bounds = layout.bounds;
+		bounds = Rect(0,0,layout.bounds.width - 8, layout.bounds.height - 8);
 		this.calculateSpecs(spec);
 		uv = UserView( layout, bounds );
 
@@ -380,22 +440,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 			};
 		
 			if (clickCount == 2) { //doubleclick adds a point
-				if (grabbed) {
-					// // first close all other windows.
-					// // so that there is only one preset gui at the
-					// // time.
-					// // Also, store origin to draw new Window
-					// //  on the same postion
-					// if(model.currentPreset.gui.notNil){
-					// 	origin = model.currentPreset.gui.w.bounds.origin;
-					// 	model.currentPreset.gui.close;
-					// };
-					// model.presets.do{|i,j|
-					// 	if(i.gui.notNil){
-					// 		origin = i.gui.w.bounds.origin;
-					// 		i.gui.close;
-					// 	}
-					// };
+				if (grabbed) { // if double click on a point, open Preset Gui.
 					model.makePointGui(grabbedPoint);
 				} {
 					this.addPoint(this.unscale(Point(x,y)));

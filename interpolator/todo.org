@@ -1,0 +1,17 @@
+* TODO make save button.
+* TODO fix: parameter removal in PresetGui.
+* TODO test Mac OSX
+* TODO fix: window name should change when preset name is changed in Gui.
+* DONE fix: scaling gui when points are added or moved outside of frame.
+  CLOSED: [2011-05-17 Tue 17:26]
+* DONE add OSC configuration GUI.
+  CLOSED: [2011-05-22 Sun 17:13]
+* DONE fix: point removal in FullGui.
+  CLOSED: [2011-05-17 Tue 17:26]
+
+* DONE fix: gui resize when adding points to InterpolatorGui and FullGui.
+  CLOSED: [2011-05-21 Sat 15:17]
+* DONE make a send OSC method
+  CLOSED: [2011-05-21 Sat 19:09]
+* DONE make a send MIDI ctl method
+  CLOSED: [2011-05-22 Sun 17:13]

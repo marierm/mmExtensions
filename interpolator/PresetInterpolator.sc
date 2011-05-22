@@ -8,7 +8,6 @@ PresetInterpolator : SimpleController {
 	}
 
 	*load { |path|
-		// Colors may differ when loading a saved PresetInterpolator.
 		var e;
 		e = path.load;
 		^super.newCopyArgs(
@@ -16,32 +15,38 @@ PresetInterpolator : SimpleController {
 		).init.initWithEvent(e);
 	}
 
+	// used by .load
+	// e should be structured like this:
+	// (
+	// points: [point,point,...],
+	// cursor: cursor.saveable,
+	// cursorPos: cusorPosition, (array)
+	// presets: [preset.saveable, preset.saveable, ...]
+	// colors: [color, color, ...]
+	// )
 	initWithEvent { |e|
-		model.cursor_(e.at(\cursor));
-		//add the points
+		model.cursor_(e.at(\cursorPos));
+		//move point 0 (it is already there) and remove it from the event.
 		model.movePoint(0, e.at(\points)[0]);
 		e.at(\points).removeAt(0);
+		// add all other points
 		e.at(\points).do{|i|
 			model.add(i);
 		};
-
-		e.at(\presets)[0].at(\parameters).do{|i|
-			cursor.add(
-				Parameter().name_(i.name).spec_(i.spec);
-			)
+		// add parameters to cursor.
+		// they will be added to other points as well (they are siblings).
+		e.at(\cursor).at(\parameters).do{|i|
+			cursor.add(i);
 		};
+		// name presets set their parameter values.
 		presets.do{ |i,j|
 			i.name_(e.at(\presets)[j].at(\name));
 			i.parameters.do{|k,l|
 				k.value_(e.at(\presets)[j].at(\parameters)[l].value);
-			}
+			};
 		};
-		// presets.do{ |i|
-		// 	// make the interpolator refresh the weights when a preset is
-		// 	// modified.
-		// 	i.addDependant(this);
-		// };
-		// this.initActions;
+		// set colors
+		model.colors_(e.at(\colors));
 	}
 
 	init {
@@ -75,32 +80,43 @@ PresetInterpolator : SimpleController {
 			\pointAdded -> {|interpolator, what, point|
 				presets.add(Preset.newFromSibling(cursor));
 				presets.last.addDependant(this);
+				this.changed(\presetAdded, presets.last);
 			},
-			\pointDuplicated -> {|interpolator, what, pointId|
-				presets.add(Preset.newFromSibling(cursor));
-				presets.last.addDependant(this);
+			\pointDuplicated -> {|interpolator, what, point, pointId|
+				var paramValues;
+				paramValues = presets[pointId].parameters.collect(_.value);
+				model.add(point);
 				presets.last.parameters.do{ |i,j|
-					i.value_(presets[pointId].parameters[j].value);
+					i.value_(paramValues[j].value);
 				};
+				this.changed(\presetAdded, presets.last);
 			},
-			\cursorDuplicated ->{|interpolator, what|
-				presets.add(Preset.newFromSibling(cursor));
-				presets.last.addDependant(this);
+			\cursorDuplicated ->{|interpolator, what, point, pointId|
+				var paramValues;
+				paramValues = cursor.parameters.collect(_.value);
+				model.add(point);
 				presets.last.parameters.do{ |i,j|
-					i.value_(cursor.parameters[j].value);
+					i.value_(paramValues[j].value);
 				};
+				this.changed(\presetAdded, presets.last);
 			},
 			\pointRemoved -> {|interpolator, what, i|
 				presets.removeAt(i);
+				this.changed(\presetRemoved, i);
 			},
 			\makeCursorGui -> {|model, what|
 				cursor.gui.background_(Color.clear);
 			},
-			\makePointGui -> {|model, what, point|
-				presets[point].gui.background_(ColorList.get(point));
+			\makePointGui -> {|model, what, point, color|
+				presets[point].gui.background_(color);
 			},
 			\paramValue -> {|preset, what, param, paramId, val|
 				model.moveAction.value;
+			},
+			\presetName -> {|preset, what, name|
+				this.changed(
+					\presetName, presets.indexOf(preset), name
+				);
 			}
 		];
 	}
@@ -109,25 +125,65 @@ PresetInterpolator : SimpleController {
 		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
 		(
 			points: model.points,
-			cursor: model.cursor,
+			colors: model.colors,
+			cursor: cursor.saveable,
+			cursorPos: model.cursor,
 			presets: presets.collect(_.saveable)
 		).writeArchive(path);
-		// // close the guis before saving because there are too many open
-		// // functions. If I don't close them, I get only warnings when I save,
-		// // but it is impossible to load the object : literal > 256...
-		// presets.do{|i,j| if(i.gui.notNil){i.gui.close}};
-		// if(currentPreset.gui.notNil){currentPreset.gui.close};
-		// [points, presets, currentPoint, currentPreset].writeArchive(path);
-		// //Archive.global.put(name, this);
-		// //this.writeArchive(path);
 	}
 
-	guiClass { ^PresetInterpolatorGui }
+	// access to model
+	getPresetColor {|i|
+		^model.colors[i];
+	}
+
+	numDim {
+		^model.n;
+	}
+
+	cursorPos {
+		^model.cursor;
+	}
+
+	cursorPos_ {|pos|
+		// var newPos;
+		// i is the index of an axis (0 for, 1 for y, 2 for z, ...)
+		// pos is the position on the axis
+		// newPos = model.cursor;
+		// newPos[i] = pos;
+		model.cursor_(pos);
+	}
+
+	action_ { |function|
+		model.action_(function);
+	}
+
+	attachedPoint_ {|i|
+		model.attachedPoint_(i);
+	}
+
+	attachedPoint {
+		^model.attachedPoint;
+	}
+
+	initOSC { |netAd, mess|
+		mess = mess ? "/PresetInterpolator";
+		cursor.parameters.do{|i|
+			i.initOSC(netAd, mess ++ "/" ++ i.name);
+		};
+	}
+	// gui stuff
+	guiClass { ^PresetInterpolatorFullGui }
+
+	interpolatorGui { arg  ... args;
+		^InterpolatorGui.new(model).performList(\gui,args);
+	}
 
 	gui2D { arg  ... args;
-		^Interpolator2DGui.new(model).performList(
-			\gui,args
-		);
+		^Interpolator2DGui.new(model).performList(\gui,args);
 	}
 
+	namesGui { arg  ... args;
+		^PresetInterpolatorGui.new(this).performList(\gui,args);
+	}
 }
