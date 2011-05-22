@@ -13,26 +13,26 @@ Interpolator { //More than 2 dimensions
 		moveAction = {
 			// action should not update gui
 			action.value(interPoints, weights);
+			this.refreshRads;
+			//find points that intersect with cursor
+			//calculate weights
+			if(points.indexOfEqual(cursor).notNil) {
+				// if cursor is exactly on a preset
+				interPoints = [ points.indexOfEqual(cursor) ];
+				weights = [1];
+			}{
+				interPoints = points.selectIndex({ |i,j|
+					i.dist(cursor) < (cursorRad + rads[j])
+				});
+				weights = points[interPoints].collect({ |i,j|
+					i.intersectArea(
+						rads[interPoints[j]], cursor, cursorRad
+					) / (pi * rads[interPoints[j]].squared);
+				}).normalizeSum;
+			};
 			{
-				this.refreshRads;
-				//find points that intersect with cursor
-				//calculate weights
-				if(points.indexOfEqual(cursor).notNil) {
-					// if cursor is exactly on a preset
-					interPoints = [ points.indexOfEqual(cursor) ];
-					weights = [1];
-				}{
-					interPoints = points.selectIndex({ |i,j|
-						i.dist(cursor) < (cursorRad + rads[j])
-					});
-					weights = points[interPoints].collect({ |i,j|
-						i.intersectArea(
-							rads[interPoints[j]], cursor, cursorRad
-						) / (pi * rads[interPoints[j]].squared);
-					}).normalizeSum;
-				};
 				this.changed(\weights, interPoints, weights);
-			}.defer; // gui stuff is defered (just in case);
+			}.defer; // gui stuff is defered;
 		};
 		n = numDim;
 		colors = List[];

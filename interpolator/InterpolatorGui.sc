@@ -119,6 +119,8 @@ InterpolatorGui : AbstractInterpolatorGui {
 				guiItems[i][1].do{ |numBox, j|
 					numBox.value_(point[j]);
 				};
+			},
+			\cursorMoved -> {|model, what, i, point|
 			}
 		];
 	}
@@ -262,6 +264,8 @@ Interpolator2DGui : AbstractInterpolatorGui {
 					this.calculateSpecs();
 				};
 				uv.refresh;
+			},
+			\cursorMoved -> {|model, what, i, point|
 			}
 		];
 	}
