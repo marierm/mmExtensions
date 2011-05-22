@@ -100,7 +100,7 @@ Interpolator { //More than 2 dimensions
 		if (pos.size == n) {
 			cursor = pos;
 			attachedPoint.notNil.if {
-				this.movePoint(attachedPoint, pos);
+				{ this.movePoint(attachedPoint, pos); }.defer;
 			};
 			// this.refreshRads;
 			moveAction.value();
