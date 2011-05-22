@@ -19,12 +19,13 @@ PresetInterpolator : SimpleController {
 	// e should be structured like this:
 	// (
 	// points: [point,point,...],
-	// cursor: cursor,
+	// cursor: cursor.saveable,
+	// cursorPos: cusorPosition, (array)
 	// presets: [preset.saveable, preset.saveable, ...]
 	// colors: [color, color, ...]
 	// )
 	initWithEvent { |e|
-		model.cursor_(e.at(\cursor));
+		model.cursor_(e.at(\cursorPos));
 		//move point 0 (it is already there) and remove it from the event.
 		model.movePoint(0, e.at(\points)[0]);
 		e.at(\points).removeAt(0);
@@ -34,10 +35,8 @@ PresetInterpolator : SimpleController {
 		};
 		// add parameters to cursor.
 		// they will be added to other points as well (they are siblings).
-		e.at(\presets)[0].at(\parameters).do{|i|
-			cursor.add(
-				Parameter().name_(i.name).spec_(i.spec);
-			)
+		e.at(\cursor).at(\parameters).do{|i|
+			cursor.add(i);
 		};
 		// name presets set their parameter values.
 		presets.do{ |i,j|
@@ -127,7 +126,8 @@ PresetInterpolator : SimpleController {
 		(
 			points: model.points,
 			colors: model.colors,
-			cursor: model.cursor,
+			cursor: cursor.saveable,
+			cursorPos: model.cursor,
 			presets: presets.collect(_.saveable)
 		).writeArchive(path);
 	}

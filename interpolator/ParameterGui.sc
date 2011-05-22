@@ -39,13 +39,28 @@ ParameterGui : AbstractInterpolatorGui {
 	
 	guiBody {|lay|
 		layout = lay;
-		name = TextField( layout, (layout.bounds.width - 24)@16 )
+		name = TextField( layout, (layout.bounds.width - 70)@16 )
 		.string_(model.name)
 		.align_(\left)
 		.background_(Color.clear)
 		.resize_(2)
 		.action_({ |tf|
 			model.name_(tf.value);
+		});
+		Button( layout, 16@16)
+		.states_([["O"]])
+		.resize_(3)
+		.action_({
+			OscConfigurationGui.new(model).performList(\gui);
+		});
+		Button( layout, 16@16)
+		.states_([["M"]])
+		.resize_(3)
+		.action_({
+			MIDIClient.initialized.not.if{
+				MIDIClient.init;
+			};
+			MidiConfigurationGui.new(model).performList(\gui);
 		});
 		Button( layout, 16@16)
 		.states_([["X"]])

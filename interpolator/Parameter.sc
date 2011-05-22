@@ -1,5 +1,7 @@
 Parameter {
-	var <name, <value, <spec, <>action, <siblings, <sendOSC, netAddr, <oscMess;
+
+	var <name, <value, <spec, <>action, <siblings, <>sendOSC, <>netAddr,
+	<>oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan;
 	//value is unmapped (between 0 and 1);
 	
 	*new { |name, spec, value|
@@ -22,7 +24,10 @@ Parameter {
 		spec = sp ? ControlSpec();
 		try {val = val.clip(0,1)};
 		value = val ? spec.unmap(spec.default);
+		netAddr = NetAddr.localAddr;
+		oscMess = "/" ++ name;
 		sendOSC = false;
+		sendMIDI = false;
 	}
 
 	initFromSibling { |sblng|
@@ -34,8 +39,18 @@ Parameter {
 
 	initOSC { |netAd, mess|
 		netAddr = netAd ? NetAddr.localAddr;
-		oscMess = mess ? name;
+		oscMess = mess ? ("/" ++ name);
 		sendOSC = true;
+	}
+
+	initMIDI { |portNum, chan, ctl|
+		MIDIClient.initialized.not.if{
+			MIDIClient.init;
+		};
+		midiPort = MIDIOut(portNum);
+		midiChan = chan;
+		midiCtl = ctl;
+		sendMIDI = true;
 	}
 
 	spec_ { |sp|
@@ -77,6 +92,9 @@ Parameter {
 		action.value(this.mapped, value);
 		sendOSC.if{
 			netAddr.sendMsg(oscMess, mapped);
+		};
+		sendMIDI.if{
+			midiPort.control(midiChan, midiCtl, \midi.asSpec.map(value));
 		};
 	}
 

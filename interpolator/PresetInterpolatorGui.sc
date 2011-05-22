@@ -1,13 +1,25 @@
 PresetInterpolatorGui : AbstractInterpolatorGui {
 	//model is a PresetInterpolator
-	var <>guiItems, butHeight;
+	var <>guiItems, butHeight, cursorLine;
 
 	init {
 		butHeight = 18;
 		guiItems = List[];
 		actions = IdentityDictionary[
 			\presetAdded -> {|prInterpolator, what, preset|
+				// Remove cursorLine
+				cursorLine.flatten.do{|guiItem|
+						guiItem.remove;
+				};
+				// Reset layout position so that new lines appear at the right
+				// place.
+				layout.decorator.top_(
+					((butHeight+4)*(guiItems.size)) + 4
+				);
+				// Add preset line.
 				this.addPresetLine(preset, model.presets.size - 1);
+				// Add cursorLine.
+				this.drawCursorLine;
 				layout.view.resizeTo(
 					this.calculateLayoutSize.width,
 					this.calculateLayoutSize.height
@@ -26,6 +38,10 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 						guiItem.remove;
 					}
 				};
+				// Remove cursorLine
+				cursorLine.flatten.do{|guiItem|
+						guiItem.remove;
+				};
 				// Remove the objects in guiItems
 				guiItems = guiItems.keep(i);
 				// Reset layout postion so that new lines appear at the right
@@ -39,6 +55,7 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 						this.addPresetLine(model.presets[j],j);
 					};
 				};
+				this.drawCursorLine;
 			},
 			\presetName -> {|prInterpolator, what, presetId, name|
 				guiItems[presetId][0].string_(name);
@@ -58,13 +75,27 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 		this.drawHeader;
 		model.presets.do{|preset, i|
 			this.addPresetLine(preset, i);
-		}
+		};
+		this.drawCursorLine;
 	}
 
 	drawHeader {
 		StaticText(layout, (this.calculateLayoutSize.width - 2)@butHeight)
 		.string_("Preset Name")
 		.align_(\centre);
+	}
+
+	drawCursorLine{ |size|
+		cursorLine = [ 
+			StaticText(layout, 100@butHeight)
+			.string_("Cursor"),
+			// edit button
+			Button( layout, (40@butHeight))
+			.states_([["E"]])
+			.action_({
+				model.cursor.gui;
+			})
+		];
 	}
 
 	addPresetLine { |preset, i|
