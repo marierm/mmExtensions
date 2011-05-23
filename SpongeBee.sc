@@ -4,6 +4,7 @@ SpongeBee {
 	var <port, inputThread, <sensorNames, spec10bits;
 	var <>action, <bus, <>busses, <>synths, busAction;
 	var <dn, <server, <name, <>features, interpAction;
+	var netAddr, oscMsgPrefix;
 
 	*new { arg portName="/dev/ttyUSB0", baudRate=19200;
 		^super.new.init(portName, baudRate);
@@ -55,6 +56,39 @@ SpongeBee {
 			\fsr1, \fsr2, \buttons];
 		busses = IdentityDictionary.new();
 		synths = IdentityDictionary.new();
+		// netAddr = NetAddr.localAddr;
+		// oscMsgPrefix = "/sponge/01"
+	}
+
+	sendFeaturesOverOSC { |na, prefix|
+		var featuresArray, bndl;
+		netAddr = na ? NetAddr.localAddr;
+		oscMsgPrefix = prefix ? "/sponge/01/features";
+		featuresArray = busses.collect(_.index).invert.atAll(
+			(0..busses.size-1)
+		);
+		action = action.addFunc({
+			bus.getn(busses.size,{ |array|
+				bndl = [[oscMsgPrefix],featuresArray,array].flop;
+				netAddr.sendBundle(0, *bndl);
+			});
+		});
+	}
+
+	sendRawOSC { |na, prefix|
+		var bndl;
+		netAddr = na ? NetAddr.localAddr;
+		oscMsgPrefix = prefix ? "/sponge/01/raw";
+		action = action.addFunc({ |...msg|
+			bndl = [[oscMsgPrefix],sensorNames,msg].flop;
+			netAddr.sendBundle(0, *bndl);
+		});
+	}
+
+	listFeatures {
+		^busses.collect(_.index).invert.atAll(
+			(0..busses.size-1)
+		);
 	}
 
 	createBus { |s|
