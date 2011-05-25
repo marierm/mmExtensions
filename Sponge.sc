@@ -1,6 +1,6 @@
-SpongeCee {
+Sponge {
 	var <port, inputThread, <featureNames, <features;
-	var <>action, <values;
+	var <>action, <values, interpAction;
 
 	*new { arg portName="/dev/ttyUSB0", baudRate=19200;
 		^super.new.init(portName, baudRate);
@@ -16,7 +16,6 @@ SpongeCee {
 			xonxoff:false,
 			exclusive:false
 		);
-		values = IdentityDictionary();
 		inputThread= fork {
 			// SPONGEBEE BYTE PARSING
 			// ======================
@@ -51,6 +50,8 @@ SpongeCee {
 		};
 		features = List[];
 		featureNames = List[];
+
+		// Add Feautres for each sensor
 		[
 			\acc1x, \acc1y, \acc1z,
 			\acc2x, \acc2y, \acc2z,
@@ -58,11 +59,57 @@ SpongeCee {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
+		// pitch, roll, yaw
+		Feature.lang(\pitch1, this, [this[\acc1x], this[\acc1z]],
+			Feature.langFuncs[\atan]);
+		Feature.lang(\roll1, this, [this[\acc1y], this[\acc1z]],
+			Feature.langFuncs[\atan]);
+		Feature.lang(\yaw1, this, [this[\acc1x], this[\acc1y]],
+			Feature.langFuncs[\atan]);
+		Feature.lang(\pitch2, this, [this[\acc2x], this[\acc2z]],
+			Feature.langFuncs[\atan]);
+		Feature.lang(\roll2, this, [this[\acc2y], this[\acc2z]],
+			Feature.langFuncs[\atan]);
+		Feature.lang(\yaw2, this, [this[\acc2x], this[\acc2y]],
+			Feature.langFuncs[\atan]);
+		Feature.lang(\pitch, this, [this[\pitch1], this[\pitch2]],
+			Feature.langFuncs[\meanMany]);
+		Feature.lang(\roll, this, [this[\roll1], this[\roll2]],
+			Feature.langFuncs[\meanMany]);
+		Feature.lang(\yaw, this, [this[\yaw1], this[\yaw2]],
+			Feature.langFuncs[\meanMany]);
+		
+		// Add lowpass and hipass Feature on evrything;
+		features.collect(_.name).do{|i|
+			Feature.synth(
+				(i ++ \LP).asSymbol, this, this[i],
+				Feature.synthFuncs[\LP], [\freq, 3]
+			);
+			Feature.synth(
+				(i ++ \HP).asSymbol, this, this[i],
+				Feature.synthFuncs[\HP], [\freq, 3]
+			);
+		}
+
 	}
 
 	at { |key|
 		^features[featureNames.indexOf(key)];
 	}
 	
-	valueAt {}
+	connect { |prInt|
+		interpAction = { |...msg|
+			prInt.cursorPos_(msg.keep(prInt.numDim));
+		};
+		action = action.addFunc(interpAction);
+	}
+
+	disconnect {
+		action = action.removeFunc(interpAction);
+	}
+
+	close {
+		inputThread.stop;
+		port.close;
+	}
 }
