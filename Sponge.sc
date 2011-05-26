@@ -1,10 +1,12 @@
 Sponge {
+	classvar featureList;
 	var <port, inputThread, <featureNames, <features;
 	var <>action, <values, interpAction;
 
 	*new { arg portName="/dev/ttyUSB0", baudRate=19200;
 		^super.new.init(portName, baudRate);
 	}
+
 	init { arg pn, br;
 		port = SerialPort(
 			port:pn,
@@ -50,7 +52,6 @@ Sponge {
 		};
 		features = List[];
 		featureNames = List[];
-
 		// Add Feautres for each sensor
 		[
 			\acc1x, \acc1y, \acc1z,
@@ -59,6 +60,10 @@ Sponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
+		this.createAllFeatures;
+	}
+
+	createAllFeatures {
 		// pitch, roll, yaw
 		Feature.lang(\pitch1, this, [this[\acc1x], this[\acc1z]],
 			Feature.langFuncs[\atan]);
@@ -78,8 +83,27 @@ Sponge {
 			Feature.langFuncs[\meanMany]);
 		Feature.lang(\yaw, this, [this[\yaw1], this[\yaw2]],
 			Feature.langFuncs[\meanMany]);
-		
-		// Add lowpass and hipass Feature on evrything;
+		// bend, twist, fold
+		Feature.lang(\bend, this, [this[\pitch1], this[\pitch2]],
+			Feature.langFuncs[\diff]);
+		Feature.lang(\twist, this, [this[\roll1], this[\roll2]],
+			Feature.langFuncs[\diff]);
+		Feature.lang(\fold, this, [this[\yaw1], this[\yaw2]],
+			Feature.langFuncs[\diff]);
+		// fsr mean
+		Feature.lang(\fsrMean, this, [this[\fsr1], this[\fsr2]],
+			Feature.langFuncs[\meanMany]);
+		// fsr diff
+		Feature.lang(\fsrDiff, this, [this[\fsr1], this[\fsr2]],
+			Feature.langFuncs[\diff]);
+		// Speed of everything
+		features.collect(_.name).do{|i|
+			Feature.lang(
+				(i ++ \Speed).asSymbol, this, this[i],
+				Feature.langFuncs[\slope]
+			)
+		};
+		// lowpass and hipass Feature on evrything;
 		features.collect(_.name).do{|i|
 			Feature.synth(
 				(i ++ \LP).asSymbol, this, this[i],

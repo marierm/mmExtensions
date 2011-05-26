@@ -46,7 +46,7 @@ Feature {
 			\meanMany -> { |data|
 				data[0].mean
 			},
-			\speed -> { |data| 
+			\slope -> { |data| 
 				try{(data[0] - data[1])}
 			},
 			\meanOne -> { |data|
