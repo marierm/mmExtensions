@@ -67,56 +67,6 @@ Sponge {
 		Sponge.featureList.collect({|i| i[\name] }).do{ |i|
 			this.createFeature(i);
 		};
-		// // pitch, roll, yaw
-		// Feature.lang(\pitch1, this, [this[\acc1x], this[\acc1z]],
-		// 	Feature.langFuncs[\atan]);
-		// Feature.lang(\roll1, this, [this[\acc1y], this[\acc1z]],
-		// 	Feature.langFuncs[\atan]);
-		// Feature.lang(\yaw1, this, [this[\acc1x], this[\acc1y]],
-		// 	Feature.langFuncs[\atan]);
-		// Feature.lang(\pitch2, this, [this[\acc2x], this[\acc2z]],
-		// 	Feature.langFuncs[\atan]);
-		// Feature.lang(\roll2, this, [this[\acc2y], this[\acc2z]],
-		// 	Feature.langFuncs[\atan]);
-		// Feature.lang(\yaw2, this, [this[\acc2x], this[\acc2y]],
-		// 	Feature.langFuncs[\atan]);
-		// Feature.lang(\pitch, this, [this[\pitch1], this[\pitch2]],
-		// 	Feature.langFuncs[\meanMany]);
-		// Feature.lang(\roll, this, [this[\roll1], this[\roll2]],
-		// 	Feature.langFuncs[\meanMany]);
-		// Feature.lang(\yaw, this, [this[\yaw1], this[\yaw2]],
-		// 	Feature.langFuncs[\meanMany]);
-		// // bend, twist, fold
-		// Feature.lang(\bend, this, [this[\pitch1], this[\pitch2]],
-		// 	Feature.langFuncs[\diff]);
-		// Feature.lang(\twist, this, [this[\roll1], this[\roll2]],
-		// 	Feature.langFuncs[\diff]);
-		// Feature.lang(\fold, this, [this[\yaw1], this[\yaw2]],
-		// 	Feature.langFuncs[\diff]);
-		// // fsr mean
-		// Feature.lang(\fsrMean, this, [this[\fsr1], this[\fsr2]],
-		// 	Feature.langFuncs[\meanMany]);
-		// // fsr diff
-		// Feature.lang(\fsrDiff, this, [this[\fsr1], this[\fsr2]],
-		// 	Feature.langFuncs[\diff]);
-		// // Speed of everything
-		// features.collect(_.name).do{|i|
-		// 	Feature.lang(
-		// 		(i ++ \Speed).asSymbol, this, this[i],
-		// 		Feature.langFuncs[\slope]
-		// 	)
-		// };
-		// // lowpass and hipass Feature on evrything;
-		// features.collect(_.name).do{|i|
-		// 	Feature.synth(
-		// 		(i ++ \LP).asSymbol, this, this[i],
-		// 		Feature.synthFuncs[\LP], [\freq, 3]
-		// 	);
-		// 	Feature.synth(
-		// 		(i ++ \HP).asSymbol, this, this[i],
-		// 		Feature.synthFuncs[\HP], [\freq, 3]
-		// 	);
-		// }
 	}
 
 	at { |key|
@@ -233,7 +183,8 @@ Sponge {
 	}
 }
 
-
+// Useful to develop when I don't have the sponge with me.
+// Uses random data insteead of sensors.
 SpongeEmu : Sponge {
 	init { arg func;
 		inputThread = fork {
