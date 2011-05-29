@@ -1,5 +1,5 @@
 Sponge {
-	classvar featureList;
+	classvar <>featureList, <featureNames;
 	var <port, inputThread, <featureNames, <features;
 	var <>action, <values, interpAction;
 
@@ -60,61 +60,63 @@ Sponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
-		this.createAllFeatures;
+		// this.createAllFeatures;
 	}
-
+	
 	createAllFeatures {
-		// pitch, roll, yaw
-		Feature.lang(\pitch1, this, [this[\acc1x], this[\acc1z]],
-			Feature.langFuncs[\atan]);
-		Feature.lang(\roll1, this, [this[\acc1y], this[\acc1z]],
-			Feature.langFuncs[\atan]);
-		Feature.lang(\yaw1, this, [this[\acc1x], this[\acc1y]],
-			Feature.langFuncs[\atan]);
-		Feature.lang(\pitch2, this, [this[\acc2x], this[\acc2z]],
-			Feature.langFuncs[\atan]);
-		Feature.lang(\roll2, this, [this[\acc2y], this[\acc2z]],
-			Feature.langFuncs[\atan]);
-		Feature.lang(\yaw2, this, [this[\acc2x], this[\acc2y]],
-			Feature.langFuncs[\atan]);
-		Feature.lang(\pitch, this, [this[\pitch1], this[\pitch2]],
-			Feature.langFuncs[\meanMany]);
-		Feature.lang(\roll, this, [this[\roll1], this[\roll2]],
-			Feature.langFuncs[\meanMany]);
-		Feature.lang(\yaw, this, [this[\yaw1], this[\yaw2]],
-			Feature.langFuncs[\meanMany]);
-		// bend, twist, fold
-		Feature.lang(\bend, this, [this[\pitch1], this[\pitch2]],
-			Feature.langFuncs[\diff]);
-		Feature.lang(\twist, this, [this[\roll1], this[\roll2]],
-			Feature.langFuncs[\diff]);
-		Feature.lang(\fold, this, [this[\yaw1], this[\yaw2]],
-			Feature.langFuncs[\diff]);
-		// fsr mean
-		Feature.lang(\fsrMean, this, [this[\fsr1], this[\fsr2]],
-			Feature.langFuncs[\meanMany]);
-		// fsr diff
-		Feature.lang(\fsrDiff, this, [this[\fsr1], this[\fsr2]],
-			Feature.langFuncs[\diff]);
-		// Speed of everything
-		features.collect(_.name).do{|i|
-			Feature.lang(
-				(i ++ \Speed).asSymbol, this, this[i],
-				Feature.langFuncs[\slope]
-			)
+		Sponge.featureList.collect({|i| i[\name] }).do{ |i|
+			this.createFeature(i);
 		};
-		// lowpass and hipass Feature on evrything;
-		features.collect(_.name).do{|i|
-			Feature.synth(
-				(i ++ \LP).asSymbol, this, this[i],
-				Feature.synthFuncs[\LP], [\freq, 3]
-			);
-			Feature.synth(
-				(i ++ \HP).asSymbol, this, this[i],
-				Feature.synthFuncs[\HP], [\freq, 3]
-			);
-		}
-
+		// // pitch, roll, yaw
+		// Feature.lang(\pitch1, this, [this[\acc1x], this[\acc1z]],
+		// 	Feature.langFuncs[\atan]);
+		// Feature.lang(\roll1, this, [this[\acc1y], this[\acc1z]],
+		// 	Feature.langFuncs[\atan]);
+		// Feature.lang(\yaw1, this, [this[\acc1x], this[\acc1y]],
+		// 	Feature.langFuncs[\atan]);
+		// Feature.lang(\pitch2, this, [this[\acc2x], this[\acc2z]],
+		// 	Feature.langFuncs[\atan]);
+		// Feature.lang(\roll2, this, [this[\acc2y], this[\acc2z]],
+		// 	Feature.langFuncs[\atan]);
+		// Feature.lang(\yaw2, this, [this[\acc2x], this[\acc2y]],
+		// 	Feature.langFuncs[\atan]);
+		// Feature.lang(\pitch, this, [this[\pitch1], this[\pitch2]],
+		// 	Feature.langFuncs[\meanMany]);
+		// Feature.lang(\roll, this, [this[\roll1], this[\roll2]],
+		// 	Feature.langFuncs[\meanMany]);
+		// Feature.lang(\yaw, this, [this[\yaw1], this[\yaw2]],
+		// 	Feature.langFuncs[\meanMany]);
+		// // bend, twist, fold
+		// Feature.lang(\bend, this, [this[\pitch1], this[\pitch2]],
+		// 	Feature.langFuncs[\diff]);
+		// Feature.lang(\twist, this, [this[\roll1], this[\roll2]],
+		// 	Feature.langFuncs[\diff]);
+		// Feature.lang(\fold, this, [this[\yaw1], this[\yaw2]],
+		// 	Feature.langFuncs[\diff]);
+		// // fsr mean
+		// Feature.lang(\fsrMean, this, [this[\fsr1], this[\fsr2]],
+		// 	Feature.langFuncs[\meanMany]);
+		// // fsr diff
+		// Feature.lang(\fsrDiff, this, [this[\fsr1], this[\fsr2]],
+		// 	Feature.langFuncs[\diff]);
+		// // Speed of everything
+		// features.collect(_.name).do{|i|
+		// 	Feature.lang(
+		// 		(i ++ \Speed).asSymbol, this, this[i],
+		// 		Feature.langFuncs[\slope]
+		// 	)
+		// };
+		// // lowpass and hipass Feature on evrything;
+		// features.collect(_.name).do{|i|
+		// 	Feature.synth(
+		// 		(i ++ \LP).asSymbol, this, this[i],
+		// 		Feature.synthFuncs[\LP], [\freq, 3]
+		// 	);
+		// 	Feature.synth(
+		// 		(i ++ \HP).asSymbol, this, this[i],
+		// 		Feature.synthFuncs[\HP], [\freq, 3]
+		// 	);
+		// }
 	}
 
 	at { |key|
@@ -135,5 +137,125 @@ Sponge {
 	close {
 		inputThread.stop;
 		port.close;
+	}
+	
+	createFeature { |key|
+		var fe, nameList, inputs;
+		// get a list af the names of the features;
+		nameList = Sponge.featureList.collect({|i| i[\name] });
+		// fe is an event describing a feature.
+		fe = Sponge.featureList[nameList.indexOf(key)];
+		// check if inputs exist
+		fe[\input].do{|i|
+			// if they don't, create them.
+			this.featureNames.includes(i).not.if{
+				this.createFeature(i);
+			};
+		};
+		// fe.input contains names of Features.
+		// This gets the actual Feature.
+		inputs = fe[\input].collect({|i| this[i]});
+		Feature.performList(
+			fe[\type],
+			[fe[\name], this, inputs, fe[\func], fe[\args]]
+		);
+	}
+
+	*initClass {
+		featureList = List[
+			(name:\pitch1, input:[\acc1x, \acc1z],
+				func:Feature.langFuncs[\atan], type:\lang
+			).know_(false),
+			(name:\roll1, input:[\acc1y, \acc1z],
+				func:Feature.langFuncs[\atan], type:\lang
+			).know_(false),
+			(name:\yaw1, input:[\acc1x, \acc1y],
+				func:Feature.langFuncs[\atan], type:\lang
+			).know_(false),
+			(name:\pitch2, input:[\acc2x, \acc2z],
+				func:Feature.langFuncs[\atan], type:\lang
+			).know_(false),
+			(name:\roll2, input:[\acc2y, \acc2z],
+				func:Feature.langFuncs[\atan], type:\lang
+			).know_(false),
+			(name:\yaw2, input:[\acc2x, \acc2y],
+				func:Feature.langFuncs[\atan], type:\lang
+			).know_(false),
+			(name:\pitch, input:[\pitch1, \pitch2],
+				func:Feature.langFuncs[\meanMany], type:\lang
+			).know_(false),
+			(name:\roll, input:[\roll1, \roll2],
+				func:Feature.langFuncs[\meanMany], type:\lang
+			).know_(false),
+			(name:\yaw, input:[\yaw1, \yaw2],
+				func:Feature.langFuncs[\meanMany], type:\lang
+			).know_(false),
+			// bend, twist, fold
+			(name:\bend, input:[\pitch1, \pitch2],
+				func:Feature.langFuncs[\diff], type:\lang
+			).know_(false),
+			(name:\twist, input:[\roll1, \roll2],
+				func:Feature.langFuncs[\diff], type:\lang
+			).know_(false),
+			(name:\fold, input:[\yaw1, \yaw2],
+				func:Feature.langFuncs[\diff], type:\lang
+			).know_(false),
+			// fsr mean
+			(name:\fsrMean, input:[\fsr1, \fsr2],
+				func:Feature.langFuncs[\meanMany], type:\lang
+			).know_(false),
+			// fsr diff
+			(name:\fsrDiff, input:[\fsr1, \fsr2],
+				func:Feature.langFuncs[\diff], type:\lang
+			).know_(false)
+		];
+		featureList.collect({|i| i[\name] }).do{|i|
+			featureList.add(
+				(name:(i ++ \Speed).asSymbol, input:[i],
+					func:Feature.langFuncs[\slope], type:\lang
+				).know_(false)
+			)
+		};
+		featureList.collect({|i| i[\name] }).do{|i|
+			featureList.add(
+				(name:(i ++ \LP).asSymbol, input:[i],
+					func:Feature.langFuncs[\LP], type:\synth,
+					args:[\freq, 3]
+				).know_(false)
+			);
+			featureList.add(
+				(name:(i ++ \HP).asSymbol, input:[i],
+					func:Feature.langFuncs[\HP], type:\synth,
+					args:[\freq, 100]
+				).know_(false)
+			);
+		};
+	}
+}
+
+
+SpongeEmu : Sponge {
+	init { arg func;
+		inputThread = fork {
+			var data; 
+			data = Array.fill(9,0);
+			loop {
+				data = Array.rand(9, 0, 1023);
+				values = data;
+				action.value(*data);
+				0.1.wait;
+			};
+		};
+		features = List[];
+		featureNames = List[];
+		// Add Feautres for each sensor
+		[
+			\acc1x, \acc1y, \acc1z,
+			\acc2x, \acc2y, \acc2z,
+			\fsr1, \fsr2, \buttons
+		].do{|i,j|
+			Feature.sensor(i,this,j);
+		};
+		// this.createAllFeatures;
 	}
 }
