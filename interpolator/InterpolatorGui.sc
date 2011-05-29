@@ -1,6 +1,5 @@
-AbstractInterpolatorGui : HJHObjectGui {
-	var <>actions;
-
+AbstractInterpolatorGui : ObjectGui {
+	var <>actions, <layout, <iMadeMasterLayout = false;
 	*new { arg model;
 		var new;
 		new = super.new;
@@ -28,7 +27,29 @@ AbstractInterpolatorGui : HJHObjectGui {
 		});
 		^layout;
 	}
-	
+
+	guify { arg parent,bounds,title;
+		// converts the parent to a FlowView or compatible object
+		// thus creating a window from nil if needed
+		// registers to remove self as dependent on model if window closes
+		if(bounds.notNil,{
+			bounds = bounds.asRect;
+		});
+		if(parent.isNil,{
+            parent = PageLayout(
+				title ?? {model.asString.copyRange(0,50)},
+				bounds,
+				front:false
+			);
+			iMadeMasterLayout = true;
+		},{
+			parent = parent.asPageLayout(bounds);
+		});
+		// i am not really a view in the hierarchy
+		parent.removeOnClose(this);
+		^parent
+	}
+
 	calculateLayoutSize {
 		^Rect(0,0,400,400)
 	}
