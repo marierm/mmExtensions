@@ -9,9 +9,9 @@
 // expected to contain all the sensor data coming from the interface (the
 // Sponge in this case).
 
-// The input of other Features is a Feature or an array of Features.  This is
-// useful if the Feature needs many inputs as is the case when calculating
-// yaw, pitch and roll of an accelerometer.
+// The input of other Features is an array of Features (or an array of size
+// one containing a Feature).  This is useful if many inputs are needed as is
+// the case when calculating yaw, pitch and roll of an accelerometer.
 
 // .value returns the current value.  .bus returns the bus on which the
 // Features puts its data.  interface is an physical interface (the sponge).
@@ -47,10 +47,10 @@ Feature {
 				data[0].mean
 			},
 			\slope -> { |data| 
-				try{(data[0] - data[1])}
+				(data[0][0] - data[1][0])
 			},
 			\meanOne -> { |data|
-				data.mean
+				data.flatten.mean
 			}
 		];
 	}
@@ -173,7 +173,7 @@ LangFeature : Feature {
 		oscPath = "/sponge/01";
 		server = Server.default;
 		bus = Bus.control(server);
-		inputData = Array.newClear(historySize);
+		inputData = Array.fill(historySize, 0);
 		// input is a feature: process a feature;
 		fullFunc = {
 			inputData.addFirst(input.collect(_.value));
