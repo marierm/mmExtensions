@@ -123,55 +123,55 @@ ArrayWarp : LinearWarp {
 		//return = this.deepCopy;
 		widgets = [
 			NumberBox(w, 40@18).value_(this.minval)
-				.action_({|i|
-					this.minval_(i.value);
-					this.init;
-					this.warp.class.switch(
-						CurveWarp, { this.warp.init(curve.value) }
-					);
-					action.value(this);
-				}),
+			.action_({|i|
+				this.minval_(i.value);
+				this.init;
+				this.warp.class.switch(
+					CurveWarp, { this.warp.init(curve.value) }
+				);
+				action.value(this);
+			}),
 			NumberBox(w, 40@18).value_(this.maxval)
-				.action_({|i|
-					this.maxval_(i.value);
-					this.init;
-					this.warp.class.switch(
-						CurveWarp, { this.warp.init(curve.value) }
-					);
-					action.value(this);
-				}),
+			.action_({|i|
+				this.maxval_(i.value);
+				this.init;
+				this.warp.class.switch(
+					CurveWarp, { this.warp.init(curve.value) }
+				);
+				action.value(this);
+			}),
 			PopUpMenu(w, 40@18).items_(Warp.warps.keys.asArray ++ [\curve])
-				.value_(
-					if (this.warp.class == CurveWarp) {
-						Warp.warps.keys.asArray.size;
-					}{
-						Warp.warps.keys.asArray.indexOf(this.warp.asSpecifier)
+			.value_(
+				if (this.warp.class == CurveWarp) {
+					Warp.warps.keys.asArray.size;
+				}{
+					Warp.warps.keys.asArray.indexOf(this.warp.asSpecifier)
+				}
+			)
+			.action_({|i|
+				try {this.warp.w.close};
+				if (i.item == \curve) {
+					curve.enabled_(true);
+					this.warp_(curve.value.asWarp(this));
+					this.init;
+					this.warp.init(curve.value);
+				}{
+					curve.enabled_(false);
+					this.warp_(i.item.asWarp(this));
+					this.init;
+					if (i.item == \array) {
+						this.init;
+						this.warp.init;
+						this.warp.makeWindow(
+							w.bounds.left + 290,
+							w.bounds.top,
+							action,
+							name
+						);
 					}
-				)
-				.action_({|i|
-					try {this.warp.w.close};
-					if (i.item == \curve) {
-						curve.enabled_(true);
-						this.warp_(curve.value.asWarp(this));
-						this.init;
-						this.warp.init(curve.value);
-					}{
-						curve.enabled_(false);
-						this.warp_(i.item.asWarp(this));
-						this.init;
-						if (i.item == \array) {
-							this.init;
-							this.warp.init;
-							this.warp.makeWindow(
-								w.bounds.left + 290,
-								w.bounds.top,
-								action,
-								name
-							);
-						}
-					};
-					action.value(this);
-				}),
+				};
+				action.value(this);
+			}),
 			NumberBox(w, 40@18).value_(this.step)
 				.action_({|i|
 					this.step_(i.value);
@@ -230,7 +230,7 @@ ArrayWarp : LinearWarp {
 				if (i.value != 0) {
 					args = i.item.asSymbol.asSpec.storeArgs;
 					widgets.do({ |j,k|
-						if (k == 2) {
+						if (k == 2) {// set the warp type
 							j.value_(
 								Warp.warps.keys.asArray.indexOf(
 									args[k]
@@ -242,7 +242,7 @@ ArrayWarp : LinearWarp {
 						}
 					});
 				};
-				action.value;
+				action.value(this);
 			});
 		w.front;
 		w.onClose_({
