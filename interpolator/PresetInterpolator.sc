@@ -172,6 +172,14 @@ PresetInterpolator : SimpleController {
 			i.initOSC(netAd, mess ++ "/" ++ i.name);
 		};
 	}
+
+	connect { |axis, feature|
+		model.connect(axis, feature);
+	}
+
+	disconnect { |axis|
+		model.disconnect(axis);
+	}
 	// gui stuff
 	guiClass { ^PresetInterpolatorFullGui }
 

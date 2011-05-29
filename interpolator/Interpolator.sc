@@ -3,7 +3,8 @@
 Interpolator { //More than 2 dimensions
 
 	var <points, <rads, <cursor, <cursorRad, <>moveAction,
-	<weights, <interPoints, <n, <>colors, <>action, <>attachedPoint;
+	<weights, <interPoints, <n, <>colors, <>action, <>attachedPoint,
+	connections;
 	
 	*new{ |numDim = 2|
 		^super.new.init(numDim);
@@ -35,6 +36,7 @@ Interpolator { //More than 2 dimensions
 			}.defer; // gui stuff is defered;
 		};
 		n = numDim;
+		connections = Array.newClear(n);
 		colors = List[];
 		points = List.new;
 		rads = List.new;
@@ -156,6 +158,28 @@ Interpolator { //More than 2 dimensions
 		// this.changed(\weights, weights);
 	}
 
+	// To control the position of the cursor using an interface (the sponge).
+	// A Feature is connected to one axis of the interpolator.
+	connect { |axis, feature|
+		var pos, func;
+		func = { |value|
+			pos = cursor;
+			pos[axis] = value;
+			this.cursor_(pos);
+		};
+		connections[axis] = (feature:feature, func:func).know_(false);
+		feature.action = action.addFunc(func);
+	}
+
+	// gui stuff
+	disconnect { |axis|
+		connections[axis][\feature].action_(
+			connections[axis][\feature].action.removeFunc(
+				connections[axis][\func]
+			);
+		)
+	}
+
 	guiClass { ^InterpolatorGui }
 
 	gui2D { arg  ... args;
@@ -165,4 +189,3 @@ Interpolator { //More than 2 dimensions
 	}
 
 }
-
