@@ -128,7 +128,7 @@ InterpolatorGui : AbstractInterpolatorGui {
 					((butHeight+4)*(guiItems.size)) + 4
 				);
 				// Redraw lines
-				if (model.points.size != i) {
+				(model.points.size != i).if {
 					(i..model.points.size-1).do { |j,k|
 						this.addPresetLine(model.points[j],j);
 					};
@@ -272,7 +272,10 @@ Interpolator2DGui : AbstractInterpolatorGui {
 				uv.refresh;
 			},
 			\pointAdded -> {|model, what, point|
-				((pointsSpec.minval > point.minItem) or: (pointsSpec.maxval < point.maxItem)).if {
+				(
+					(pointsSpec.minval > point.minItem) or: 
+					(pointsSpec.maxval < point.maxItem)
+				).if {
 					this.calculateSpecs();
 				};
 				uv.refresh;
@@ -281,7 +284,10 @@ Interpolator2DGui : AbstractInterpolatorGui {
 				uv.refresh;
 			},
 			\pointMoved -> {|model, what, i, point|
-				((pointsSpec.minval > point.minItem) or: (pointsSpec.maxval < point.maxItem)).if {
+				(
+					(pointsSpec.minval > point.minItem) or:
+					(pointsSpec.maxval < point.maxItem)
+				).if {
 					this.calculateSpecs();
 				};
 				uv.refresh;
@@ -419,7 +425,7 @@ Interpolator2DGui : AbstractInterpolatorGui {
 			model.points.do{|point,i|
 				//if mouse is within 6 pixels of a point, grab it.
 				point = this.scale(this.getPoint(i));
-				if(((x - point.x).abs < 6) && ((y-point.y).abs < 6)){
+				(((x - point.x).abs < 6) && ((y-point.y).abs < 6)).if {
 					grabbed = true;
 					grabbedPoint = i;
 					//keeps point at the same spot under te mouse when dragging
@@ -427,18 +433,17 @@ Interpolator2DGui : AbstractInterpolatorGui {
 				}
 			};
 
-			if (((x - scaled.x).abs < 6) && ((y - scaled.y).abs < 6)){
+			(((x - scaled.x).abs < 6) && ((y - scaled.y).abs < 6)).if {
 				// user clicked on the cursor
-				if ((modifiers bitAnd: 134217728 != 0)) { //alt key is
-														  //pressed:
-														  //copyCurrentPoint;
+				modifiers.isAlt.if {
+					//alt key is pressed: copyCurrentPoint;
 					this.duplicatePoint(\cursor);
 					grabbed = true;
 					grabbedPoint = model.points.size - 1; //grab the point
 														  //that was just
 														  //created.
 				} { 
-					if (modifiers bitAnd: 234881024 == 0) {
+					(modifiers bitAnd: 234881024 == 0).if {
 						// no modifier keys are pressed
 						grabbed = true;
 						grabbedPoint = -1; //-1 is cursor
@@ -446,9 +451,9 @@ Interpolator2DGui : AbstractInterpolatorGui {
 					}
 				};
 			} {
-				if ((modifiers bitAnd: 134217728 != 0) && grabbed) {
+				(modifiers.isAlt && grabbed).if {
 					// user clicked on a preset (not on the cursor)
-					if (modifiers bitAnd: 33554432 != 0) {
+					(modifiers.isAlt && modifiers.isShift).if {
 						//alt and shift are both pressed
 						model.remove(grabbedPoint);
 						grabbed = false;
@@ -460,8 +465,8 @@ Interpolator2DGui : AbstractInterpolatorGui {
 				};
 			};
 		
-			if (clickCount == 2) { //doubleclick adds a point
-				if (grabbed) { // if double click on a point, open Preset Gui.
+			(clickCount == 2).if { //doubleclick adds a point
+				grabbed.if { // if double click on a point, open Preset Gui.
 					model.makePointGui(grabbedPoint);
 				} {
 					this.addPoint(this.unscale(Point(x,y)));
