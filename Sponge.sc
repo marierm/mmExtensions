@@ -52,7 +52,7 @@ Sponge {
 		};
 		features = List[];
 		featureNames = List[];
-		// Add Feautres for each sensor
+		// Add Features for each sensor
 		[
 			\acc1x, \acc1y, \acc1z,
 			\acc2x, \acc2y, \acc2z,
@@ -60,6 +60,11 @@ Sponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
+		// Sponge.featureList.select({|i| 
+		// 	i[\type] == \sensor
+		// }).collect(_[\name]).do({|i|
+		// 	this.createFeature(i)
+		// });
 		// this.createAllFeatures;
 	}
 	
@@ -91,20 +96,29 @@ Sponge {
 	
 	createFeature { |key|
 		var fe, nameList, inputs;
+		this.featureNames.includes(key).if{
+			"Feature % already exists.\n".postf(key);
+			^this[key];
+		};
 		// get a list af the names of the features;
 		nameList = Sponge.featureList.collect({|i| i[\name] });
 		// fe is an event describing a feature.
 		fe = Sponge.featureList[nameList.indexOf(key)];
-		// check if inputs exist
-		fe[\input].do{|i|
-			// if they don't, create them.
-			this.featureNames.includes(i).not.if{
-				this.createFeature(i);
+		// if type is sensor, no need to do this.
+		(fe[\type] != \sensor).if{
+			// check if inputs exist
+			fe[\input].do{|i|
+				// if they don't, create them.
+				this.featureNames.includes(i).not.if{
+					this.createFeature(i);
+				};
 			};
+			// fe.input contains names of Features.
+			// This gets the actual Feature.
+			inputs = fe[\input].collect({|i| this[i]});
+		} {
+			inputs = fe[\input];
 		};
-		// fe.input contains names of Features.
-		// This gets the actual Feature.
-		inputs = fe[\input].collect({|i| this[i]});
 		Feature.performList(
 			fe[\type],
 			[fe[\name], this, inputs, fe[\func], fe[\args]]
@@ -113,6 +127,15 @@ Sponge {
 
 	*initClass {
 		featureList = List[
+			(name:\acc1x, input:0, type:\sensor),
+			(name:\acc1y, input:1, type:\sensor),
+			(name:\acc1z, input:2, type:\sensor),
+			(name:\acc2x, input:3, type:\sensor),
+			(name:\acc2y, input:4, type:\sensor),
+			(name:\acc2z, input:5, type:\sensor),
+			(name:\fsr1, input:6, type:\sensor),
+			(name:\fsr2, input:7, type:\sensor),
+			(name:\buttons, input:8, type:\sensor),
 			(name:\pitch1, input:[\acc1x, \acc1z],
 				func:Feature.langFuncs[\atan], type:\lang
 			).know_(false),
