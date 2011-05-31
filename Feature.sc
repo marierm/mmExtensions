@@ -27,11 +27,11 @@ Feature {
 		synthFuncs = IdentityDictionary[
 			\LP -> {
 				arg in0 = 0, freq = 3;
-				LPF.kr(In.kr(in0, 1), freq);
+				LPF.kr(In.kr(in0.linexp(0,1023,0,1), 1), freq);
 			},
 			\HP -> {
 				arg in0 = 0, freq = 100;
-				HPF.kr(In.kr(in0, 1), freq);
+				HPF.kr(In.kr(in0.linexp(0,1023,0,1), 1), freq);
 			}
 		];
 		langFuncs = IdentityDictionary[
@@ -95,7 +95,7 @@ SynthFeature : Feature {
 		oscPath = "/sponge/01";
 		server = Server.default;
 		args = input.collect{|i,j|
-			[(\in ++ j).asSymbol, i.bus.index];
+			[(\in ++ j).asSymbol, i.bus];
 		}.flatten ++ args;
 
 		fork {
@@ -109,6 +109,7 @@ SynthFeature : Feature {
 				args: args);
 			server.sync;
 		};
+
 		
 		fullFunc = {
 			bus.get{|value|

@@ -192,13 +192,13 @@ Sponge {
 		featureList.collect({|i| i[\name] }).do{|i|
 			featureList.add(
 				(name:(i ++ \LP).asSymbol, input:[i],
-					func:Feature.langFuncs[\LP], type:\synth,
+					func:Feature.synthFuncs[\LP], type:\synth,
 					args:[\freq, 3]
 				).know_(false)
 			);
 			featureList.add(
 				(name:(i ++ \HP).asSymbol, input:[i],
-					func:Feature.langFuncs[\HP], type:\synth,
+					func:Feature.synthFuncs[\HP], type:\synth,
 					args:[\freq, 100]
 				).know_(false)
 			);
