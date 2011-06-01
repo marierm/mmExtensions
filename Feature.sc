@@ -51,6 +51,16 @@ Feature {
 			},
 			\meanOne -> { |data|
 				data.flatten.mean
+			},
+			\button -> { |data, button|
+				// checks if button changed value.
+				var changed, val;
+				changed = (
+					(data[0][0] & (1<<button) != 0 ) !=
+					(data[1][0] & (1<<button) != 0 )
+				);
+				val = (data[0][0] & (1<<button) != 0 ).asInteger;
+				[val, changed];
 			}
 		];
 	}
@@ -59,8 +69,8 @@ Feature {
 		^SensorFeature.new(name, interface, input)
 	}
 
-	*lang { |name, interface, input, function|
-		^LangFeature.new(name, interface, input, function)
+	*lang { |name, interface, input, function, args|
+		^LangFeature.new(name, interface, input, function, args)
 	}
 
 	*synth { |name, interface, input, function, args|
@@ -165,11 +175,11 @@ SensorFeature : Feature { // the raw data from the sensor
 LangFeature : Feature {
 	var <>historySize=10, <inputData, <value;
 
-	*new { |name, interface, input, function|
-		^super.newCopyArgs(name, interface, input).init(function);
+	*new { |name, interface, input, function, args|
+		^super.newCopyArgs(name, interface, input).init(function, args);
 	}
 
-	init { |function|
+	init { |function, args|
 		netAddr = NetAddr.localAddr;
 		oscPath = "/sponge/01";
 		server = Server.default;
@@ -179,7 +189,7 @@ LangFeature : Feature {
 		fullFunc = {
 			inputData.addFirst(input.collect(_.value));
 			(inputData.size > historySize).if { inputData.pop };
-			value = function.value(inputData);
+			value = function.value(inputData, *args);
 			action.value(value, inputData);
 			netAddr.sendMsg(oscPath, name, value);
 			bus.set(value);

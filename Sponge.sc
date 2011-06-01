@@ -1,5 +1,5 @@
 Sponge {
-	classvar <>featureList, <featureNames;
+	classvar <>featureList;
 	var <port, inputThread, <featureNames, <features;
 	var <>action, <values, interpAction;
 
@@ -201,6 +201,17 @@ Sponge {
 					func:Feature.synthFuncs[\HP], type:\synth,
 					args:[\freq, 100]
 				).know_(false)
+			);
+		};
+		// buttons
+		7.do{|i|
+			featureList.add(
+				(name:(\button ++ i.asString).asSymbol,
+					input:[\buttons],
+					func: Feature.langFuncs[\button],
+					type: \lang,
+					args: [i]
+				).know_(false);
 			);
 		};
 	}
