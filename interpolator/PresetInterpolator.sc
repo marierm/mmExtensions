@@ -15,6 +15,14 @@ PresetInterpolator : SimpleController {
 		).init.initWithEvent(e);
 	}
 
+	*loadOld { |path|
+		var e;
+		e = path.load;
+		^super.newCopyArgs(
+			Interpolator(e.at(\points)[0].size)
+		).init.initWithEventOld(e);
+	}
+
 	// used by .load
 	// e should be structured like this:
 	// (
@@ -37,6 +45,33 @@ PresetInterpolator : SimpleController {
 		// they will be added to other points as well (they are siblings).
 		e.at(\cursor).at(\parameters).do{|i|
 			cursor.add(i);
+		};
+		// name presets set their parameter values.
+		presets.do{ |i,j|
+			i.name_(e.at(\presets)[j].at(\name));
+			i.parameters.do{|k,l|
+				k.value_(e.at(\presets)[j].at(\parameters)[l].value);
+			};
+		};
+		// set colors
+		model.colors_(e.at(\colors));
+	}
+
+	initWithEventOld { |e|
+		model.cursor_(e.at(\cursor));
+		//move point 0 (it is already there) and remove it from the event.
+		model.movePoint(0, e.at(\points)[0]);
+		e.at(\points).removeAt(0);
+		// add all other points
+		e.at(\points).do{|i|
+			model.add(i);
+		};
+		// add parameters to cursor.
+		// they will be added to other points as well (they are siblings).
+		e.at(\presets)[0].at(\parameters).do{|i|
+			cursor.add(
+				Parameter().name_(i.name).spec_(i.spec);
+			)
 		};
 		// name presets set their parameter values.
 		presets.do{ |i,j|

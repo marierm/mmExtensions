@@ -173,6 +173,9 @@ Sponge {
 			(name:\fold, input:[\yaw1, \yaw2],
 				func:Feature.langFuncs[\diff], type:\lang
 			).know_(false),
+			(name:\pseudoBend, input:[\acc1x, \acc2x],
+				func:Feature.langFuncs[\diff], type:\lang
+			).know_(false),
 			// fsr mean
 			(name:\fsrMean, input:[\fsr1, \fsr2],
 				func:Feature.langFuncs[\meanMany], type:\lang
