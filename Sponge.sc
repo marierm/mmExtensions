@@ -103,6 +103,20 @@ Sponge {
 		port.close;
 	}
 	
+	setOSCport { |port|
+		this.features.do{ |i| i.netAddr.port_(port) }
+	}
+	
+	setOSCaddr { |addr|		
+		this.features.do{ |i| i.netAddr.hostname_(addr) }
+	}
+	
+	setOSCprefix { |prefix|
+		this.features.do{ |i|
+			i.oscPath = prefix.asString ++ "/" ++ i.oscPath.split.last;
+		}
+	}
+	
 	createFeature { |key|
 		var fe, nameList, inputs;
 		this.featureNames.includes(key).if{
