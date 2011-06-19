@@ -1,0 +1,204 @@
+CLASS:: Interpolator
+summary:: Interpolation in a N-dimension space.
+categories:: 
+related:: PresetInterpolator
+
+DESCRIPTION::
+Interpolator 
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new Interpolator.
+
+argument:: numDim
+The number of dimensions of the space.  This is static.
+
+returns:: An Interpolator.
+
+
+INSTANCEMETHODS::
+
+METHOD:: points
+Get the list of all the data points in the space.
+
+returns:: A list of points.
+
+METHOD:: rads
+To calculate the weights of the data points, Interpolator uses an algorithm
+that involves drawing circles around the data points and the cursor.  This
+method returns the radii of the data points.
+
+returns:: A list of radii.
+
+METHOD:: cursorRad
+Get the radius of the cursor.
+
+returns:: A floating point value.
+
+METHOD:: cursor_
+Set the current position of the cursor (the interpolation point).
+
+argument:: pos
+The new position of the cursor.  An array of size n (n is the number of
+dimensions of the space).
+
+returns:: nil
+
+METHOD:: moveAction
+(describe method here)
+
+returns:: nil
+
+METHOD:: weights
+
+Get the weights of data points that have an influence.  The list of points
+that have an influence are returned by the interPoints method.  On its own,
+this data is useless.
+
+returns:: A list
+
+METHOD:: interPoints
+Get the list of data points that have a non nil weight.  Combine this
+information with the weights method to get the weight of each data point.
+
+returns:: A list
+
+METHOD:: n
+Get the number of dimension of the space.
+
+returns:: An Integer
+
+METHOD:: colors
+Get the colors of the data points.  When a gui is made, each data point has its
+own color.  See gui method.
+
+returns:: A list of colors
+
+METHOD:: action
+(describe method here)
+
+returns:: (returnvalue)
+
+METHOD:: attachedPoint
+(describe method here)
+
+returns:: (returnvalue)
+
+METHOD:: init
+(describe method here)
+
+argument:: numDim
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: addFirstPoint
+(describe method here)
+
+returns:: (returnvalue)
+
+METHOD:: add
+(describe method here)
+
+argument:: point
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: duplicatePoint
+(describe method here)
+
+argument:: point
+(describe argument here)
+
+argument:: pointId
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: remove
+(describe method here)
+
+argument:: i
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: changeCoord
+(describe method here)
+
+argument:: i
+(describe argument here)
+
+argument:: j
+(describe argument here)
+
+argument:: val
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: movePoint
+(describe method here)
+
+argument:: i
+(describe argument here)
+
+argument:: pos
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: makePointGui
+(describe method here)
+
+argument:: grabbedPoint
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: refreshRads
+(describe method here)
+
+returns:: (returnvalue)
+
+METHOD:: connect
+(describe method here)
+
+argument:: axis
+(describe argument here)
+
+argument:: feature
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: disconnect
+(describe method here)
+
+argument:: axis
+(describe argument here)
+
+returns:: (returnvalue)
+
+METHOD:: guiClass
+(describe method here)
+
+returns:: (returnvalue)
+
+METHOD:: gui2D
+(describe method here)
+
+argument::  ... args
+(describe argument here)
+
+returns:: (returnvalue)
+
+
+EXAMPLES::
+
+code::
+(some example code)
+::

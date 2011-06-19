@@ -1,9 +1,8 @@
 The mmExtensions for SuperCollider
 ==================================
 
-At this point, this repository contains the .sc files necessary to use the
-PresetInterpolator HyperInterpolator objects.
-
+At this point, this repository contains the files required to use to the
+PresetInterpolator
 
 Installation
 ============
@@ -19,6 +18,8 @@ Dependencies
 
 - SenseWorld DataNetwork Quark (by Marije Baalman)
 - wslib Quark (by Wouter Snoei)
+- ddwGUIEnhancements
+- crucial library
 
 
 Description
@@ -26,7 +27,11 @@ Description
 
 PresetInterpolator() is a preset interpolation system similar in concept to
 the Metasurface found in AudioMulch (created by Ross Bencina) or the max patch
-SpaceMaster (by Ali Momeni and David Wessel).
+SpaceMaster (by Ali Momeni and David Wessel).  There is an important
+difference, though: PresetInterpolator() can interpolate spaces of any number of dimensions.
+
+Interpolator() is the interpolation system used by PresetInterpolator().  It
+does not do much: it simply outputs weights.
 
 
 How to use it
@@ -35,53 +40,93 @@ How to use it
 These classes are not documented yet, but here are a few notes to get you
 started.
 
-x = PresetInterpolator();
-x.makeGui;
-// The grey dot is the cursor;
-// The colored dots represent presets;
-// The size of the transparent circles around the presets is proportional to
-// the weight of that preset;
+// There is only one parameter to Interpolator: the number of dimensions.
+// This creates a 2D interpolator:
 
-// In the Preset Interpolator window:
-// ==================================
-// Double-click in the area to add new presets (colored points);
-// Alt-click and drag to duplicate a preset;
-// Alt-click and drag also works on the cursor (the grey point);
+x = Interpolator(2);
+x.gui; // nice GUI.
+
+// The (bigger) grey dot is the cursor;
+// The colored dots are the data points;
+// The size of the transparent circles around the data points is
+// proportional to the weight of that preset;
+
+// In the Interpolator window:
+// ===========================
+// Double-click in the area to add new data points;
 // Alt-shift-click deletes a presets;
+
+// When using the Interpolator to interpolate between presets:
+// ==========================================================
+// (see PresetInterpolator below)
+// Alt-click and drag to duplicate a data point (a preset);
+// Alt-click and drag also works on the cursor (the grey point);
 // Double-click on a preset to edit it;
+
+
+// A PresetInterpolator takes an Interpolator as an argument.  If no argument
+// is provided, a 2D Interpolator is created for you;
+y = PresetInterpolator(x);
+y.gui;
+
+// In the PresetInterpolator window:
+// ================================
+// There is a row for each data point (which is associated with a preset).
+// Here is a description of the columns:
+   
+// 1. The preset name (pressing enter after editing the textField).
+// 2. The "Attach" button. This button attaches the data point to the
+//    cursor.  Every time the cursor is moved, the attached point follows
+//    it. This is useful to position a point in a multidimensional space
+//    using an interface.  There will be an screencast of an example soon.
+// 3. The "Edit" button. Opens a PresetGui window (edit the preset).
+// 4. The data point id (an integer).
+// 5. The data points coordinates.
+// 6. The "Remove" button (X).
+// 7. The weight of the point.
+
+// The last row is different:
+// 1. "Cursor".
+// 2. "Edit" button.
+// 3. One PopUpMenu for each coordinate. (See note)
+// 4. "2D Gui" button: creates an interpolator GUI (2D).
+
+// The PopUpMenus have 3 possible values: nothing, x, y.  They are used to
+// select which coordinates will be used by the 2D GUI.  Especially useful to
+// visualize multidimensonal data.
+
 
 // In preset window:
 // ================= 
-// Click on the '+' to add more parameters. (That's the wide button at the top
-// of the window, the '+' is hardly visible in Cocoa.)
+// Click on the 'Add Parameter' to add more parameters.
 // The presets can have any number of parameters and these parameters can
 // represent anything.
 // Double-click on the slider to edit the parameter's ControlSpec.
-// Alt-click on the slider to edit the parameter's action.
-// Parameters can be named
+// Click on the "O" button to open the OSC preferences of the parameter.
+// Click on the "M" button to open the MIDI preferences of the parameter.
+// Parameters can be named.
 
-// parameters can also be added like this:
-x.addParameter; // execute this many times
-x.presets[0].parameters;
-x.presets[1].parameters;// Each preset has the same number of parameters.
-x.presets[2].parameters;// 
+// Each preset of a PresetInterpolator always have the same number of
+// Parameters.  Changing the Spec or the name of a Parameter will change
+// the spec or the name of the corresponding Parameters of other presets.
+// Example: if I rename the third parameter of a preset to "foo", the third
+// parameter of all presets will be renamed "foo".
 
-x.currentPreset; // this 'preset' represents the cursor
+y.cursor; // this 'preset' represents the cursor
 
 // When adding an action to the currentPreset's parameters, moving the cursor
-// does something! (this action can also be added in the GUI)
+// does something!
 (
-x.currentPreset.parameters[0].action_({|mapped, unmapped|
+y.cursor.parameters[0].action_({|mapped, unmapped|
 	"Parameter 0: ".post;
 	mapped.postln;
 });
 )
 // Each parameter has a ControlSpec (it can be edited in the GUI as well)
-x.currentPreset.parameters[0].spec_(ControlSpec(20,20000,\exp));
-x.currentPreset.parameters[0].spec_(\midi); //this works too.
+y.cursor.parameters[0].spec_(ControlSpec(20,20000,\exp));
+y.cursor.parameters[0].spec_(\midi); //this works too.
 
-// This should be enough to get experienced users started.  Sorry for the less
-// experienced ones... proper doc is on the way.
+// Proper doc is on the way.
 
 
 
@@ -99,18 +144,17 @@ intersecting circles.  Here is how it works (briefly):
    moved.
 
 2- The points which have a circle that intersects the cursor's circle have a
-   weight.  (Not all points do, but at least one does.)
+   non nil weight.  (Not all points do, but at least one does.)
 
 3- The weight of each point is calculated like this: (intersecting area of the
    2 circles) / (total area of the circle).
 
-4- Then we do a weighted sum using these weights.
+4- Then we do a weighted sum for each parameter using these weights.
 
 I know, it is not very clear.  Just look at the code!
 
 
-... and it works in spaces with more than 2D (I tried up to 6D).  It is
-implemented in the HyperInterpolator class.
+And it works in spaces with more than 2D (I tried up to 10D).
 
 
 Cheers!

@@ -1,3 +1,5 @@
+* TODO make addDim method;
+* TODO actions hould not be saved;
 * TODO make save button.
 * TODO fix: parameter removal in PresetGui.
 * TODO test Mac OSX
