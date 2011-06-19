@@ -7,10 +7,16 @@ y = PresetInterpolator(Interpolator(8));
 y.gui(nil, Rect(200,200, 800,200));// with nice gui.
 
 
+//list the serial devices
+SerialPort.listDevices;
+
 // create the sponge obect and connect it to the PresetInterpolator.
 a = SpongeBee("/dev/tty.usbserial-A800ekzP");
+a.action_({|...data| data.postln;})
 a.connect(z)
 a.close;
+
+
 
 //Save and load
 y.save(Document.current.dir ++ "/presetInterpolatorPatch.pri");

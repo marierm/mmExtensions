@@ -42,7 +42,7 @@ SpongeBee {
 			data[0] = (msb << 3) + lsb;
 			loop {
 				byte = port.read;
-				id = byte;				// get sensor number
+				id = byte; // get sensor number
 				if (id == 8) { // if it is the button's data
 					msb = port.read % 128;
 					data[id] = msb;
@@ -50,7 +50,12 @@ SpongeBee {
 				} {	// if it is the data of one of the sensors
 					msb = port.read % 128;
 					lsb = port.read % 8;
-					data[id] = (msb << 3) + lsb;
+					try {
+						data[id] = (msb << 3) + lsb;
+					} { |error|
+						error.postln;
+						"This error can be ignored safely.".postln;
+					}
 				};
 			}
 		};
