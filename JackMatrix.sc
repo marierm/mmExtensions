@@ -1,5 +1,5 @@
 JackMatrix {
-	var <>prefix, <grid, <inputs, <outputs, <connections;
+	var <>prefix, <grid, <inputs, <outputs, <connections, w, sv, uv;
 
 	*new{ |prefix|
 		^super.newCopyArgs(prefix).init;
@@ -47,11 +47,41 @@ JackMatrix {
 		};
 		pipe.close;
 
+		w = Window("JackMatrix",Rect(100,100,600,600));
+		sv = ScrollView(w, Rect(0,0,600,600));
+		uv = UserView(
+			sv,
+			Rect(0,0,(inputs.size * 20) + 200, (outputs.size * 20) + 200)
+		);
+		uv.drawFunc_({
+			outputs.do{|i, j|
+				Pen.line(Point(0,152 + (j*20)), Point(150,152 + (j*20)));
+				Pen.stroke;
+				i.drawRightJustIn(
+					Rect(0,152 + (j*20), 150, 20)
+				);
+			};
+			Pen.line(Point(0,152 + (outputs.size * 20)), Point(150,152 + (outputs.size * 20)));
+			Pen.stroke;
+			Pen.translate(155,145);
+			inputs.do{|i|
+				Pen.line(-1@5, 65@(-150));
+				Pen.stroke;
+				Pen.rotate(-pi/2.7);
+				i.draw();
+				Pen.rotate(pi/2.7);
+				Pen.translate(20,0);
+			};
+			Pen.line(-1@5, 65@(-150));
+			Pen.stroke;
+
+		});
+
 		grid = BoxMatrix(
-			nil,
-			((inputs.size + 2) * 35)@((outputs.size + 2) * 15),
-			inputs.size + 2,
-			outputs.size + 2
+			sv,
+			Rect(150,150, inputs.size * 20, outputs.size * 20),
+			inputs.size,
+			outputs.size
 		);
 
 		grid.defaultStyle.fontColor = Color.grey(0.3);
@@ -60,21 +90,8 @@ JackMatrix {
 		grid.defaultStyle.center = true;
 
 		inputs.do{|i,j|
-			grid.at((j+2)@0).title_(i.asString.split($:)[0]);
-			grid.at((j+2)@1).title_(
-				i.split($:)[1].findRegexp("[0-9]+$")[0][1]
-			);
-		};
-		outputs.do{|i,j|
-			grid.at(0@(j+2)).title_(i.asString.split($:)[0]);
-			grid.at(1@(j+2)).title_(
-				i.split($:)[1].findRegexp("[0-9]+$")[0][1]
-			);
-		};
-		
-		inputs.do{|i,j|
 			outputs.do{|k,l|
-				grid.at((l+2)@(j+2)).connected = false;
+				grid.at(j@l).connected = false;
 			};
 		};
 
@@ -83,7 +100,7 @@ JackMatrix {
 			out = outputs.indexOfEqual(i[0]);
 			out.notNil.if {
 				in = inputs.indexOfEqual(i[1]);
-				box = grid.at((in + 2)@(out + 2));
+				box = grid.at(in@out);
 				box.connected = true;
 				box.boxColor = Color.red;
 			}
@@ -93,7 +110,7 @@ JackMatrix {
 			var command;
 			box.connected.if{
 				command = prefix++"jack_disconnect" +
-				  outputs[box.point.y - 2] + inputs[box.point.x - 2];
+				  outputs[box.point.y] + inputs[box.point.x];
 				command.postln;
 				modifiers.isShift.not.if{
 					command.unixCmd;
@@ -102,7 +119,7 @@ JackMatrix {
 				};
 			} {
 				command = prefix++"jack_connect" +
-				  outputs[box.point.y - 2] + inputs[box.point.x - 2];
+				  outputs[box.point.y] + inputs[box.point.x];
 				command.postln;
 				modifiers.isShift.not.if{
 					command.unixCmd;
@@ -111,6 +128,7 @@ JackMatrix {
 				};
 			}
 		};
+		w.front;
 	}
 	
 }
