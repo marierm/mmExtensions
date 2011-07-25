@@ -76,6 +76,12 @@ Feature {
 	*synth { |name, interface, input, function, args|
 		^SynthFeature.new(name, interface, input, function, args)
 	}
+	
+	init {
+		netAddr = NetAddr.localAddr;
+		oscPath = "/sponge/01/" ++ name.asString;
+		server = Server.default;
+	}
 
 	remove {
 		interface.action_(interface.action.removeFunc(fullFunc));
@@ -101,9 +107,7 @@ SynthFeature : Feature {
 	}
 
 	init { |function, args|
-		netAddr = NetAddr.localAddr;
-		oscPath = "/sponge/01";
-		server = Server.default;
+		super.init;
 		args = input.collect{|i,j|
 			[(\in ++ j).asSymbol, i.bus];
 		}.flatten ++ args;
@@ -124,7 +128,7 @@ SynthFeature : Feature {
 		fullFunc = {
 			bus.get{|value|
 				action.value(value);
-				netAddr.sendMsg(oscPath, name, value);
+				netAddr.sendMsg(oscPath, value);
 			};
 		};
 		
@@ -156,15 +160,13 @@ SensorFeature : Feature { // the raw data from the sensor
 	}
 
 	init { 
-		netAddr = NetAddr.localAddr;
-		oscPath = "/sponge/01";
-		server = Server.default;
+		super.init;
 		bus = Bus.control(server);
 		fullFunc = { |...msg|
 			value = msg[input];
 			action.value(value);
 			bus.set(value);
-			netAddr.sendMsg(oscPath, name, value);
+			netAddr.sendMsg(oscPath, value);
 		};
 		interface.action_(interface.action.addFunc(fullFunc));
 		interface.features.add(this);
@@ -180,9 +182,7 @@ LangFeature : Feature {
 	}
 
 	init { |function, args|
-		netAddr = NetAddr.localAddr;
-		oscPath = "/sponge/01";
-		server = Server.default;
+		super.init;
 		bus = Bus.control(server);
 		inputData = Array.fill(historySize, 0);
 		// input is a feature: process a feature;
@@ -191,7 +191,7 @@ LangFeature : Feature {
 			(inputData.size > historySize).if { inputData.pop };
 			value = function.value(inputData, *args);
 			action.value(value, inputData);
-			netAddr.sendMsg(oscPath, name, value);
+			netAddr.sendMsg(oscPath, value);
 			bus.set(value);
 		};
 		interface.action_(interface.action.addFunc(fullFunc));
