@@ -20,7 +20,16 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 				this.addPresetLine(preset, model.presets.size - 1);
 				// Add cursorLine.
 				this.drawCursorLine;
-				layout.view.resizeToFit(true,false);
+				layout.view.resizeTo(
+					this.calculateLayoutSize.width,
+					this.calculateLayoutSize.height
+				);
+				iMadeMasterLayout.if {
+					layout.parent.resizeTo(
+						this.calculateLayoutSize.width,
+						this.calculateLayoutSize.height
+					);
+				};
 			},
 			\presetRemoved -> {|prInterpolator, what, i|
 				// Remove all lines starting from the line to be removed.

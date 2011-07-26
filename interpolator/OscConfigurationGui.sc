@@ -38,9 +38,9 @@ OscConfigurationGui : AbstractInterpolatorGui {
 		.align_(\right);
 		PopUpMenu( layout, 244@18 )
 		.items_(["OFF", "ON"])
-		.value_(model.sendOSC.binaryValue)
+		.value_(model.sendOSC.asInteger)
 		.action_({|me|
-			model.sendOSC_(me.value.booleanValue);
+			model.sendOSC_(me.value.asBoolean);
 		});
 
 	}

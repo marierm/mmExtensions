@@ -42,7 +42,7 @@ MidiConfigurationGui : AbstractInterpolatorGui {
 		.align_(\right);
 		PopUpMenu( layout, 244@18 )
 		.items_(["OFF", "ON"])
-		.value_(model.sendMIDI.binaryValue)
+		.value_(model.sendMIDI.asInteger)
 		.action_({|me|
 			model.sendMIDI_(me.value.asBoolean);
 		});
