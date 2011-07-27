@@ -109,7 +109,7 @@ SynthFeature : Feature {
 	init { |function, args|
 		super.init;
 		args = input.collect{|i,j|
-			[(\in ++ j).asSymbol, i.bus];
+			[(\in ++ j).asSymbol, i.bus.index];
 		}.flatten ++ args;
 
 		fork {
