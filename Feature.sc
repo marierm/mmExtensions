@@ -27,11 +27,11 @@ Feature {
 		synthFuncs = IdentityDictionary[
 			\LP -> {
 				arg in0 = 0, freq = 3;
-				LPF.kr(In.kr(in0.linexp(0,1023,0,1), 1), freq);
+				LPF.kr(In.kr(in0, 1), freq);
 			},
 			\HP -> {
 				arg in0 = 0, freq = 100;
-				HPF.kr(In.kr(in0.linexp(0,1023,0,1), 1), freq);
+				HPF.kr(In.kr(in0, 1), freq);
 			}
 		];
 		langFuncs = IdentityDictionary[
@@ -78,9 +78,10 @@ Feature {
 	}
 	
 	init {
-		netAddr = NetAddr.localAddr;
-		oscPath = "/sponge/01/" ++ name.asString;
-		server = Server.default;
+		netAddr = try{input[0].netAddr} ? NetAddr.localAddr;
+		oscPath = try{input[0].oscPath.dirname.withTrailingSlash} ? "/sponge/01/";
+		oscPath = oscPath ++ name.asString;
+		server = try{input[0].server} ? Server.default;
 	}
 
 	remove {
