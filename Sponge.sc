@@ -117,8 +117,9 @@ Sponge {
 		}
 	}
 	
-	createFeature { |key|
+	createFeature { |key ... args|
 		var fe, nameList, inputs;
+		args.postln;
 		this.featureNames.includes(key).if{
 			"Feature % already exists.\n".postf(key);
 			^this[key];
@@ -142,6 +143,7 @@ Sponge {
 		} {
 			inputs = fe[\input];
 		};
+		// use the right method (.sensor, .lang or .synth)
 		Feature.performList(
 			fe[\type],
 			[fe[\name], this, inputs, fe[\func], fe[\args]]
@@ -149,6 +151,8 @@ Sponge {
 	}
 
 	*initClass {
+		// featureList contains a list of predefined features.  They have to
+		// be created with Sponge.createFeature(\name)
 		featureList = List[
 			(name:\acc1x, input:0, type:\sensor),
 			(name:\acc1y, input:1, type:\sensor),

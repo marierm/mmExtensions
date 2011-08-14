@@ -99,19 +99,20 @@ Feature {
 }
 
 SynthFeature : Feature {
-	var <synth;
+	var <synth, <args;
 	// Function is a UGen Graph Function.  Inputs should be named \in0, \in1,
-	// \in2, etc Other args are appended.  User is responsible of scaling the
+	// \in2, etc Other args are appended.  User is responsible for scaling the
 	// data inside the synth.
 	*new { |name, interface, input, function, args|
 		^super.newCopyArgs(name, interface, input).init(function, args);
 	}
 
-	init { |function, args|
+	init { |function, arguments|
 		super.init;
-		args = input.collect{|i,j|
+		args = arguments;
+		arguments = input.collect{|i,j|
 			[(\in ++ j).asSymbol, i.bus.index];
-		}.flatten ++ args;
+		}.flatten ++ arguments;
 
 		fork {
 			bus = Bus.control(server);
@@ -121,7 +122,7 @@ SynthFeature : Feature {
 				outbus: bus,
 				fadeTime: 0.02,
 				addAction: \addToTail,
-				args: args);
+				args: arguments);
 			server.sync;
 		};
 
@@ -143,6 +144,20 @@ SynthFeature : Feature {
 		bus.get(func);
 	}
 
+	// set a parameter of the synth.
+	set { |argName, value|
+		synth.set(argName, value);
+	}
+
+	getParameters {
+		var res;
+		res = List[];
+		forBy(0, args.size-2, 2) {|i|
+			res.add(args[i]);
+		};
+		^res;
+	}
+
 	remove {
 		interface.action_(interface.action.removeFunc(fullFunc));
 		interface.features.remove(this);
@@ -150,7 +165,6 @@ SynthFeature : Feature {
 		bus.free;
 		synth.free;
 	}
-	
 }
 
 SensorFeature : Feature { // the raw data from the sensor
