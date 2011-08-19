@@ -20,7 +20,7 @@
 Feature {
 	classvar <>synthFuncs, <>langFuncs;
 	var <>name, <interface, <input, fullFunc, <bus, <>server, <>netAddr,
-	<>oscPath, <>action, <>dependants;
+	<oscPath, <>action, <>dependantFeatures;
 	
 
 	*initClass {
@@ -86,7 +86,22 @@ Feature {
 		netAddr = try{input[0].netAddr} ? NetAddr.localAddr;
 		oscPath = try{input[0].oscPath.dirname.withTrailingSlash} ? "/sponge/01/";
 		oscPath = oscPath ++ name.asString;
-		dependants = List[];
+		dependantFeatures = List[];
+	}
+
+	oscPath_ { |path|
+		oscPath = path;
+		this.changed(\oscPath, path);
+	}
+
+	oscAddr_ { |addr|
+		netAddr.hostname_(addr);
+		this.changed(\oscAddr, addr);
+	}
+
+	oscPort_ { |port|
+		netAddr.port_(port);
+		this.changed(\oscPort, port);
 	}
 
 	remove {
@@ -94,7 +109,7 @@ Feature {
 		interface.features.remove(this);
 		interface.featureNames.remove(name);
 		bus.free;
-		dependants.do(_.remove); // remove features that depend on this one.
+		dependantFeatures.do(_.remove); // remove features that depend on this one.
 	}
 
 	// hack...
@@ -124,7 +139,7 @@ SynthFeature : Feature {
 		};
 		args = arguments;
 		arguments = input.collect{|i,j|
-			i.dependants.add(this);
+			i.dependantFeatures.add(this);
 			[(\in ++ j).asSymbol, i.bus.index];
 		}.flatten ++ arguments;
 
@@ -174,8 +189,8 @@ SynthFeature : Feature {
 
 	remove {
 		super.remove;
-		input.do({|i| i.dependants.remove(this); }); // remove myself from the
-												 // dependants list of others.
+		input.do({|i| i.dependantFeatures.remove(this); }); // remove myself from the
+												 // dependantFeatures list of others.
 		synth.free;
 	}
 }
@@ -218,7 +233,7 @@ LangFeature : Feature {
 		bus = Bus.control(server);
 		inputData = Array.fill(historySize, 0);
 		// input is a feature: process a feature;
-		input.do({ |i| i.dependants.add(this) });
+		input.do({ |i| i.dependantFeatures.add(this) });
 		fullFunc = {
 			inputData.addFirst(input.collect(_.value));
 			(inputData.size > historySize).if { inputData.pop };
@@ -234,8 +249,8 @@ LangFeature : Feature {
 	
 	remove {
 		super.remove;
-		input.do({|i| i.dependants.remove(this); }); // remove myself from the
-												 // dependants list of others.
+		input.do({|i| i.dependantFeatures.remove(this); }); // remove myself from the
+												 // dependantFeatures list of others.
 	}
 
 }
