@@ -20,7 +20,7 @@
 Feature {
 	classvar <>synthFuncs, <>langFuncs;
 	var <>name, <interface, <input, fullFunc, <bus, <>server, <>netAddr,
-	<>oscPath, <>action;
+	<>oscPath, <>action, <>dependants;
 	
 
 	*initClass {
@@ -82,6 +82,7 @@ Feature {
 		oscPath = try{input[0].oscPath.dirname.withTrailingSlash} ? "/sponge/01/";
 		oscPath = oscPath ++ name.asString;
 		server = try{input[0].server} ? Server.default;
+		dependants = List[];
 	}
 
 	remove {
@@ -89,6 +90,7 @@ Feature {
 		interface.features.remove(this);
 		interface.featureNames.remove(name);
 		bus.free;
+		dependants.do(_.remove); // remove features that depend on this one.
 	}
 
 	// hack...
@@ -111,6 +113,7 @@ SynthFeature : Feature {
 		super.init;
 		args = arguments;
 		arguments = input.collect{|i,j|
+			i.dependants.add(this);
 			[(\in ++ j).asSymbol, i.bus.index];
 		}.flatten ++ arguments;
 
@@ -159,10 +162,9 @@ SynthFeature : Feature {
 	}
 
 	remove {
-		interface.action_(interface.action.removeFunc(fullFunc));
-		interface.features.remove(this);
-		interface.featureNames.remove(name);
-		bus.free;
+		super.remove;
+		input.do({|i| i.dependants.remove(this); }); // remove myself from the
+												 // dependants list of others.
 		synth.free;
 	}
 }
@@ -189,7 +191,7 @@ SensorFeature : Feature { // the raw data from the sensor
 	}
 
 	remove {
-		"% is a sensor feature and cannot be removed.".postf(name);
+		"\'%\' is a sensor feature and cannot be removed.\n".postf(name);
 	}
 }
 
@@ -205,6 +207,7 @@ LangFeature : Feature {
 		bus = Bus.control(server);
 		inputData = Array.fill(historySize, 0);
 		// input is a feature: process a feature;
+		input.do({ |i| i.dependants.add(this) });
 		fullFunc = {
 			inputData.addFirst(input.collect(_.value));
 			(inputData.size > historySize).if { inputData.pop };
@@ -217,4 +220,11 @@ LangFeature : Feature {
 		interface.features.add(this);
 		interface.featureNames.add(name);
 	}
+	
+	remove {
+		super.remove;
+		input.do({|i| i.dependants.remove(this); }); // remove myself from the
+												 // dependants list of others.
+	}
+
 }
