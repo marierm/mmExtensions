@@ -100,11 +100,11 @@ Sponge {
 	}
 	
 	setOSCport { |port|
-		this.features.do{ |i| i.netAddr.port_(port) }
+		this.features.do{ |i| i.oscPort_(port) }
 	}
 	
 	setOSCaddr { |addr|		
-		this.features.do{ |i| i.netAddr.hostname_(addr) }
+		this.features.do{ |i| i.oscAddr_(addr) }
 	}
 	
 	setOSCprefix { |prefix|
