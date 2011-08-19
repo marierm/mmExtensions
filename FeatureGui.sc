@@ -1,5 +1,5 @@
 FeatureGui : ObjectGui {
-	var <>actions, prefixView, portView, addrView;
+	var <>actions, prefixView, portView, addrView, monitor;
 
 	*new { arg model;
 		var new;
@@ -10,6 +10,15 @@ FeatureGui : ObjectGui {
 
 	init {
 		actions = IdentityDictionary[
+			\oscPath -> {|model, what, path|
+				prefixView.string_(path);
+			},
+			\oscPort -> {|model, what, port|
+				portView.string_(port.asString);
+			},
+			\oscAddr -> {|model, what, addr|
+				addrView.string_(addr);
+			},
 		];
 	}
 
@@ -29,36 +38,88 @@ FeatureGui : ObjectGui {
 			QHLayout(
 				StaticText(w).string_(
 					model.interface.class.asString + "Feature" + model.name.asString
-				).align_(\center).font_(Font.default.size_(24))
+				).align_(\center).font_(Font.default.size_(24)).maxHeight_(40)
 			)
 		);
 		w.layout.add(
 			QHLayout(
-				StaticText(w).string_("OSC Path").align_(\right).minWidth_(80),
-				prefixView = TextField(w).string_(model.oscPath),
+				StaticText(w).string_("Type").align_(\right)
+				.minWidth_(85).maxSize_(85@22),
+				StaticText(w).string_(model.class.asString).maxHeight_(22)
+			)
+		);
+		w.layout.add(
+			QHLayout(
+				StaticText(w).string_("OSC Path").align_(\right).minWidth_(85).maxHeight_(22),
+				prefixView = TextField(w).string_(model.oscPath).maxHeight_(22),
 				Button(w).states_([["Set (only this feature)"]]).action_({
 					model.oscPath_(prefixView.value);
+				}).maxHeight_(22)
+			)
+		);
+		w.layout.add(
+			QHLayout(
+				StaticText(w).string_("OSC Address").align_(\right).minWidth_(85).maxHeight_(22),
+				addrView = TextField(w).string_(model.netAddr.hostname).maxHeight_(22),
+				Button(w).states_([["Set (only this feature)"]]).action_({
+					model.oscAddr_(prefixView.value);
+				}).maxHeight_(22)
+			)
+		);
+		w.layout.add(
+			QHLayout(
+				StaticText(w).string_("OSC Port").align_(\right).minWidth_(85).maxHeight_(22),
+				portView = TextField(w).string_(model.netAddr.port).maxHeight_(22),
+				Button(w).states_([["Set (only this feature)"]]).action_({
+					model.oscPort_(prefixView.value.asInteger);
+				}).maxHeight_(22)
+			)
+		);
+		w.layout.add(
+			QHLayout(
+				StaticText(w).string_("Input(s)").align_(\right)
+				.minWidth_(85).maxSize_(85@22),
+				*((model.input.size == 0).if{
+					StaticText(w).string_("none").maxHeight_(22)
+				}{
+					model.input.collect{|i|
+						Button(w).states_([[i.name]]).action_({i.gui}).maxHeight_(22)
+					}
 				})
 			)
 		);
 		w.layout.add(
 			QHLayout(
-				StaticText(w).string_("OSC Address").align_(\right).minWidth_(80),
-				addrView = TextField(w).string_(model.netAddr.hostname),
-				Button(w).states_([["Set (only this feature)"]]).action_({
-					model.netAddr.hostname_(prefixView.value);
+				StaticText(w).string_("Dependant(s)").align_(\right)
+				.minWidth_(85).maxSize_(85@22),
+				*((model.dependantFeatures.size == 0).if{
+					StaticText(w).string_("none").maxHeight_(22)
+				}{
+					model.dependantFeatures.collect{|i|
+						Button(w).states_([[i.name]]).action_({i.gui}).maxHeight_(22)
+					}
 				})
 			)
 		);
 		w.layout.add(
 			QHLayout(
-				StaticText(w).string_("OSC Port").align_(\right).minWidth_(80),
-				portView = TextField(w).string_(model.netAddr.port),
-				Button(w).states_([["Set (only this feature)"]]).action_({
-					model.netAddr.port_(prefixView.value.asInteger);
-				})
+				StaticText(w).string_("Bus").align_(\right)
+				.minWidth_(85).maxSize_(85@22),
+				StaticText(w).string_(model.bus.index).maxHeight_(22),
+				Button(w).states_(
+					[["monitor"],["stop"]]
+				).action_({ |i|
+					(i.value == 1).if{
+						monitor = BusMonitor(model.bus, 2000, 1).dt_(0.001);
+						monitor.start;
+					} {
+						monitor.stop;
+					}
+				}).maxHeight_(22)
 			)
 		);
+		w.layout.add(QHLayout(StaticText(w)));
+		w.onClose_({monitor.stop});
 		w.front;
 	}
 
