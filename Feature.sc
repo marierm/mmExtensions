@@ -78,10 +78,14 @@ Feature {
 	}
 	
 	init {
+		server = try{input[0].server} ? Server.default;
+		server.serverRunning.not.if {
+			("server '" ++ server.name ++ "' not running.\nFeature '" ++
+				name ++ "' may not work as expected.").warn;
+		};
 		netAddr = try{input[0].netAddr} ? NetAddr.localAddr;
 		oscPath = try{input[0].oscPath.dirname.withTrailingSlash} ? "/sponge/01/";
 		oscPath = oscPath ++ name.asString;
-		server = try{input[0].server} ? Server.default;
 		dependants = List[];
 	}
 
@@ -111,6 +115,11 @@ SynthFeature : Feature {
 
 	init { |function, arguments|
 		super.init;
+		server.serverRunning.not.if {
+			("Synth features need a server to work properly.").warn;
+			("Feature '" ++ name ++ "'will not be activated.").warn;
+			^nil;
+		};
 		args = arguments;
 		arguments = input.collect{|i,j|
 			i.dependants.add(this);
