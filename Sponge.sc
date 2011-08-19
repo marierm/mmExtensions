@@ -1,6 +1,6 @@
 Sponge {
 	classvar <>featureList;
-	var <port, inputThread, <featureNames, <features;
+	var <port, inputThread, <featureNames, <features, <portName;
 	var <>action, <values, interpAction;
 
 	*new { arg portName="/dev/ttyUSB0", baudRate=19200;
@@ -8,6 +8,7 @@ Sponge {
 	}
 
 	init { arg pn, br;
+		portName = pn;
 		port = SerialPort(
 			port:pn,
 			baudrate:br,
@@ -69,12 +70,6 @@ Sponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
-		// Sponge.featureList.select({|i| 
-		// 	i[\type] == \sensor
-		// }).collect(_[\name]).do({|i|
-		// 	this.activateFeature(i)
-		// });
-		// this.activateAllFeatures;
 	}
 	
 	activateAllFeatures {
@@ -87,6 +82,7 @@ Sponge {
 		^features[featureNames.indexOf(key)];
 	}
 	
+	// Connect or disconnect to a PresetInterpolator
 	connect { |prInt|
 		interpAction = { |...msg|
 			prInt.cursorPos_(msg.keep(prInt.numDim));
@@ -270,6 +266,8 @@ Sponge {
 // Uses random data insteead of sensors.
 SpongeEmu : Sponge {
 	init { arg func;
+		portName = "Emulator"; // Fake a SerialPort name to show it in the
+							   // gui.
 		inputThread = fork {
 			var data; 
 			data = Array.fill(9,0);
@@ -282,7 +280,7 @@ SpongeEmu : Sponge {
 		};
 		features = List[];
 		featureNames = List[];
-		// Add Feautres for each sensor
+		// Add Features for each sensor
 		[
 			\acc1x, \acc1y, \acc1z,
 			\acc2x, \acc2y, \acc2z,
@@ -290,6 +288,5 @@ SpongeEmu : Sponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
-		// this.activateAllFeatures;
 	}
 }

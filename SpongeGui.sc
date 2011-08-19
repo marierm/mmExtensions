@@ -43,26 +43,35 @@ SpongeGui : ObjectGui {
 		var w;
 		w = Window("A Sponge GUI");
 		// w = ScrollView(x, Rect(0,0,x.bounds.width, x.bounds.height));
-		w.layout_(QGridLayout());
+		w.layout_(QVLayout());
 		w.layout.add(
-			viewInactive = ListView(w).items_(listInactive).mouseDownAction_({
-				|view, x, y, modifiers, buttonNumber, clickCount|
-				(buttonNumber == 0 and: clickCount == 2).if {
-					model.activateFeature(view.items[view.value]);
-				};
-			}),
-			0,	// row
-			0	// column
+			QHLayout(
+				StaticText(w).string_(
+					"Sponge" + model.portName
+				).align_(\center).font_(Font.default.size_(24))
+			)
 		);
 		w.layout.add(
-			viewActive = ListView(w).items_(listActive).mouseDownAction_({
-				|view, x, y, modifiers, buttonNumber, clickCount|
-				(buttonNumber == 0 and: clickCount == 2).if {
-					model.deactivateFeature(view.items[view.value]);
-				};
-			}),
-			0, // row
-			1  // column
+			QHLayout(
+				StaticText(w).string_("Available Features"),
+				StaticText(w).string_("Active Features")
+			);
+		);
+		w.layout.add(
+			QHLayout(
+				viewInactive = ListView(w).items_(listInactive).mouseDownAction_({
+					|view, x, y, modifiers, buttonNumber, clickCount|
+					(buttonNumber == 0 and: clickCount == 2).if {
+						model.activateFeature(view.items[view.value]);
+					};
+				}),
+				viewActive = ListView(w).items_(listActive).mouseDownAction_({
+					|view, x, y, modifiers, buttonNumber, clickCount|
+					(buttonNumber == 0 and: clickCount == 2).if {
+						model.deactivateFeature(view.items[view.value]);
+					};
+				})
+			);
 		);
 		w.front;
 	}
