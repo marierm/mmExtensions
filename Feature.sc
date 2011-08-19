@@ -187,6 +187,10 @@ SensorFeature : Feature { // the raw data from the sensor
 		interface.features.add(this);
 		interface.featureNames.add(name);
 	}
+
+	remove {
+		"% is a sensor feature and cannot be removed.".postf(name);
+	}
 }
 
 LangFeature : Feature {

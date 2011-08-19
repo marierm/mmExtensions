@@ -72,14 +72,14 @@ Sponge {
 		// Sponge.featureList.select({|i| 
 		// 	i[\type] == \sensor
 		// }).collect(_[\name]).do({|i|
-		// 	this.createFeature(i)
+		// 	this.activateFeature(i)
 		// });
-		// this.createAllFeatures;
+		// this.activateAllFeatures;
 	}
 	
-	createAllFeatures {
+	activateAllFeatures {
 		Sponge.featureList.collect({|i| i[\name] }).do{ |i|
-			this.createFeature(i);
+			this.activateFeature(i);
 		};
 	}
 
@@ -118,23 +118,30 @@ Sponge {
 	}
 	
 	createFeature { |key ... args|
+		this.deprecated(
+			thisMethod,
+			this.class.findRespondingMethodFor(\activateFeature)
+		);
+		this.activateFeature(key, *args);
+	}
+	
+	activateFeature { |key ... args|
 		var fe, nameList, inputs;
-		args.postln;
 		this.featureNames.includes(key).if{
 			"Feature % already exists.\n".postf(key);
 			^this[key];
 		};
 		// get a list af the names of the features;
 		nameList = Sponge.featureList.collect({|i| i[\name] });
-		// fe is an event describing a feature.
+		// fe is an Event describing a feature.
 		fe = Sponge.featureList[nameList.indexOf(key)];
 		// if type is sensor, no need to do this.
 		(fe[\type] != \sensor).if{
 			// check if inputs exist
 			fe[\input].do{|i|
-				// if they don't, create them.
+				// if they don't, activate them.
 				this.featureNames.includes(i).not.if{
-					this.createFeature(i);
+					this.activateFeature(i);
 				};
 			};
 			// fe.input contains names of Features.
@@ -148,11 +155,23 @@ Sponge {
 			fe[\type],
 			[fe[\name], this, inputs, fe[\func], fe[\args]]
 		);
+		this.changed(\featureActivated, fe);
 	}
+
+	deactivateFeature { |key|
+		features[featureNames.indexOf(key)].remove;
+		this.changed(\featureDeactivated, key);
+	}
+
+	guiClass { ^SpongeGui }
 
 	*initClass {
 		// featureList contains a list of predefined features.  They have to
-		// be created with Sponge.createFeature(\name)
+		// be activated with aSponge.activateFeature(\name) This list is
+		// ordered because of dependancies: Features that depend on others
+		// (their input is another feature) are at the end of the list.  This
+		// way, it is possible to iterate over this list to activate all
+		// features.
 		featureList = List[
 			(name:\acc1x, input:0, type:\sensor),
 			(name:\acc1y, input:1, type:\sensor),
@@ -271,6 +290,6 @@ SpongeEmu : Sponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
-		// this.createAllFeatures;
+		// this.activateAllFeatures;
 	}
 }
