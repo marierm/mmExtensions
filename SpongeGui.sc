@@ -66,7 +66,7 @@ SpongeGui : ObjectGui {
 				StaticText(w).string_("OSC Address").align_(\right).minWidth_(80),
 				addrView = TextField(w).string_(NetAddr.localAddr.hostname),
 				Button(w).states_([["Set For All Features"]]).action_({
-					model.setOSCaddr(prefixView.value);
+					model.setOSCaddr(addrView.value);
 				})
 			)
 		);
@@ -75,7 +75,7 @@ SpongeGui : ObjectGui {
 				StaticText(w).string_("OSC Port").align_(\right).minWidth_(80),
 				portView = TextField(w).string_(NetAddr.localAddr.port),
 				Button(w).states_([["Set For All Features"]]).action_({
-					model.setOSCport(prefixView.value.asInteger);
+					model.setOSCport(portView.value.asInteger);
 				})
 			)
 		);
@@ -96,8 +96,14 @@ SpongeGui : ObjectGui {
 				viewActive = ListView(w).items_(listActive).mouseDownAction_({
 					|view, x, y, modifiers, buttonNumber, clickCount|
 					(buttonNumber == 0 and: clickCount == 2).if {
-						model.deactivateFeature(view.items[view.value]);
+						model.features[
+							model.featureNames.indexOf(view.items[view.value])
+						].gui;
 					};
+				}).keyDownAction_({ |view, key|
+					((key == 8.asAscii) or: (key == 127.asAscii)).if{
+						model.deactivateFeature(view.items[view.value]);
+					}
 				})
 			);
 		);
