@@ -102,6 +102,8 @@ Feature {
 	collect { |f|
 		^f.value(this, 0);
 	}
+
+	guiClass { ^FeatureGui }
 }
 
 SynthFeature : Feature {

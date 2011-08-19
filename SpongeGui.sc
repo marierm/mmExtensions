@@ -1,5 +1,6 @@
 SpongeGui : ObjectGui {
-	var <>actions, listInactive, listActive, viewActive, viewInactive;
+	var <>actions, listInactive, listActive, viewActive, viewInactive,
+	prefixView, portView, addrView;
 
 	*new { arg model;
 		var new;
@@ -49,6 +50,33 @@ SpongeGui : ObjectGui {
 				StaticText(w).string_(
 					"Sponge" + model.portName
 				).align_(\center).font_(Font.default.size_(24))
+			)
+		);
+		w.layout.add(
+			QHLayout(
+				StaticText(w).string_("OSC Prefix").align_(\right).minWidth_(80),
+				prefixView = TextField(w).string_("/sponge/01"),
+				Button(w).states_([["Set For All Features"]]).action_({
+					model.setOSCprefix(prefixView.value);
+				})
+			)
+		);
+		w.layout.add(
+			QHLayout(
+				StaticText(w).string_("OSC Address").align_(\right).minWidth_(80),
+				addrView = TextField(w).string_(NetAddr.localAddr.hostname),
+				Button(w).states_([["Set For All Features"]]).action_({
+					model.setOSCaddr(prefixView.value);
+				})
+			)
+		);
+		w.layout.add(
+			QHLayout(
+				StaticText(w).string_("OSC Port").align_(\right).minWidth_(80),
+				portView = TextField(w).string_(NetAddr.localAddr.port),
+				Button(w).states_([["Set For All Features"]]).action_({
+					model.setOSCport(prefixView.value.asInteger);
+				})
 			)
 		);
 		w.layout.add(
