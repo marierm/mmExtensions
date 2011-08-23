@@ -18,23 +18,27 @@
 // .name is a name (most likely a symbol) for the feature.
 
 Feature {
-	classvar <>synthFuncs, <>langFuncs;
+	classvar <>synthDefs, <>funcs;
 	var <>name, <interface, <input, fullFunc, <bus, <>server, <>netAddr,
 	<oscPath, <>action, <>dependantFeatures;
 	
 
 	*initClass {
-		synthFuncs = IdentityDictionary[
-			\LP -> {
-				arg in0 = 0, freq = 3;
-				LPF.kr(In.kr(in0, 1), freq);
-			},
-			\HP -> {
-				arg in0 = 0, freq = 100;
-				HPF.kr(In.kr(in0, 1), freq);
-			}
+		synthDefs = IdentityDictionary[
+			\LP -> SynthDef(\featureLP, {
+				arg out=0, in0 = 0, freq = 3;
+				Out.kr(
+					out, LPF.kr(In.kr(in0, 1), freq)
+				);
+			}, metadata:( specs:(freq:[0.01, 100, \exp]) ) ),
+			\HP -> SynthDef(\featureHP, {
+				arg out=0, in0 = 0, freq = 100;
+				Out.kr(
+					out, HPF.kr(In.kr(in0, 1), freq)
+				);
+			}, metadata:( specs:(freq:[1,1000,\exp]) ) )
 		];
-		langFuncs = IdentityDictionary[
+		funcs = IdentityDictionary[
 			\atan -> { |data|
 				atan2(
 					(data[0][0]).linlin(0,1023,-1,1),
@@ -122,22 +126,22 @@ Feature {
 }
 
 SynthFeature : Feature {
-	var <synth, <args;
-	// Function is a UGen Graph Function.  Inputs should be named \in0, \in1,
+	var <synth, <def;
+	// Inputs of SynthDef should be named \in0, \in1,
 	// \in2, etc Other args are appended.  User is responsible for scaling the
 	// data inside the synth.
-	*new { |name, interface, input, function, args|
-		^super.newCopyArgs(name, interface, input).init(function, args);
+	*new { |name, interface, input, synthDef, args|
+		^super.newCopyArgs(name, interface, input).init(synthDef, args);
 	}
 
-	init { |function, arguments|
+	init { |synthDef, arguments|
 		super.init;
 		server.serverRunning.not.if {
 			("Synth features need a server to work properly.").warn;
-			("Feature '" ++ name ++ "'will not be activated.").warn;
+			("Feature '" ++ name ++ "' will not be activated.").warn;
 			^nil;
 		};
-		args = arguments;
+		def = synthDef;
 		arguments = input.collect{|i,j|
 			i.dependantFeatures.add(this);
 			[(\in ++ j).asSymbol, i.bus.index];
@@ -145,13 +149,12 @@ SynthFeature : Feature {
 
 		fork {
 			bus = Bus.control(server);
+			def.add;
 			server.sync;
-			synth = function.play(
-				target: server,
-				outbus: bus,
-				fadeTime: 0.02,
-				addAction: \addToTail,
-				args: arguments);
+			synth = Synth.tail(
+				server,
+				def.name,
+				args: [\out, bus.index] ++ arguments);
 			server.sync;
 		};
 
@@ -178,14 +181,14 @@ SynthFeature : Feature {
 		synth.set(argName, value);
 	}
 
-	getParameters {
-		var res;
-		res = List[];
-		forBy(0, args.size-2, 2) {|i|
-			res.add(args[i]);
-		};
-		^res;
-	}
+	// getParameters {
+	// 	var res;
+	// 	res = List[];
+	// 	forBy(0, args.size-2, 2) {|i|
+	// 		res.add(args[i]);
+	// 	};
+	// 	^res;
+	// }
 
 	remove {
 		super.remove;

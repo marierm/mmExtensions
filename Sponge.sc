@@ -179,71 +179,71 @@ Sponge {
 			(name:\fsr2, input:7, type:\sensor),
 			(name:\buttons, input:8, type:\sensor),
 			(name:\pitch1, input:[\acc1x, \acc1z],
-				func:Feature.langFuncs[\atan], type:\lang
+				func:Feature.funcs[\atan], type:\lang
 			).know_(false),
 			(name:\roll1, input:[\acc1y, \acc1z],
-				func:Feature.langFuncs[\atan], type:\lang
+				func:Feature.funcs[\atan], type:\lang
 			).know_(false),
 			(name:\yaw1, input:[\acc1x, \acc1y],
-				func:Feature.langFuncs[\atan], type:\lang
+				func:Feature.funcs[\atan], type:\lang
 			).know_(false),
 			(name:\pitch2, input:[\acc2x, \acc2z],
-				func:Feature.langFuncs[\atan], type:\lang
+				func:Feature.funcs[\atan], type:\lang
 			).know_(false),
 			(name:\roll2, input:[\acc2y, \acc2z],
-				func:Feature.langFuncs[\atan], type:\lang
+				func:Feature.funcs[\atan], type:\lang
 			).know_(false),
 			(name:\yaw2, input:[\acc2x, \acc2y],
-				func:Feature.langFuncs[\atan], type:\lang
+				func:Feature.funcs[\atan], type:\lang
 			).know_(false),
 			(name:\pitch, input:[\pitch1, \pitch2],
-				func:Feature.langFuncs[\meanMany], type:\lang
+				func:Feature.funcs[\meanMany], type:\lang
 			).know_(false),
 			(name:\roll, input:[\roll1, \roll2],
-				func:Feature.langFuncs[\meanMany], type:\lang
+				func:Feature.funcs[\meanMany], type:\lang
 			).know_(false),
 			(name:\yaw, input:[\yaw1, \yaw2],
-				func:Feature.langFuncs[\meanMany], type:\lang
+				func:Feature.funcs[\meanMany], type:\lang
 			).know_(false),
 			// bend, twist, fold
 			(name:\bend, input:[\pitch1, \pitch2],
-				func:Feature.langFuncs[\diff], type:\lang
+				func:Feature.funcs[\diff], type:\lang
 			).know_(false),
 			(name:\twist, input:[\roll1, \roll2],
-				func:Feature.langFuncs[\diff], type:\lang
+				func:Feature.funcs[\diff], type:\lang
 			).know_(false),
 			(name:\fold, input:[\yaw1, \yaw2],
-				func:Feature.langFuncs[\diff], type:\lang
+				func:Feature.funcs[\diff], type:\lang
 			).know_(false),
 			(name:\pseudoBend, input:[\acc1x, \acc2x],
-				func:Feature.langFuncs[\diff], type:\lang
+				func:Feature.funcs[\diff], type:\lang
 			).know_(false),
 			// fsr mean
 			(name:\fsrMean, input:[\fsr1, \fsr2],
-				func:Feature.langFuncs[\meanMany], type:\lang
+				func:Feature.funcs[\meanMany], type:\lang
 			).know_(false),
 			// fsr diff
 			(name:\fsrDiff, input:[\fsr1, \fsr2],
-				func:Feature.langFuncs[\diff], type:\lang
+				func:Feature.funcs[\diff], type:\lang
 			).know_(false)
 		];
 		featureList.collect({|i| i[\name] }).do{|i|
 			featureList.add(
 				(name:(i ++ \Speed).asSymbol, input:[i],
-					func:Feature.langFuncs[\slope], type:\lang
+					func:Feature.funcs[\slope], type:\lang
 				).know_(false)
 			)
 		};
 		featureList.collect({|i| i[\name] }).do{|i|
 			featureList.add(
 				(name:(i ++ \LP).asSymbol, input:[i],
-					func:Feature.synthFuncs[\LP], type:\synth,
+					func:Feature.synthDefs[\LP], type:\synth,
 					args:[\freq, 3]
 				).know_(false)
 			);
 			featureList.add(
 				(name:(i ++ \HP).asSymbol, input:[i],
-					func:Feature.synthFuncs[\HP], type:\synth,
+					func:Feature.synthDefs[\HP], type:\synth,
 					args:[\freq, 100]
 				).know_(false)
 			);
@@ -253,7 +253,7 @@ Sponge {
 			featureList.add(
 				(name:(\button ++ i.asString).asSymbol,
 					input:[\buttons],
-					func: Feature.langFuncs[\button],
+					func: Feature.funcs[\button],
 					type: \lang,
 					args: [i]
 				).know_(false);
