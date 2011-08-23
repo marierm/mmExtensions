@@ -30,7 +30,7 @@ Feature {
 				Out.kr(
 					out, LPF.kr(In.kr(in0, 1), freq)
 				);
-			}, metadata:( specs:(freq:[0.01, 100, \exp]) ) ),
+			}, metadata:( specs:(freq:[0.1, 100, \exp]) ) ),
 			\HP -> SynthDef(\featureHP, {
 				arg out=0, in0 = 0, freq = 100;
 				Out.kr(
