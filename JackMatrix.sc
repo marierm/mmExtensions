@@ -1,51 +1,20 @@
 JackMatrix {
-	var <>prefix, <grid, <inputs, <outputs, <connections, w, sv, uv;
+	var <>prefix, <grid, <inputs, <outputs, <connections, w, sv, uv,
+	<autoUpdate, routine;
 
-	*new{ |prefix|
+	*new{ |prefix, autoUpdate|
 		^super.newCopyArgs(prefix).init;
 	}
-	
+
 	init {
-		var pipe, line1, line2;
 		inputs = List[];
 		outputs = List[];
 		connections = List[];
-		pipe = Pipe.new(prefix++"jack_lsp -p", "r");
-		line1 = pipe.getLine;							
-		{line1.notNil}.while {
-			line2 = pipe.getLine;
-			line2.notNil.if {
-				line2.contains("input").if {
-					inputs.add(line1)
-				};
-				line2.contains("output").if {
-					outputs.add(line1)
-				};
-			};
-			line1 = line2;
-		};
-		pipe.close;
 		
-		inputs.sort({|a,b|
-			a.asString.naturalCompare(b.asString) < 0;
-		});
 
-		outputs.sort({|a,b|
-			a.asString.naturalCompare(b.asString) < 0;
-		});
-
-		pipe = Pipe.new(prefix++"jack_lsp -c", "r");
-		line1 = pipe.getLine;							
-		{line1.notNil}.while {
-			line2 = pipe.getLine;
-			line2.notNil.if {
-				line2.containsStringAt(0, "   ").if {
-					connections.add([line1, line2.copyToEnd(3)])
-				};
-			};
-			line1 = line2;
-		};
-		pipe.close;
+		this.getNames;
+		
+		this.getConnections;
 
 		w = Window("JackMatrix",Rect(100,100,600,600));
 		sv = ScrollView(w, Rect(0,0,600,600));
@@ -61,7 +30,10 @@ JackMatrix {
 					Rect(0,152 + (j*20), 150, 20)
 				);
 			};
-			Pen.line(Point(0,152 + (outputs.size * 20)), Point(150,152 + (outputs.size * 20)));
+			Pen.line(
+				Point(0,152 + (outputs.size * 20)),
+				Point(150,152 + (outputs.size * 20))
+			);
 			Pen.stroke;
 			Pen.translate(155,145);
 			inputs.do{|i|
@@ -89,22 +61,7 @@ JackMatrix {
 		grid.defaultStyle.borderColor = Color.grey(0.3);
 		grid.defaultStyle.center = true;
 
-		inputs.do{|i,j|
-			outputs.do{|k,l|
-				grid.at(j@l).connected = false;
-			};
-		};
-
-		connections.do{|i|
-			var in, out, box;
-			out = outputs.indexOfEqual(i[0]);
-			out.notNil.if {
-				in = inputs.indexOfEqual(i[1]);
-				box = grid.at(in@out);
-				box.connected = true;
-				box.boxColor = Color.red;
-			}
-		};
+		this.updateGui;
 		
 		grid.mouseDownAction = { arg box,modifiers,buttonNumber,clickCount;
 			var command;
@@ -113,22 +70,84 @@ JackMatrix {
 				  outputs[box.point.y] + inputs[box.point.x];
 				command.postln;
 				modifiers.isShift.not.if{
-					command.unixCmd;
-					box.connected = false;
-					box.boxColor = grid.defaultStyle.boxColor;
+					command.systemCmd;
+					this.getConnections;
+					this.updateGui;
 				};
 			} {
 				command = prefix++"jack_connect" +
 				  outputs[box.point.y] + inputs[box.point.x];
 				command.postln;
 				modifiers.isShift.not.if{
-					command.unixCmd;
-					box.connected = true;
-					box.boxColor = Color.red;
+					command.systemCmd;
+					this.getConnections;
+					this.updateGui;
 				};
 			}
 		};
 		w.front;
+	}
+
+	updateGui {
+		// init everything disconnected (for the GUI)
+		inputs.do{|i,j|
+			outputs.do{|k,l|
+				grid.at(j@l).connected = false;
+				grid.at(j@l).boxColor = grid.defaultStyle.boxColor
+			};
+		};
+
+		connections.do{|i|
+			// connections is a List of size 2 arrays [output, input];
+			var in, out, box;
+			out = outputs.indexOfEqual(i[0]); // get the index of the output
+			out.notNil.if {
+				in = inputs.indexOfEqual(i[1]); // get the index of the input
+				box = grid.at(in@out); // get the box
+				box.connected = true;  // and change its attributes
+				box.boxColor = Color.red; // and looks
+			}
+		};
+	}	
+
+	getConnections {
+		var stdOut, cons;
+		cons = List[];
+		stdOut = (prefix++"jack_lsp -c").unixCmdGetStdOut.split($\n);
+		stdOut.do { |i,j|
+			i.containsStringAt(0, "   ").if {
+				var inc=1;
+				{stdOut[j - inc].containsStringAt(0, "   ")}.while({ inc = inc+1});
+				cons.add([stdOut[j - inc], i.copyToEnd(3)])
+			}
+		};
+		connections = cons;
+	}
+
+	getNames {
+		var stdOut, ins, outs;
+		ins = List[];
+		outs = List[];
+		stdOut = (prefix++"jack_lsp -p").unixCmdGetStdOut.split($\n);
+		stdOut.do { |i,j|
+			i.contains("input").if {
+				ins.add(stdOut[j-1])
+			};
+			i.contains("output").if {
+				outs.add(stdOut[j-1])
+			};
+		};
+		outputs = outs;
+		inputs = ins;
+
+		// sort things naturally
+		inputs.sort({|a,b|
+			a.asString.naturalCompare(b.asString) < 0;
+		});
+
+		outputs.sort({|a,b|
+			a.asString.naturalCompare(b.asString) < 0;
+		});
 	}
 	
 }
