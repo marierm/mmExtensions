@@ -1,23 +1,62 @@
-JackMatrix {
-	var <>prefix, <grid, <inputs, <outputs, <connections, w, sv, uv,
-	<autoUpdate, routine;
+// Copyright 2011 Martin Marier
+// JackMatrix is a matrix GUI to connect Jack clients.
+// It depends on BoxMatrix from the crucialviews Quark.
 
-	*new{ |prefix, autoUpdate|
-		^super.newCopyArgs(prefix).init;
+// Arguments:
+
+// prefix: a prefix to the jack_* command line utilities.  Using ssh, it is
+// possible to control Jack connections on a remote machine.  Example:
+// JackMatrix("ssh mm@192.168.0.102 /usr/bin/")
+
+// autoUpdate: a time interval in seconds.  The GUI will be update at this
+// rate.  A value of 0 or less will turn off GUI update.  Very small values
+// will probably hang sclang.
+
+JackMatrix {
+	var <>prefix, <autoUpdate,
+	<grid, <inputs, <outputs, <connections, w, sv, uv, routine;
+
+	*new{ |prefix, autoUpdate=2.0|
+		^super.newCopyArgs(prefix, autoUpdate).init;
 	}
 
 	init {
 		inputs = List[];
 		outputs = List[];
 		connections = List[];
-		
 
 		this.getNames;
-		
 		this.getConnections;
 
 		w = Window("JackMatrix",Rect(100,100,600,600));
 		sv = ScrollView(w, Rect(0,0,600,600));
+
+		this.updateGui;
+		
+		w.onClose_({routine.stop});
+		w.front;
+
+		routine = Routine({
+			{
+				this.getNames;
+				this.getConnections;
+				this.updateGui;
+				// \update.postln;
+				autoUpdate.wait;
+			}.loop;
+		});
+
+		(autoUpdate > 0).if { routine.play(AppClock); };
+
+	}
+
+	autoUpdate_ { |val|
+		(val <= 0).if { routine.stop; autoUpdate = val };
+		(val > 0).if { routine.play(AppClock); autoUpdate = val };
+	}
+
+	updateGui {
+		{uv.remove}.try;
 		uv = UserView(
 			sv,
 			Rect(0,0,(inputs.size * 20) + 200, (outputs.size * 20) + 200)
@@ -46,9 +85,10 @@ JackMatrix {
 			};
 			Pen.line(-1@5, 65@(-150));
 			Pen.stroke;
-
 		});
 
+		{grid.remove}.try;
+		
 		grid = BoxMatrix(
 			sv,
 			Rect(150,150, inputs.size * 20, outputs.size * 20),
@@ -61,34 +101,6 @@ JackMatrix {
 		grid.defaultStyle.borderColor = Color.grey(0.3);
 		grid.defaultStyle.center = true;
 
-		this.updateGui;
-		
-		grid.mouseDownAction = { arg box,modifiers,buttonNumber,clickCount;
-			var command;
-			box.connected.if{
-				command = prefix++"jack_disconnect" +
-				  outputs[box.point.y] + inputs[box.point.x];
-				command.postln;
-				modifiers.isShift.not.if{
-					command.systemCmd;
-					this.getConnections;
-					this.updateGui;
-				};
-			} {
-				command = prefix++"jack_connect" +
-				  outputs[box.point.y] + inputs[box.point.x];
-				command.postln;
-				modifiers.isShift.not.if{
-					command.systemCmd;
-					this.getConnections;
-					this.updateGui;
-				};
-			}
-		};
-		w.front;
-	}
-
-	updateGui {
 		// init everything disconnected (for the GUI)
 		inputs.do{|i,j|
 			outputs.do{|k,l|
@@ -106,6 +118,29 @@ JackMatrix {
 				box = grid.at(in@out); // get the box
 				box.connected = true;  // and change its attributes
 				box.boxColor = Color.red; // and looks
+			}
+		};
+
+		grid.mouseDownAction = { arg box,modifiers,buttonNumber,clickCount;
+			var command;
+			box.connected.if{
+				command = prefix++"jack_disconnect" +
+				outputs[box.point.y] + inputs[box.point.x];
+				command.postln;
+				modifiers.isShift.not.if{
+					command.systemCmd;
+					this.getConnections;
+					this.updateGui;
+				};
+			} {
+				command = prefix++"jack_connect" +
+				outputs[box.point.y] + inputs[box.point.x];
+				command.postln;
+				modifiers.isShift.not.if{
+					command.systemCmd;
+					this.getConnections;
+					this.updateGui;
+				};
 			}
 		};
 	}	
