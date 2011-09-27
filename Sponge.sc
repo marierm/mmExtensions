@@ -197,13 +197,13 @@ Sponge {
 				func:Feature.funcs[\atan], type:\lang
 			).know_(false),
 			(name:\pitch, input:[\pitch1, \pitch2],
-				func:Feature.funcs[\meanMany], type:\lang
+				func:Feature.funcs[\meanCircle], type:\lang
 			).know_(false),
 			(name:\roll, input:[\roll1, \roll2],
-				func:Feature.funcs[\meanMany], type:\lang
+				func:Feature.funcs[\meanCircle], type:\lang
 			).know_(false),
 			(name:\yaw, input:[\yaw1, \yaw2],
-				func:Feature.funcs[\meanMany], type:\lang
+				func:Feature.funcs[\meanCircle], type:\lang
 			).know_(false),
 			// bend, twist, fold
 			(name:\bend, input:[\pitch1, \pitch2],

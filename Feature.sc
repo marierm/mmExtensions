@@ -50,6 +50,15 @@ Feature {
 			\meanMany -> { |data|
 				data[0].mean
 			},
+			\meanCircle -> { |data|
+				// to get the mean of 2 angles, use average of cartesian
+				// coordinates.
+				var a, b, res;
+				a = Polar(1, data[0][0]).asPoint;
+				b = Polar(1, data[0][1]).asPoint;
+				res = ((a+b)/2).asPolar;
+				res.theta;
+			},
 			\slope -> { |data| 
 				(data[0][0] - data[1][0])
 			},
