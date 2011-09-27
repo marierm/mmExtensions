@@ -207,13 +207,13 @@ Sponge {
 			).know_(false),
 			// bend, twist, fold
 			(name:\bend, input:[\pitch1, \pitch2],
-				func:Feature.funcs[\diff], type:\lang
+				func:Feature.funcs[\diffCircle], type:\lang
 			).know_(false),
 			(name:\twist, input:[\roll1, \roll2],
-				func:Feature.funcs[\diff], type:\lang
+				func:Feature.funcs[\diffCircle], type:\lang
 			).know_(false),
 			(name:\fold, input:[\yaw1, \yaw2],
-				func:Feature.funcs[\diff], type:\lang
+				func:Feature.funcs[\diffCircle], type:\lang
 			).know_(false),
 			(name:\pseudoBend, input:[\acc1x, \acc2x],
 				func:Feature.funcs[\diff], type:\lang

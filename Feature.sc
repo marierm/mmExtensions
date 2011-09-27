@@ -47,6 +47,17 @@ Feature {
 			\diff -> { |data|
 				data[0][0] - data[0][1]
 			},
+			\diffCircle -> { |data|
+				var a, b, res;
+				a = Polar(1, data[0][0]).asPoint;
+				b = Polar(1, data[0][1]).asPoint;
+				// res = acos((a.dist(b).squared -2) / 2);
+				res = 2 * asin(a.dist(b) / 2);
+				(data[0][0] < data[0][1]).if {
+					res = res * -1;
+				};
+				res;
+			},
 			\meanMany -> { |data|
 				data[0].mean
 			},
