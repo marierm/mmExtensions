@@ -234,7 +234,7 @@ LangFeature : Feature {
 	init { |function, args|
 		super.init;
 		bus = Bus.control(server);
-		inputData = Array.fill(historySize, 0);
+		inputData = Array.fill(historySize, [0] );
 		// input is a feature: process a feature;
 		input.do({ |i| i.dependantFeatures.add(this) });
 		fullFunc = {

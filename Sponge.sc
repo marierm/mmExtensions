@@ -48,15 +48,15 @@ Sponge {
 					data[id] = msb;
 					values = data;
 					action.value(*data);
-				} {	// if it is the data of one of the sensors
+				} {	// if it is the data of one of the other sensors
 					msb = port.read % 128;
 					lsb = port.read % 8;
 					try {
 						data[id] = (msb << 3) + lsb;
-					} { |error|
-						error.postln;
-						"This error can be ignored safely.".postln;
-					}
+					} // { |error|
+					// 	error.postln;
+					// 	"This error can be ignored safely.".postln;
+					// }
 				};
 			}
 		};

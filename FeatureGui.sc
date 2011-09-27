@@ -116,6 +116,7 @@ FeatureGui : ObjectGui {
 						monitor.gnuplot.autoscaleY;
 						monitor.gnuplot.sendCmd(
 							"set title \"" ++ model.name.asString ++ "\"");
+						monitor.gnuplot.sendCmd("set style data line");
 					} {
 						monitor.stop;
 					}
