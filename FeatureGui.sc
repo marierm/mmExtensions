@@ -106,20 +106,10 @@ FeatureGui : ObjectGui {
 				StaticText(w).string_("Bus").align_(\right)
 				.minWidth_(85).maxSize_(85@22),
 				StaticText(w).string_(model.bus.index).maxHeight_(22),
-				// monitor depends on GNUPlot Quark.
 				Button(w).states_(
-					[["monitor"],["stop"]]
+					[["monitor"]]
 				).action_({ |i|
-					(i.value == 1).if{
-						monitor = BusMonitor(model.bus, 500, 1).dt_(0.001);
-						monitor.start;
-						monitor.gnuplot.autoscaleY;
-						monitor.gnuplot.sendCmd(
-							"set title \"" ++ model.name.asString ++ "\"");
-						monitor.gnuplot.sendCmd("set style data line");
-					} {
-						monitor.stop;
-					}
+					BusPlot(model.bus, model.name);
 				}).maxHeight_(22)
 			)
 		);
