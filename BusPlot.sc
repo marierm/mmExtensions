@@ -42,18 +42,25 @@ BusPlot {
 		oscDef = OSCdef(("busplot" ++ id).asSymbol, { arg msg, time;
 			(msg[1] == id).if {
 				buffer.loadToFloatArray( 0, numFrames, {|vals|
-					vals = vals.as(Array).rotate(
-						(msg[3].asInt) * -1 * bus.numChannels
-					);
-					vals = vals.keep((numFrames-(pad * bus.numChannels)) * -1);
-					vals = vals.unlace(bus.numChannels);
-					{
-						plot.value = vals;
-						plot.domainSpecs_(ControlSpec(dur * -1,0, units:"sec" ));
-						plot.setProperties(\labelX,"seconds",\labelY,name.asString);
-						// plot.resolution_(1);
-						plot.findSpecs_(false);
-					}.defer;
+					try{
+						vals = vals.as(Array).rotate(
+							(msg[3].asInt) * -1 * bus.numChannels
+						);
+						vals = vals.keep((numFrames-(pad * bus.numChannels)) * -1);
+						vals = vals.unlace(bus.numChannels);
+						{
+							plot.value = vals;
+							plot.domainSpecs_(
+								ControlSpec(dur * -1,0, units:"sec" )
+							);
+							plot.setProperties(
+								\labelX, "seconds",
+								\labelY,name.asString
+							);
+							// plot.resolution_(1);
+							plot.findSpecs_(false);
+						}.defer;
+					}
 				});
 			}
 		},'/tr', bus.server.addr);
