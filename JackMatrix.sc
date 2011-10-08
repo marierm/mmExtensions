@@ -147,11 +147,13 @@ JackMatrix {
 
 	getConnections {
 		var stdOut, cons;
+		var inc;
+		
 		cons = List[];
 		stdOut = (prefix++"jack_lsp -c").unixCmdGetStdOut.split($\n);
 		stdOut.do { |i,j|
-			i.containsStringAt(0, "   ").if {
-				var inc=1;
+			i.containsStringAt(0, "   ").if{
+				inc = 1;
 				{stdOut[j - inc].containsStringAt(0, "   ")}.while({ inc = inc+1});
 				cons.add([stdOut[j - inc], i.copyToEnd(3)])
 			}
