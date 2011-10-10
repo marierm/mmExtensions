@@ -2,51 +2,100 @@
 // 
 // 
 
-SpongeLooper {
+Looper {
 
-	var maxDur, numChannels, server, rate, <buffer, wSynth, rSynth, dur,
-	xFade, start, end, inBuses, outBus;
+	var inBus, maxDur, server, <buffer, recSynth, pbSynth, dur,
+	xFade, start, end, outBus;
 
-	*new { |maxDur=60, numChannels=1, server, rate='control'|
+	*new { |inBus, maxDur=60, server, rate='control'|
 		server = server ? Server.default;
-		^Super.newCopyArgs(maxDur, numChannels, server, rate).init;
+		(rate == 'control').if {
+			^Super.newCopyArgs(inBus, maxDur, server).initKr;
+		};
+		(rate == 'audio').if {
+			^Super.newCopyArgs(inBus, maxDur, server).initAr;
+		};
+
 	}
 
-	*ar { |maxDur=60, numChannels=1, server|
-		^this.new(maxDur, numChannels, server, 'audio');
+	*ar { |inBus, maxDur=60, server|
+		^this.new(inBus, maxDur, server, 'audio');
 	}
 
-	*kr { |maxDur=60, numChannels=1, server|
-		^this.new(maxDur, numChannels, server, 'control');
+	*kr { |inBus, maxDur=60, server|
+		^this.new(inBus, maxDur, server, 'control');
 	}
 
-	init {
-		buffer = Buffer.alloc(
-			server, maxDur * server.sampleRate, numChannels
-		);
-		outBus = Bus.alloc(rate, server, numChannels);
+	initAr {
+		{
+			buffer = Buffer.alloc(
+				server, maxDur * server.sampleRate, inBus.numChannels
+			);
+			outBus = Bus.audio(server, inBus.numChannels);
+			
+			SynthDef(("looperRec" ++ inBus.numChannels).asSymbol, {
+				arg inBus=0, bufnum=0, numFrames=1;
+				var phase;
+				phase = Phasor.ar(0,1,0,numFrames);
+				BufWr.ar(In.ar(inBus, inBus.numChannels), bufnum, phase);
+			}).send(server);
 
-		// wDef = SynthDef(\help_RecordBuf, {
-		// 	arg out=0, bufnum=0, inBus;
-		// 	RecordBuf.ar(formant, bufnum, doneAction: 2, loop: 0);
-		// });
-		// wSynth = Synth.tail(server, \wDef);
+			SynthDef(("looperPb" ++ inBus.numChannels).asSymbol, {
+				arg out=0, bufnum=0, trig=0, start=0, end=1, resetPos=0;
+				var phase;
+				phase = Phasor.ar(trig,1,start,end, resetPos);
+				Out.ar(
+					out,
+					BufRd.ar(inBus.numChannels, bufnum, phase)
+				)
+			}).send(server);
+
+			server.sync;
+
+			recSynth = Synth.head(
+				server,
+				("looperRec" ++ inBus.numChannels).asSymbol, [
+					\out, outBus.index,
+					\inBus, inBus,
+					\bufnum, buffer.bufnum,
+					\numFrames, buffer.numFrames
+				]
+			);
+
+			pbSynth = Synth.newPaused(
+				("looperPb" ++ inBus.numChannels).asSymbol, [
+					\out, outBus.index,
+					\bufnum, buffer.bufnum,
+					\trig, 0,
+					\start, 0,
+					\end, buffer.numFrames,
+					\resetPos, 0
+				],
+				server,
+				\addToTail
+			);
+		}.fork;
 	}
 
-	inBuses_ { |...buses|
-		var totalNumChan, pass=true;
-		// Check the total number of channels and if rates correspond;
-		totalNumChan = buses.collect(_.numChannels).sum;
-		buses.do{|i| (i.rate != rate).if{pass=false} };
-		pass = pass and: (totalNumChan == numChannels);
-		pass.if {
-			inBuses = buses;
-		} {
-			"buses.size is not equal to numChannels".warn;
-		}
+	initKr {
+		{
+			buffer = Buffer.alloc(
+				server, maxDur * server.sampleRate, inBus.numChannels
+			);
+			outBus = Bus.audio(server, inBus.numChannels);
+			server.sync;
+			
+			recSynth = SynthDef(("looper" ++ inBus.numChannels).asSymbol, {
+				arg out=0, inBus=0, bufnum=0, numFrames=1;
+				var phase;
+				phase = Phasor.ar(0,1,0,numFrames);
+				BufWr.ar(In.ar(inBus, inBus.numChannels), bufnum, phase);
+			}).play(server, [
+				\out, outBus.index,
+				\inBus, inBus,
+				\bufnum, buffer.bufnum,
+				\numFrames, buffer.numFrames
+			]);
+		}.fork;
 	}
-
-	rec {}
-	
-	play {}
 }
