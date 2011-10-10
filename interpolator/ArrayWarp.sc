@@ -1,9 +1,9 @@
 // Copyright 2010 Martin Marier
 
-ArrayWarp : LinearWarp {
+GraphWarp : LinearWarp {
 	var <>array, <>interpolate=false, <w, step, <ms;
 	*initClass {
-		Warp.warps.put(\array, ArrayWarp)
+		Warp.warps.put(\graph, GraphWarp)
 	}
 	*new { arg spec, array;
 		^super.new(spec.asSpec).init(array);
@@ -29,7 +29,7 @@ ArrayWarp : LinearWarp {
 			super.unmap(value)
 		) / (array.size-1);
 	}
-	makeWindow { arg x=30, y=300, action, name="ArrayWarp";
+	makeWindow { arg x=30, y=300, action, name="GraphWarp";
 		var display;
 		w = Window(name , Rect(x, y, 350, 400))
 			.alwaysOnTop_(true);
@@ -82,7 +82,7 @@ ArrayWarp : LinearWarp {
 
 + Array {
 	asWarp { arg spec;
-		^ArrayWarp.new(spec, this)
+		^GraphWarp.new(spec, this)
 	}
 }
 
@@ -159,7 +159,7 @@ ArrayWarp : LinearWarp {
 					curve.enabled_(false);
 					this.warp_(i.item.asWarp(this));
 					this.init;
-					if (i.item == \array) {
+					if (i.item == \graph) {
 						this.init;
 						this.warp.init;
 						this.warp.makeWindow(
@@ -176,7 +176,7 @@ ArrayWarp : LinearWarp {
 				.action_({|i|
 					this.step_(i.value);
 					this.warp.class.switch(
-						ArrayWarp, {this.warp.step_}
+						GraphWarp, {this.warp.step_}
 					);
 					action.value(this);
 				}),
@@ -205,7 +205,7 @@ ArrayWarp : LinearWarp {
 				curve.enabled_(true);
 				curve.value_(this.warp.curve);
 			},
-			ArrayWarp, {
+			GraphWarp, {
 				curve.enabled_(false);
 				this.warp.makeWindow(
 						w.bounds.left + 290,
