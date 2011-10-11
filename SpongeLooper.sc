@@ -5,7 +5,7 @@
 Looper {
 
 	var inBus, maxDur, server, <buffer, recSynth, pbSynth,
-	xFade, start, end, <outBus, phasorBus;
+	xFade, <start, <end, <outBus, <startBus, <endBus;
 
 	*initClass {
 		16.do{|i|
@@ -28,16 +28,26 @@ Looper {
 				)
 			}).writeDefFile();
 			SynthDef(("looperreccontrol" ++ numChannels).asSymbol, {
-				arg inBus=0, bufnum=0, numFrames=1, phasorOut=100;
+				arg inBus=0, bufnum=0, startOut=100, endOut=101,
+				startTrig, endTrig;
 				var phase;
-				phase = Phasor.kr(0,1,0,numFrames);
-				Out.kr(phasorOut, phase);
+				phase = Phasor.kr(0,1,0,BufFrames.kr(bufnum));
+				Out.kr(startOut, Latch.kr(phase, startTrig));
+				Out.kr(endOut, Latch.kr(phase, endTrig));
 				BufWr.kr(In.kr(inBus, numChannels), bufnum, phase);
 			}).writeDefFile();
 			SynthDef(("looperpbcontrol" ++ numChannels).asSymbol, {
-				arg out=0, bufnum=0, trig=0, start=0, end=1, resetPos=0;
-				var phase;
-				phase = Phasor.kr(trig,1,start,end, resetPos);
+				arg out=0, bufnum=0, trig=0, startBus, endBus;
+				var phase, start, end;
+				start = In.kr(startBus);
+				end = In.kr(endBus);
+				phase = Phasor.kr(
+					trig, 1, start, 
+					Select.kr( //end
+						end <= start,
+						[end, BufFrames.kr(bufnum) + end]
+					)
+				);
 				Out.kr(
 					out,
 					BufRd.kr(numChannels, bufnum, phase)
@@ -63,24 +73,28 @@ Looper {
 
 			buffer = Buffer.alloc( server, dur, inBus.numChannels);
 			outBus = Bus.alloc(inBus.rate, server, inBus.numChannels);
-			phasorBus = Bus.control(server, 1);
+			startBus = Bus.control(server, 1);
+			endBus = Bus.control(server, 1);
 			
 			server.sync;
 
-			recSynth = Synth.head(server, recDefName, [
-				\out, outBus.index,
-				\inBus, inBus.index,
-				\bufnum, buffer.bufnum,
-				\numFrames, buffer.numFrames,
-				\phasorOut, phasorBus.index
-			]);
-			pbSynth = Synth.newPaused(pbDefName, [
+			recSynth = Synth.newPaused(
+				recDefName, [
+					\inBus, inBus.index,
+					\bufnum, buffer.bufnum,
+					\startOut, startBus.index,
+					\endOut, endBus.index
+				],
+				server,
+				\addToHead
+			);
+			pbSynth = Synth.newPaused(
+				pbDefName, [
 					\out, outBus.index,
 					\bufnum, buffer.bufnum,
 					\trig, 0,
-					\start, 0,
-					\end, buffer.numFrames,
-					\resetPos, 0
+					\startBus, startBus.index,
+					\endBus, endBus.index
 				],
 				server,
 				\addToTail
@@ -89,32 +103,50 @@ Looper {
 	}
 
 	startRec {
-		phasorBus.get({|val| start = val});
+		server.sendBundle(
+			0.01,
+			recSynth.runMsg(true),
+			recSynth.setMsg(\startTrig, 1)
+		);
+		server.sendBundle(
+			0.05,
+			recSynth.setMsg(\startTrig, 0)
+		);
+		// phasorBus.get({|val|
+		// 	start = val;
+		// 	pbSynth.set(\start, start);
+		// });
 	}
 
 	stopRec {
-		phasorBus.get({|val| end = val});
+		server.sendBundle(
+			0.01,
+			recSynth.setMsg(\endTrig, 1)
+		);
+		server.sendBundle(
+			0.05,
+			recSynth.setMsg(\endTrig, 0),
+			recSynth.runMsg(false)
+		);
+
+		// phasorBus.get({|val|
+		// 	end = val;
+		// 	(end <= start).if{
+		// 		end = end + buffer.numFrames;
+		// 	};
+		// 	pbSynth.set(\end, end);
+		// });
+		// recSynth.run(false);
 	}
 
 	startPb {
-		var msg;
-		(end <= start).if{
-			end = buffer.numFrames + end;
-		};
-		msg = [
-			pbSynth.runMsg(true),
-			pbSynth.setMsg( \start, start,\end, end ),
-			pbSynth.setMsg(\trig,1),
-			pbSynth.setMsg(\trig,0)
-		];
-
-		server.listSendBundle(0.01, msg);
+		this.stopRec;
+		server.sendBundle(0.01, pbSynth.runMsg(true), pbSynth.setMsg(\trig,1));
+		server.sendBundle(0.02, pbSynth.setMsg(\trig,0));
 		// set crossFade stuff
 	}
 
 	stopPb {
 		pbSynth.run(false);
 	}
-
-
 }

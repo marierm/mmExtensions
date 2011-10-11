@@ -57,7 +57,7 @@ BusPlot {
 								\labelX, "seconds",
 								\labelY,name.asString
 							);
-							// plot.resolution_(1);
+							plot.resolution_(1);
 							plot.findSpecs_(false);
 						}.defer;
 					}
