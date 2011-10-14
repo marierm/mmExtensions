@@ -5,7 +5,7 @@
 Looper {
 
 	var inBus, maxDur, server, <>xFade, <buffer, recSynth, pbSynth,
-	<start, <end, <outBus, <startBus, <endBus;
+	<start, <end, <outBus, <lengthBus;
 
 	*initClass {
 		16.do{|i|
@@ -41,47 +41,34 @@ Looper {
 			// }).writeDefFile();
 
 			SynthDef(("looperreccontrol" ++ numChannels).asSymbol, {
-				arg inBus=0, bufnum=0, startOut=100, endOut=101,
-				t_startTrig=0, t_endTrig=0;
-				var phase;
-				phase = Phasor.kr(t_startTrig,1,0,BufFrames.kr(bufnum));
-				Out.kr(startOut, Latch.kr(phase, t_startTrig));
-				Out.kr(endOut, Latch.kr(phase, t_endTrig));
-				BufWr.kr(In.kr(inBus, numChannels), bufnum, phase);
+				arg inBus=0, bufnum=0, lengthBus=100, run=0, t_trig=0, gate=1, fadeTime=1, t_reset=0;
+				var recLevel, preLevel;
+				recLevel = Linen.kr(gate, 0, 1, fadeTime);
+				preLevel = 1 - recLevel;
+				RecordBuf.kr(
+					In.kr(inBus, numChannels),
+					bufnum,
+					offset: 0,
+					recLevel: recLevel,
+					preLevel: preLevel,
+					run: run,
+					trigger: t_trig
+				);
+				Out.kr(lengthBus, Latch.kr(Phasor.kr(t_reset,1,0, 750 * 60), t_trig));
 			}).writeDefFile();
 			SynthDef(("looperpbcontrol" ++ numChannels).asSymbol, {
-				arg out=0, bufnum=0, t_trig=0, startBus, endBus, fadeTime=1,
-				gate=0, t_reset=0, hold=0;
-				var phase1, phase2, start, end, player1, player2, env, dur, sig;
-				start = In.kr(startBus);
-				end = Select.kr(
-						In.kr(endBus) <= start,
-						[In.kr(endBus), BufFrames.kr(bufnum) + In.kr(endBus)]
+				arg out=0, bufnum=0, lengthBus;
+				var dur, player;
+				dur = (In.kr(lengthBus, 1) - 10) * ControlDur.ir;
+				player = PlayBuf.kr(
+					numChannels: numChannels,
+					bufnum: bufnum,
+					rate: 1,
+					trigger: Impulse.kr(1/dur),
+					startPos: 0,
+					loop: 1
 				);
-				dur = ((end - start) * ControlDur.ir) - fadeTime;
-				// fadeTime = fadeTime * ControlRate.ir;
-				// phase1 = Phasor.kr(t_trig, 1, start, end + (fadeTime * ControlRate.ir));
-				// phase1 = Phasor.kr(t_trig, 1, start, end + (fadeTime * ControlRate.ir));
-				phase1 = Phasor.kr(t_trig, 1, start, 2 * end);
-				// phase2 = (phase1 + end) % (end + (fadeTime * ControlRate.ir));
-				phase2 = (phase1 + end) % (2 * end);
-				player1 = BufRd.kr(numChannels, bufnum, phase1);
-				player2 = BufRd.kr(numChannels, bufnum, phase2);
-
-				env = DemandEnvGen.kr(
-					Dseq([0, 1, 1, 0], inf),
-					Dseq([fadeTime, dur,fadeTime, dur], inf),
-					gate: gate,
-					reset: t_reset
-				);
-				player1 = player1 * env;
-				player2 = player2 * (1 - env); // invert enveloppe
-				sig = Mix([player1, player2]);
-				sig = SelectX.kr(VarLag.kr(hold, fadeTime, 0), [sig, Latch.kr(sig, t_trig)]);
-				// env2 = Linen.kr(hold, fadeTime, 1, fadeTime);
-				Out.kr(out, sig );
-				// Out.kr(	out, [player1, player2]);
-				// Out.kr(	out, player1);
+				Out.kr(out, player);
 			}).writeDefFile();
 		}
 	}
@@ -104,17 +91,17 @@ Looper {
 			buffer = Buffer.alloc( server, dur, inBus.numChannels);
 			// outBus = Bus.alloc(inBus.rate, server, inBus.numChannels);
 			outBus = Bus.alloc(inBus.rate, server, inBus.numChannels);
-			startBus = Bus.control(server, 1);
-			endBus = Bus.control(server, 1);
+			lengthBus = Bus.control(server, 1);
 			
 			server.sync;
 
-			recSynth = Synth.newPaused(
+			recSynth = Synth.new(
 				recDefName, [
 					\inBus, inBus.index,
 					\bufnum, buffer.bufnum,
-					\startOut, startBus.index,
-					\endOut, endBus.index
+					\lengthBus, lengthBus.index,
+					\run, 0,
+					\fadeTime, xFade
 				],
 				server,
 				\addToHead
@@ -123,10 +110,7 @@ Looper {
 				pbDefName, [
 					\out, outBus.index,
 					\bufnum, buffer.bufnum,
-					\trig, 0,
-					\startBus, startBus.index,
-					\endBus, endBus.index,
-					\fadeTime, xFade
+					\lengthBus, lengthBus.index
 				],
 				server,
 				\addToTail
@@ -137,11 +121,9 @@ Looper {
 	startRec {
 		this.stopPb;
 		// start recording now
-		// and set start.
-		recSynth.run(true);
 		server.sendBundle(
 			0.01,
-			recSynth.setMsg(\t_startTrig, 1)
+			recSynth.setMsg(\run, 1, \t_trig, 1, \gate, 1, \t_reset, 1)
 		);
 	}
 
@@ -152,28 +134,23 @@ Looper {
 		// stop recording in xFade seconds
 		server.sendBundle(
 			0.01,
-			recSynth.setMsg(\t_endTrig, 1, \gate, 0)
+			recSynth.setMsg(\t_trig, 1, \run, 1, \gate, 0)
 		);
 		server.sendBundle(
-			xFade,
-			recSynth.runMsg(false)
+			xFade + 0.01,
+			recSynth.set(\run, 0)
 		);
 	}
 
 	startPb {
 		this.stopRec;
-		pbSynth.run(true);
-		pbSynth.set(\gate, 1, \t_reset, 2, \hold, 0);
-
 		server.sendBundle(
 			0.01,
-			// recSynth.setMsg(\t_endTrig, 1),
-			pbSynth.setMsg(\t_trig, 1, \gate, 1)
-			// pbSynth.setnMsg(\env, Env([0,1,0],[xFade, , xFade]).asArray)
+			pbSynth.runMsg(true)
 		);
 	}
 
 	stopPb {
-		pbSynth.set(\gate, -1, \hold, 1);
+		pbSynth.run(false);
 	}
 }
