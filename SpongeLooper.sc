@@ -32,7 +32,7 @@ Looper {
 				Out.ar(
 					lengthBus,
 					Latch.ar(
-						Phasor.ar(t_reset,1,0, ControlRate.ir * 60),
+						Phasor.ar(t_reset,1,0, SampleRate.ir * 60),
 						t_trig
 					)
 				);
