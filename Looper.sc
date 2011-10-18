@@ -16,7 +16,7 @@ Looper {
 				arg inBus=0, bufnum=0, lengthBus=100, run=0,
 				t_trig=1, gate=1, fadeTime=1, t_reset=0;
 				var recLevel, preLevel;
-				recLevel = VarLag.ar(DC.ar(gate), fadeTime, warp:\lin);
+				recLevel = VarLag.kr(gate, fadeTime, warp:\welch);
 				// recLevel = Linen.kr(gate, 0, 1, fadeTime);
 				preLevel = 1 - recLevel;
 				RecordBuf.ar(
@@ -165,8 +165,8 @@ Looper {
 			this.stopRec;
 			server.sendBundle(
 				0.05,
-				pbSynth.addToTailMsg(
-					nil, [
+				pbSynth.addAfterMsg(
+					recSynth, [
 						\out, outBus.index,
 						\bufnum, buffer.bufnum,
 						\lengthBus, lengthBus.index
