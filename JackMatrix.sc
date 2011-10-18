@@ -28,8 +28,8 @@ JackMatrix {
 		this.getNames;
 		this.getConnections;
 
-		w = Window("JackMatrix",Rect(100,100,600,600));
-		sv = ScrollView(w, Rect(0,0,600,600));
+		w = Window("JackMatrix",Rect(100,100,700,700));
+		sv = ScrollView(w, Rect(0,0,700,700));
 
 		this.updateGui;
 		
@@ -56,12 +56,15 @@ JackMatrix {
 	}
 
 	updateGui {
+		var outputsTextWidth=180, inputsTextWidth=180;
+		
 		{uv.remove}.try;
 		uv = UserView(
 			sv,
 			Rect(0,0,(inputs.size * 20) + 200, (outputs.size * 20) + 200)
 		);
 		uv.drawFunc_({
+			// draw outputs (left)
 			outputs.do{|i, j|
 				Pen.line(Point(0,152 + (j*20)), Point(150,152 + (j*20)));
 				Pen.stroke;
@@ -76,14 +79,16 @@ JackMatrix {
 			Pen.stroke;
 			Pen.translate(155,145);
 			inputs.do{|i|
-				Pen.line(-1@5, 65@(-150));
+				Pen.line(-3@8, -69@(-150));
 				Pen.stroke;
-				Pen.rotate(-pi/2.7);
-				i.draw();
 				Pen.rotate(pi/2.7);
+				i.drawRightJustIn(
+					Rect(-150,-16, 157, 20)
+				);
+				Pen.rotate(-pi/2.7);
 				Pen.translate(20,0);
 			};
-			Pen.line(-1@5, 65@(-150));
+			Pen.line(-3@2, -69@(-150));
 			Pen.stroke;
 		});
 
