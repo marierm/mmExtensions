@@ -11,7 +11,7 @@ Looper {
 		16.do{|i|
 			var numChannels;
 			numChannels = i+1;
-			// audio rate does not work (yet)
+			// audio rate SynthDefs
 			SynthDef(("looperrecaudio" ++ numChannels).asSymbol, {
 				arg inBus=0, bufnum=0, lengthBus=100, run=0,
 				t_trig=1, gate=1, fadeTime=1, t_reset=0;
@@ -51,7 +51,7 @@ Looper {
 				);
 				Out.ar(out, player);
 			}).writeDefFile();
-
+			// Control rate SynthDefs
 			SynthDef(("looperreccontrol" ++ numChannels).asSymbol, {
 				arg inBus=0, bufnum=0, lengthBus=100, run=0,
 				t_trig=1, gate=1, fadeTime=1, t_reset=0;
@@ -101,6 +101,7 @@ Looper {
 		fork{
 			var dur, recDefName, pbDefName;
 			dur = maxDur * server.sampleRate;
+			// Make a shorter buffer if we record control rate.
 			(inBus.rate == 'control').if {
 				dur = dur div: server.options.blockSize;
 			};
