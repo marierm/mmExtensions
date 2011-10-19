@@ -39,6 +39,19 @@ Feature {
 			}, metadata:( specs:(freq:[1,1000,\exp]) ) )
 		];
 		funcs = IdentityDictionary[
+			\accelGlobal -> { |data| // takes x, y and z as an input.
+				data[0].linlin(0,1023,-1,1).pow(2).sum.pow(0.5);
+			},
+			\integrate -> { |data, feature|
+				var value;
+				value = data.collect(_.at(0)).linlin(0,1023,-1,1, nil).sum;
+				// put sum in next to last slot in array because new data is
+				// inserted at the beginning.
+				feature.inputData[
+					feature.inputData.size - 2
+				] = [value.linlin(-1,1,0,1023, nil)];
+				value;
+			},
 			\atan -> { |data|
 				atan2(
 					(data[0][0]).linlin(0,1023,-1,1),
@@ -76,7 +89,7 @@ Feature {
 			\meanOne -> { |data|
 				data.flatten.mean
 			},
-			\button -> { |data, button|
+			\button -> { |data, feature, button|
 				// checks if button changed value.
 				var changed, val;
 				changed = (
@@ -245,7 +258,7 @@ SensorFeature : Feature { // the raw data from the sensor
 }
 
 LangFeature : Feature {
-	var <>historySize=10, <inputData, <value;
+	var <>historySize=10, <>inputData, <value;
 
 	*new { |name, interface, input, function, args|
 		^super.newCopyArgs(name, interface, input).init(function, args);
@@ -260,7 +273,7 @@ LangFeature : Feature {
 		fullFunc = {
 			inputData.addFirst(input.collect(_.value));
 			(inputData.size > historySize).if { inputData.pop };
-			value = function.value(inputData, *args);
+			value = function.value(inputData, this, *args);
 			action.value(value, inputData);
 			netAddr.sendMsg(oscPath, value);
 			bus.set(value);

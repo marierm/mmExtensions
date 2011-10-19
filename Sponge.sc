@@ -178,6 +178,30 @@ Sponge {
 			(name:\fsr1, input:6, type:\sensor),
 			(name:\fsr2, input:7, type:\sensor),
 			(name:\buttons, input:8, type:\sensor),
+			(name:\accelGlob1, input:[\acc1x, \acc1y, \acc1z],
+				func:Feature.funcs[\accelGlobal], type:\lang
+			).know_(false),
+			(name:\accelGlob2, input:[\acc2x, \acc2y, \acc2z],
+				func:Feature.funcs[\accelGlobal], type:\lang
+			).know_(false),
+			(name:\xSpeed1, input:[\acc1x],
+				func:Feature.funcs[\integrate], type:\lang
+			).know_(false),
+			(name:\ySpeed1, input:[\acc1y],
+				func:Feature.funcs[\integrate], type:\lang
+			).know_(false),
+			(name:\zSpeed1, input:[\acc1z],
+				func:Feature.funcs[\integrate], type:\lang
+			).know_(false),
+			(name:\xSpeed2, input:[\acc2x],
+				func:Feature.funcs[\integrate], type:\lang
+			).know_(false),
+			(name:\ySpeed2, input:[\acc2y],
+				func:Feature.funcs[\integrate], type:\lang
+			).know_(false),
+			(name:\zSpeed2, input:[\acc2z],
+				func:Feature.funcs[\integrate], type:\lang
+			).know_(false),
 			(name:\pitch1, input:[\acc1x, \acc1z],
 				func:Feature.funcs[\atan], type:\lang
 			).know_(false),
