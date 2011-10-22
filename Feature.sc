@@ -114,6 +114,10 @@ Feature {
 		^SynthFeature.new(name, interface, input, function, args)
 	}
 	
+	*button { |name, interface, input, function, args|
+		^ButtonFeature.new(name, interface, input, function, args)
+	}
+
 	init {
 		server = try{input[0].server} ? Server.default;
 		server.serverRunning.not.if {
@@ -285,8 +289,49 @@ LangFeature : Feature {
 	
 	remove {
 		super.remove;
-		input.do({|i| i.dependantFeatures.remove(this); }); // remove myself from the
-												 // dependantFeatures list of others.
+		// remove myself from the
+		// dependantFeatures list of others.
+		input.do({|i| i.dependantFeatures.remove(this); });
+	}
+
+}
+
+// A Feature specefically for buttons.  It only outputs data when its value
+// changes.
+ButtonFeature : Feature {
+	var <value;
+
+	*new { |name, interface, input, function, args|
+		^super.newCopyArgs(name, interface, input).init(function, args);
+	}
+
+	init { |function, args|
+		var newVal=0, oldVal=0, buttonNum;
+		super.init;
+		buttonNum = args[0];
+		bus = Bus.control(server);
+		input.do({ |i| i.dependantFeatures.add(this) });
+		fullFunc = {
+			newVal = input.collect(_.value)[0];
+			newVal = ((newVal & (1<<buttonNum)) != 0).asInteger;
+			(newVal != oldVal).if {
+				value = newVal;
+				action.value(value, oldVal );
+				netAddr.sendMsg(oscPath, value);
+				bus.set(value);
+			};
+			oldVal = newVal;
+		};
+		interface.action_(interface.action.addFunc(fullFunc));
+		interface.features.add(this);
+		interface.featureNames.add(name);
+	}
+	
+	remove {
+		super.remove;
+		// remove myself from the
+		// dependantFeatures list of others.
+		input.do({|i| i.dependantFeatures.remove(this); });
 	}
 
 }

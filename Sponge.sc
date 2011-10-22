@@ -277,9 +277,8 @@ Sponge {
 			featureList.add(
 				(name:(\button ++ i.asString).asSymbol,
 					input:[\buttons],
-					func: Feature.funcs[\button],
-					type: \lang,
-					args: [i]
+					type: \button,
+					args: [i] //passes the button number.
 				).know_(false);
 			);
 		};
