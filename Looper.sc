@@ -4,8 +4,8 @@
 
 Looper {
 
-	var inBus, maxDur, server, <>xFade, <buffer, recSynth, pbSynth,
-	<start, <end, <outBus, <lengthBus, <isRecording, <isPlaying;
+	var inBus, <xFade, <maxDur, server, <buffer, recSynth, pbSynth,
+	<outBus, <lengthBus, <isRecording, <isPlaying;
 
 	*initClass {
 		16.do{|i|
@@ -93,13 +93,14 @@ Looper {
 		}
 	}
 
-	*new { |inBus, maxDur=60, xFade=0.05|
-		^super.newCopyArgs(inBus, maxDur, inBus.server, xFade).init;
+	*new { |inBus, xFade=0.1, maxDur=60 |
+		^super.newCopyArgs(inBus, xFade, maxDur).init;
 	}
 
 	init {
 		fork{
 			var dur, recDefName, pbDefName;
+			server = inBus.server;
 			dur = maxDur * server.sampleRate;
 			// Make a shorter buffer if we record control rate.
 			(inBus.rate == 'control').if {
@@ -181,5 +182,25 @@ Looper {
 	stopPb {
 		pbSynth.free;
 		isPlaying = false;
+	}
+
+	xFade_ { |dur|
+		xFade = dur;
+		recSynth.set(\fadeTime, dur);
+	}
+}
+
+FeatureLooper : Looper{
+	var <>feature;
+
+	*new { |feature, xFade=0.1, maxDur=60 |
+		^super.new(feature.bus, xFade, maxDur).feature_(feature);
+	}
+
+}
+
++ Feature {
+	loop { |xFade=0.1, maxDur=60|
+		^FeatureLooper(this, xFade=0.1, maxDur=60);
 	}
 }
