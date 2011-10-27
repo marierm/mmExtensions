@@ -152,6 +152,9 @@ PresetInterpolator : SimpleController {
 				this.changed(
 					\presetName, presets.indexOf(preset), name
 				);
+			},
+			\attachedPoint -> {|interpolator, what, point|
+				this.changed(\attachedPoint, point);
 			}
 		];
 	}

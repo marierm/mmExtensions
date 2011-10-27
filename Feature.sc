@@ -229,8 +229,9 @@ SynthFeature : Feature {
 
 	remove {
 		super.remove;
-		input.do({|i| i.dependantFeatures.remove(this); }); // remove myself from the
-												 // dependantFeatures list of others.
+		// remove myself from the
+		// dependantFeatures list of others.
+		input.do({|i| i.dependantFeatures.remove(this); });
 		synth.free;
 	}
 }

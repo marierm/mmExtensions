@@ -59,6 +59,20 @@ PresetInterpolatorGui : AbstractInterpolatorGui {
 			},
 			\presetName -> {|prInterpolator, what, presetId, name|
 				guiItems[presetId][0].string_(name);
+			},
+			\attachedPoint -> {|prInterpolator, what, point|
+				point.isNil.if{
+					guiItems.do{|i|
+						i[1].value_(0);
+					}
+				}{
+					guiItems.do{ |i,j|
+						(j != point).if {
+							i[1].value_(0);
+						};
+					};
+					guiItems[point][1].value_(1);
+				}
 			}
 		];
 	}

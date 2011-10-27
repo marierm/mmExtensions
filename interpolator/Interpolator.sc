@@ -3,7 +3,7 @@
 Interpolator { //More than 2 dimensions
 
 	var <points, <rads, <cursor, <cursorRad, <>moveAction,
-	<weights, <interPoints, <n, <>colors, <>action, <>attachedPoint,
+	<weights, <interPoints, <n, <>colors, <>action, <attachedPoint,
 	connections;
 	
 	*new{ |numDim = 2|
@@ -169,6 +169,11 @@ Interpolator { //More than 2 dimensions
 		};
 		connections[axis] = (feature:feature, func:func).know_(false);
 		feature.action = action.addFunc(func);
+	}
+
+	attachedPoint_ { |point|
+		attachedPoint = point;
+		this.changed(\attachedPoint, point);
 	}
 
 	// gui stuff
