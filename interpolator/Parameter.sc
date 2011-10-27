@@ -90,12 +90,12 @@ Parameter {
 		value = val;
 		this.changed(\value, mapped, value);
 		action.value(this.mapped, value);
-		sendOSC.if{
-			netAddr.sendMsg(oscMess, mapped);
-		};
-		sendMIDI.if{
-			midiPort.control(midiChan, midiCtl, \midi.asSpec.map(value));
-		};
+		// sendOSC.if{
+		// 	netAddr.sendMsg(oscMess, mapped);
+		// };
+		// sendMIDI.if{
+		// 	midiPort.control(midiChan, midiCtl, \midi.asSpec.map(value));
+		// };
 	}
 
 	remove {

@@ -199,7 +199,7 @@ SynthFeature : Feature {
 		fullFunc = {
 			bus.get{|value|
 				action.value(value);
-				netAddr.sendMsg(oscPath, value);
+				// netAddr.sendMsg(oscPath, value);
 			};
 		};
 		
@@ -250,7 +250,7 @@ SensorFeature : Feature { // the raw data from the sensor
 			value = msg[input];
 			action.value(value);
 			bus.set(value);
-			netAddr.sendMsg(oscPath, value);
+			// netAddr.sendMsg(oscPath, value);
 		};
 		interface.action_(interface.action.addFunc(fullFunc));
 		interface.features.add(this);
@@ -280,7 +280,7 @@ LangFeature : Feature {
 			(inputData.size > historySize).if { inputData.pop };
 			value = function.value(inputData, this, *args);
 			action.value(value, inputData);
-			netAddr.sendMsg(oscPath, value);
+			// netAddr.sendMsg(oscPath, value);
 			bus.set(value);
 		};
 		interface.action_(interface.action.addFunc(fullFunc));
@@ -297,7 +297,7 @@ LangFeature : Feature {
 
 }
 
-// A Feature specefically for buttons.  It only outputs data when its value
+// A Feature specifically for buttons.  It only outputs data when its value
 // changes.
 ButtonFeature : Feature {
 	var <value;
@@ -318,7 +318,7 @@ ButtonFeature : Feature {
 			(newVal != oldVal).if {
 				value = newVal;
 				action.value(value, oldVal );
-				netAddr.sendMsg(oscPath, value);
+				// netAddr.sendMsg(oscPath, value);
 				bus.set(value);
 			};
 			oldVal = newVal;
