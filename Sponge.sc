@@ -3,7 +3,7 @@ Sponge {
 	var <port, inputThread, <featureNames, <features, <portName;
 	var <>action, <values, interpAction;
 
-	*new { arg portName="/dev/ttyUSB0", baudRate=19200;
+	*new { arg portName="/dev/ttyUSB0", baudRate=57600;
 		^super.new.init(portName, baudRate);
 	}
 
@@ -45,7 +45,8 @@ Sponge {
 				id = byte; // get sensor number
 				if (id == 8) { // if it is the button's data
 					msb = port.read % 128;
-					data[id] = msb;
+					lsb = port.read % 8;
+					data[id] = (msb << 3) + lsb;
 					values = data;
 					action.value(*data);
 				} {	// if it is the data of one of the other sensors
@@ -273,7 +274,7 @@ Sponge {
 			);
 		};
 		// buttons
-		7.do{|i|
+		10.do{|i|
 			featureList.add(
 				(name:(\button ++ i.asString).asSymbol,
 					input:[\buttons],
