@@ -185,22 +185,22 @@ Sponge {
 			(name:\accelGlob2, input:[\acc2x, \acc2y, \acc2z],
 				func:Feature.funcs[\accelGlobal], type:\lang
 			).know_(false),
-			(name:\xSpeed1, input:[\acc1x],
+			(name:\acc1xIntegral, input:[\acc1x],
 				func:Feature.funcs[\integrate], type:\lang
 			).know_(false),
-			(name:\ySpeed1, input:[\acc1y],
+			(name:\acc1yIntegral, input:[\acc1y],
 				func:Feature.funcs[\integrate], type:\lang
 			).know_(false),
-			(name:\zSpeed1, input:[\acc1z],
+			(name:\acc1zIntegral, input:[\acc1z],
 				func:Feature.funcs[\integrate], type:\lang
 			).know_(false),
-			(name:\xSpeed2, input:[\acc2x],
+			(name:\acc2xIntegral, input:[\acc2x],
 				func:Feature.funcs[\integrate], type:\lang
 			).know_(false),
-			(name:\ySpeed2, input:[\acc2y],
+			(name:\acc2yIntegral, input:[\acc2y],
 				func:Feature.funcs[\integrate], type:\lang
 			).know_(false),
-			(name:\zSpeed2, input:[\acc2z],
+			(name:\acc2zIntegral, input:[\acc2z],
 				func:Feature.funcs[\integrate], type:\lang
 			).know_(false),
 			(name:\pitch1, input:[\acc1x, \acc1z],
@@ -254,7 +254,7 @@ Sponge {
 		];
 		featureList.collect({|i| i[\name] }).do{|i|
 			featureList.add(
-				(name:(i ++ \Speed).asSymbol, input:[i],
+				(name:(i ++ \Slope).asSymbol, input:[i],
 					func:Feature.funcs[\slope], type:\lang
 				).know_(false)
 			)
