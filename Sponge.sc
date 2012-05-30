@@ -19,7 +19,7 @@ Sponge {
 			xonxoff:false,
 			exclusive:false
 		);
-		inputThread= fork {
+		inputThread = fork {
 			// SPONGEBEE BYTE PARSING
 			// ======================
 			// 
@@ -29,38 +29,30 @@ Sponge {
 			// where xxx is input sensor number
 			// 2nd and third bytes are data bytes : 1xxxxxxx and 10000xxx
 			// 7 bit MSB on first data byte and 3 bit LSB on second one.
-			// Last status byte (00001000) (8) has only one data byte:
-			// the 7 buttons.
-			var data, byte, msb, lsb, id, count=0;
+			// Last status byte (00001000) is for the 10 buttons.
+			var data, msb, lsb, id;
 			data = Array.fill(9,0);
-			byte = port.read;
-			while {byte != 0} { // read until we find the first status byte
-				byte = port.read;
+			id = port.read;
+			{(id >> 7) != 0}.while{
+				id = port.read;
 			};
-			msb = port.read % 128;
-			lsb = port.read % 8;
-			data[0] = (msb << 3) + lsb;
-			loop {
-				byte = port.read;
-				id = byte; // get sensor number
-				if (id == 8) { // if it is the button's data
-					msb = port.read % 128;
-					lsb = port.read % 8;
-					data[id] = (msb << 3) + lsb;
-					values = data;
-					action.value(*data);
-				} {	// if it is the data of one of the other sensors
+			{
+				9.do{
 					msb = port.read % 128;
 					lsb = port.read % 8;
 					try {
 						data[id] = (msb << 3) + lsb;
-					} // { |error|
-					// 	error.postln;
-					// 	"This error can be ignored safely.".postln;
-					// }
+					};
+					id = port.read;
 				};
-			}
+				// invert Z axies test;
+				// data[2] = (data[2] * -1) + 1023;
+				// data[5] = (data[5] * -1) + 1023;
+				values = data;
+				action.value(*data);
+			}.loop;
 		};
+
 		features = List[];
 		featureNames = List[];
 		// Add Features for each sensor
@@ -96,6 +88,9 @@ Sponge {
 	}
 
 	close {
+		features.do{|i|
+			i.remove;
+		};
 		inputThread.stop;
 		port.close;
 	}
