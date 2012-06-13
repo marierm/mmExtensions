@@ -1,90 +1,90 @@
 // Copyright 2010 Martin Marier
 
-GraphWarp : LinearWarp {
-	var <>array, <>interpolate=false, <w, step, <ms;
-	*initClass {
-		Warp.warps.put(\graph, GraphWarp)
-	}
-	*new { arg spec, array;
-		^super.new(spec.asSpec).init(array);
-	}
-	init { arg argArray;
-		array = argArray ? [0.0,1.0];
-		array = array.normalize;
-		step = spec.step/spec.range;
-	}
-	step_ {
-		step = spec.step/spec.range;
-		try {ms.step_(step)};		
-	}
-	map { arg value;
-		if (interpolate) {
-			^super.map(array.blendAt(value * (array.size-1)));
-		}{
-			^super.map(array.at(value * (array.size-1)));
-		}
-	}
-	unmap { arg value;
-		^array.indexInBetween(
-			super.unmap(value)
-		) / (array.size-1);
-	}
-	makeWindow { arg x=30, y=300, action, name="GraphWarp";
-		var display;
-		w = Window(name , Rect(x, y, 350, 400))
-			.alwaysOnTop_(true);
-		w.addFlowLayout( 10@10, 5@2 );
-		ms = MultiSliderView(w, 330@330)
-			.resize_(5)
-			.elasticMode_(1)
-			.indexThumbSize_(50)
-			.valueThumbSize_(2)
-			.value_(array)
-			.step_(step)
-			.action_({ |a|
-				array = a.value;
-				display.string_(
-					super.map(ms.currentvalue).asString
-				);
-				action.value;
-			});
-		StaticText(w, 30@15)
-			.string_("size")
-			.resize_(7)
-			.align_(\right);
-		NumberBox(w, 40@15)
-			.value_(array.size)
-			.resize_(7)
-			.action_({|j|
-				array = Array.fill(j.value,{|i| array[i] ? 0});
-				ms.value_(array);
-				action.value;
-			});
-		StaticText(w, 200@15)
-			.string_("interpolation")
-			.resize_(9)
-			.align_(\right);
-		Button(w, 40@20)
-			.states_([["off"],["on"]])
-			.value_(interpolate.binaryValue)
-			.resize_(9)
-			.action_({ |butt|
-				interpolate = butt.value.booleanValue;
-				action.value;
-			});
-		display=StaticText(w, 330@15)
-			.string_("")
-			.resize_(8)
-			.align_(\center);
-		w.front;
-	}
-}
+// GraphWarp : LinearWarp {
+// 	var <>array, <>interpolate=false, <w, step, <ms;
+// 	*initClass {
+// 		Warp.warps.put(\graph, GraphWarp)
+// 	}
+// 	*new { arg spec, array;
+// 		^super.new(spec.asSpec).init(array);
+// 	}
+// 	init { arg argArray;
+// 		array = argArray ? [0.0,1.0];
+// 		array = array.normalize;
+// 		step = spec.step/spec.range;
+// 	}
+// 	step_ {
+// 		step = spec.step/spec.range;
+// 		try {ms.step_(step)};		
+// 	}
+// 	map { arg value;
+// 		if (interpolate) {
+// 			^super.map(array.blendAt(value * (array.size-1)));
+// 		}{
+// 			^super.map(array.at(value * (array.size-1)));
+// 		}
+// 	}
+// 	unmap { arg value;
+// 		^array.indexInBetween(
+// 			super.unmap(value)
+// 		) / (array.size-1);
+// 	}
+// 	makeWindow { arg x=30, y=300, action, name="GraphWarp";
+// 		var display;
+// 		w = Window(name , Rect(x, y, 350, 400))
+// 			.alwaysOnTop_(true);
+// 		w.addFlowLayout( 10@10, 5@2 );
+// 		ms = MultiSliderView(w, 330@330)
+// 			.resize_(5)
+// 			.elasticMode_(1)
+// 			.indexThumbSize_(50)
+// 			.valueThumbSize_(2)
+// 			.value_(array)
+// 			.step_(step)
+// 			.action_({ |a|
+// 				array = a.value;
+// 				display.string_(
+// 					super.map(ms.currentvalue).asString
+// 				);
+// 				action.value;
+// 			});
+// 		StaticText(w, 30@15)
+// 			.string_("size")
+// 			.resize_(7)
+// 			.align_(\right);
+// 		NumberBox(w, 40@15)
+// 			.value_(array.size)
+// 			.resize_(7)
+// 			.action_({|j|
+// 				array = Array.fill(j.value,{|i| array[i] ? 0});
+// 				ms.value_(array);
+// 				action.value;
+// 			});
+// 		StaticText(w, 200@15)
+// 			.string_("interpolation")
+// 			.resize_(9)
+// 			.align_(\right);
+// 		Button(w, 40@20)
+// 			.states_([["off"],["on"]])
+// 			.value_(interpolate.binaryValue)
+// 			.resize_(9)
+// 			.action_({ |butt|
+// 				interpolate = butt.value.booleanValue;
+// 				action.value;
+// 			});
+// 		display=StaticText(w, 330@15)
+// 			.string_("")
+// 			.resize_(8)
+// 			.align_(\center);
+// 		w.front;
+// 	}
+// }
 
-+ Array {
-	asWarp { arg spec;
-		^GraphWarp.new(spec, this)
-	}
-}
+// + Array {
+// 	asWarp { arg spec;
+// 		^GraphWarp.new(spec, this)
+// 	}
+// }
 
 //method that increase a value according to a spec.
 //currentVal in value to be incremented.
@@ -250,13 +250,13 @@ GraphWarp : LinearWarp {
 		});
 		^w;
 	}
-	constrain { arg value;
-		^value.asFloat.round(step).clip(clipLo, clipHi)
-	}
-	map { arg value;
-		// maps a value from [0..1] to spec range
-		^warp.map(value.clip(0.0, 1.0)).round(step).clip(clipLo, clipHi);
-	}
+	// constrain { arg value;
+	// 	^value.asFloat.round(step).clip(clipLo, clipHi)
+	// }
+	// map { arg value;
+	// 	// maps a value from [0..1] to spec range
+	// 	^warp.map(value.clip(0.0, 1.0)).round(step).clip(clipLo, clipHi);
+	// }
 	increase { arg currentVal, increment, numSteps=1000;
 		^warp.increase(
 			currentVal, increment, numSteps
