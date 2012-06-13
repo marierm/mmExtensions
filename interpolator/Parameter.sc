@@ -22,6 +22,7 @@ Parameter {
 		siblings = List[];
 		try {sp = sp.asSpec};
 		spec = sp ? ControlSpec();
+		spec.addDependant(this);
 		try {val = val.clip(0,1)};
 		value = val ? spec.unmap(spec.default);
 		netAddr = NetAddr.localAddr;
@@ -54,7 +55,7 @@ Parameter {
 	}
 
 	spec_ { |sp|
-		spec = sp.asSpec.deepCopy;
+		spec = sp;
 		siblings.do{ |param|
 			if (param.spec != spec) {
 				param.spec_(spec);
@@ -102,5 +103,14 @@ Parameter {
 		this.changed(\paramRemoved);
 	}
 
-	guiClass { ^ParameterGui }
+	guiClass { ^ParameterGui2 }
+
+	update { |controlSpec, what ... args|
+		// Dependant of its spec only.  this would have to be changed if
+		// Parameter comes to depend on something else.
+
+		// Siblings could eventually depend on each other.  This would probably
+		// make things simpler.
+		this.spec_(controlSpec);
+	}
 }
