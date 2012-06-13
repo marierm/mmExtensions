@@ -28,8 +28,8 @@ Preset {
 			i.siblings.add(this);
 		};
 		actions = IdentityDictionary[
-			\paramRemoved -> {|model, what|
-				this.remove(model);
+			\paramRemoved -> {|param, what|
+				this.remove(param);
 			},
 			\value -> {|param, what, val|
 				this.changed(\paramValue, param, parameters.indexOf(param), val);
@@ -45,8 +45,8 @@ Preset {
 			i.addDependant(this);
 		});
 		actions = IdentityDictionary[
-			\paramRemoved -> {|model, what|
-				this.remove(model);
+			\paramRemoved -> {|param, what|
+				this.remove(param);
 			},
 			\value -> {|param, what, val|
 				this.changed(\paramValue, param, val);
@@ -73,7 +73,7 @@ Preset {
 	}
 
 	removeAt { |id|
-		( id < parameters.size && parameters.size > 1).if {
+		// ( id < parameters.size && parameters.size > 1).if {
 			parameters.removeAt(id);
 			siblings.do { |i|
 				(i.parameters.size != parameters.size).if {
@@ -81,14 +81,14 @@ Preset {
 				}
 			};
 			this.changed(\paramRemoved, parameters[id], id);
-		} {
-			"This Parameter cannot be removed".warn;
-		}
+		// } {
+		// 	"This Parameter cannot be removed".warn;
+		// }
 	}
 
 	remove { |thing|
 		var id;
-		( parameters.size > 1).if {
+		// ( parameters.size > 1).if {
 			id = parameters.indexOf(thing);
 			parameters.remove(thing);
 			siblings.do { |i|
@@ -97,9 +97,9 @@ Preset {
 				}
 			};
 			this.changed(\paramRemoved, thing, id);
-		} {
-			"This Parameter cannot be removed".warn;
-		}
+		// } {
+		// 	"This Parameter cannot be removed".warn;
+		// }
 	}	
 
 	name_ { |nm|
@@ -126,5 +126,5 @@ Preset {
 		^(name: name, parameters: parameters);
 	}
 
-	guiClass { ^PresetGui }
+	guiClass { ^PresetGui2 }
 }
