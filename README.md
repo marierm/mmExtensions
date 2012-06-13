@@ -4,7 +4,7 @@ The mmExtensions for SuperCollider
 ==================================
 
 At this point, this repository contains the files required to use to the
-PresetInterpolator
+PresetInterpolator and the Sponge.
 
 Installation
 ============
@@ -30,7 +30,8 @@ Description
 PresetInterpolator() is a preset interpolation system similar in concept to
 the Metasurface found in AudioMulch (created by Ross Bencina) or the max patch
 SpaceMaster (by Ali Momeni and David Wessel).  There is an important
-difference, though: PresetInterpolator() can interpolate spaces of any number of dimensions.
+difference, though: PresetInterpolator() can interpolate spaces of any number
+of dimensions.
 
 Interpolator() is the interpolation system used by PresetInterpolator().  It
 does not do much: it simply outputs weights.
@@ -100,12 +101,12 @@ visualize multidimensonal data.
 
 In preset window:
 ================= 
-* Click on the 'Add Parameter' to add more parameters.
+* Click on the 'Add' to add more parameters.
 The presets can have any number of parameters and these parameters can
 represent anything.
-* Double-click on the slider to edit the parameter's ControlSpec.
-* Click on the "O" button to open the OSC preferences of the parameter.
-* Click on the "M" button to open the MIDI preferences of the parameter.
+* Click on the '+' to edit the parameter's ControlSpec.
+* Click on the "O" button to open the OSC preferences of the parameter. (Temporarily not working.)
+* Click on the "M" button to open the MIDI preferences of the parameter. (Temporarily not working.)
 * Parameters can be named.
 
 Each preset of a PresetInterpolator always have the same number of
