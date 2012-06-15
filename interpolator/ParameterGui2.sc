@@ -12,7 +12,7 @@ ParameterGui2 : ObjectGui {
 
 ParameterView {
 	var tree, <parameter, <treeItem;
-	var slider, mapped, unmapped, name;
+	var slider, mapped, unmapped, name, oscButt;
 
 	*new { |parent, parameter, id|
 		^super.new.init(parent, parameter, id)
@@ -44,12 +44,17 @@ ParameterView {
 			).action_({ |nb|
 				parameter.value_(nb.value);
 			}),
-			Button().states_([
-				["",Color.grey(0.3), Color.grey(0.4)],
-				["X",Color.black, Color.white]
-			]).value_(
+			oscButt = Button().states_(
+				parameter.sendOSC.if({
+					[[parameter.oscMess, Color.black, Color.white]]
+				},{
+					[["none",Color.grey(0.3), Color.grey(0.4)]]
+				})
+			).value_(
 				parameter.sendOSC.asInteger;
-			),
+			).action_({|butt|
+				OscConfigurationGui.new(parameter).performList(\gui);
+			}),
 			Button().states_([
 				["",Color.grey(0.3), Color.grey(0.4)],
 				["X",Color.black, Color.white]
@@ -90,6 +95,17 @@ ParameterView {
 			\paramRemoved, {
 				parameter.removeDependant(this);
 				// tree.removeItem(treeItem);
+			},
+			\OSC, {
+				parameter.sendOSC.if({
+					oscButt.states_(
+						[[parameter.oscMess, Color.black, Color.white]]
+					)				
+				},{
+					oscButt.states_(
+						[["none",Color.grey(0.3), Color.grey(0.4)]]
+					)
+				});
 			}
 		);
 	}

@@ -1,7 +1,7 @@
 Parameter {
 
-	var <name, <value, <spec, <>action, <siblings, <>sendOSC, <>netAddr,
-	<>oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan;
+	var <name, <value, <spec, <>action, <siblings, <sendOSC, <>netAddr,
+	<oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan, oscAction;
 	//value is unmapped (between 0 and 1);
 	
 	*new { |name, spec, value|
@@ -38,10 +38,31 @@ Parameter {
 		}
 	}
 
-	initOSC { |netAd, mess|
-		netAddr = netAd ? NetAddr.localAddr;
-		oscMess = mess ? ("/" ++ name);
-		sendOSC = true;
+	// initOSC { |netAd, mess|
+	// 	netAddr = netAd ? NetAddr.localAddr;
+	// 	oscMess = mess ? ("/" ++ name);
+	// 	sendOSC = true;
+	// }
+
+	sendOSC_ { |bool|
+		bool.if({
+			sendOSC = true;
+			oscAction = {netAddr.sendMsg(oscMess, this.mapped);};
+			action = action.addFunc(oscAction);
+			this.changed(\OSC, true);
+		},{
+			sendOSC = false;
+			action = action.removeFunc(oscAction);
+			this.changed(\OSC, false)
+		});
+		// sendMIDI.if{
+		// 	midiPort.control(midiChan, midiCtl, \midi.asSpec.map(value));
+		// };
+	}
+	
+	oscMess_ { |string|
+		oscMess = string;
+		this.changed(\OSC);
 	}
 
 	initMIDI { |portNum, chan, ctl|
@@ -72,9 +93,10 @@ Parameter {
 			}
 		};
 		this.changed(\name, name);
-		sendOSC.if{
+		// sendOSC.if{
 			oscMess = oscMess.dirname ++ "/" ++ name;
-		};
+		// };
+		this.changed(\OSC);
 	}
 
 	mapped {
@@ -91,12 +113,6 @@ Parameter {
 		value = val;
 		this.changed(\value, mapped, value);
 		action.value(this.mapped, value);
-		// sendOSC.if{
-		// 	netAddr.sendMsg(oscMess, mapped);
-		// };
-		// sendMIDI.if{
-		// 	midiPort.control(midiChan, midiCtl, \midi.asSpec.map(value));
-		// };
 	}
 
 	remove {
