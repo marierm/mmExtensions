@@ -24,7 +24,7 @@ ControlSpecView {
 	}
 
 	init { |parent, aSpec, parameterView|
-		parentItem = parent;
+		parentItem = parent.addChild(["ControlSpec"]);
 		spec = aSpec;
 		paramView = parameterView;
 		parentItem.addChild(["min","max","warp","step","default","units","preset"]);
@@ -32,11 +32,15 @@ ControlSpecView {
 		paramView.parameter.spec.addDependant(this);
 		//return = spec.deepCopy;
 		widgets = [
-			NumberBox().value_(paramView.parameter.spec.minval)
+			NumberBox()
+			.maxDecimals_(12)
+			.value_(paramView.parameter.spec.minval)
 			.action_({|i|
 				paramView.parameter.spec.minval_(i.value);
 			}),
-			NumberBox().value_(paramView.parameter.spec.maxval)
+			NumberBox()
+			.maxDecimals_(12)
+			.value_(paramView.parameter.spec.maxval)
 			.action_({|i|
 				paramView.parameter.spec.maxval_(i.value);
 			}),
@@ -52,18 +56,22 @@ ControlSpecView {
 					curve.enabled_(false);
 				}
 			}),
-			NumberBox().value_(paramView.parameter.spec.step)
-				.action_({|i|
-					paramView.parameter.spec.step_(i.value);
-				}),
-			NumberBox().value_(paramView.parameter.spec.default)
-				.action_({|i|
-					paramView.parameter.spec.default_(i.value);
-				}),
+			NumberBox()
+			.maxDecimals_(12)
+			.value_(paramView.parameter.spec.step)
+			.action_({|i|
+				paramView.parameter.spec.step_(i.value);
+			}),
+			NumberBox()
+			.maxDecimals_(12)
+			.value_(paramView.parameter.spec.default)
+			.action_({|i|
+				paramView.parameter.spec.default_(i.value);
+			}),
 			TextField().value_(paramView.parameter.spec.units)
-				.action_({|i|
-					paramView.parameter.spec.units_(i.value.asString);
-				}),
+			.action_({|i|
+				paramView.parameter.spec.units_(i.value.asString);
+			}),
 			PopUpMenu().items_(
 				[\presets] ++ Spec.specs.select({|i|
 					(i.class == ControlSpec)
