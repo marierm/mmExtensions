@@ -34,12 +34,12 @@ ParameterView {
 			).action_({ |sl|
 				parameter.value_(sl.value);
 			}),
-			mapped = NumberBox().value_(
+			mapped = NumberBox().maxDecimals_(12).value_(
 				parameter.mapped
 			).action_({ |nb|
 				parameter.mapped_(nb.value);
 			}),
-			unmapped = NumberBox().value_(
+			unmapped = NumberBox().maxDecimals_(12).value_(
 				parameter.value
 			).action_({ |nb|
 				parameter.value_(nb.value);
