@@ -122,6 +122,12 @@ Preset {
 		^parameters.size;
 	}
 
+	randomizeParameters {
+		parameters.do({ |i|
+			i.value_(1.0.rand);
+		});
+	}
+
 	saveable {
 		^(name: name, parameters: parameters);
 	}

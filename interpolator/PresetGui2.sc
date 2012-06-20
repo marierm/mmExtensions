@@ -1,5 +1,5 @@
 PresetGui2 : ObjectGui { 
-	var tree, addButton;
+	var tree, buttons;
 	
 	update { |model, what ... args|
 		what.switch(
@@ -28,10 +28,15 @@ PresetGui2 : ObjectGui {
 			ParameterView(tree,i,j);
 		};
 
-		addButton = tree.addItem([""]).setView(
+		buttons = tree.addItem(["",""]).setView(
 			0,
 			Button().states_([["Add"]]).action_({
 				model.add(Parameter())
+			})
+		).setView(
+			1,
+			Button().states_([["Randomize"]]).action_({
+				model.randomizeParameters;
 			})
 		);
 		tree.setProperty(\windowTitle,model.name);
