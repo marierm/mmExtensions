@@ -23,7 +23,9 @@ InterpolatorView2D {
 
 		window = Window(
 			"Interpolator 2D (axies % and %)".format(*axies),
-			Rect.aboutPoint(Window.screenBounds.center, size + 8, size +8)
+			Rect.aboutPoint(
+				Window.screenBounds.center, (size * 0.5)  + 4, (size * 0.5) + 4
+			)
 		);
 
 		bounds = Rect(4,4,size,size);
