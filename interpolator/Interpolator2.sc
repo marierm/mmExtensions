@@ -1,26 +1,71 @@
 // Copyright 2011-2012 Martin Marier
 
 Interpolator2 {
-	var <n, <points, <cursor, <weightsCalculator;
+	var <n, <points, <cursor, algo;
 	
-	*new{ |numDim = 2|
-		^super.newCopyArgs(numDim).init;
+	*new { |numDim = 2, algo|
+		^super.newCopyArgs(numDim).init(algo);
 	}
 	
-	init{
+	init { |algorithm|
 		points = List[];
 		cursor = InterpolatorCursor(this, 0.5 ! n);
-		weightsCalculator = WeightsCalculator(this);
+		this.algo_(algorithm);
 		this.add( 0!n );
 	}
-	
+
+	calculateWeights {
+		var weights;
+		weights = algo.value(cursor, points);
+		points.do({|i,j|
+			i.weight_(weights[j]);
+		});
+	}
+		
+	algo_ { |algorithm|
+		algo = algorithm ? { |cursor, points|
+			var cursorOnPoint=false; // True if the cursor is exactly on a point.
+			var radii, cursorRadius, weights;
+
+			weights = Array.fill(points.size, 0);
+
+			points.do({|i,j|
+				(i.position == cursor.position).if({
+					weights[j] = 1.0;
+					cursorOnPoint = true;
+				});
+			});
+
+			cursorOnPoint.not.if({
+				// calculate radii
+				radii = points.collect({ |i|
+					var otherPoints;
+					otherPoints = points ++ [cursor];
+					otherPoints.remove(i);
+					i.nearestDist(otherPoints);
+				});
+				cursorRadius = cursor.nearestDist(points);
+				// calculate weights
+				points.do({ |i,j|
+					// only if circles intersect
+					(i.dist(cursor) < (cursorRadius + radii[j])).if({
+						weights[j] = i.position.intersectArea(
+							radii[j], cursor.position, cursorRadius
+						) / (pi * radii[j].squared);
+					});
+				});
+			});
+			
+			weights.normalizeSum;
+		};
+	}
+
 	add { |pos|
 		var pt;
 		pt = InterpolatorPoint(this, pos);
 		points.add( pt );
 		this.changed(\pointAdded, pt);
-		// points.do(_.calculateWeight);
-		weightsCalculator.calculate;
+		this.calculateWeights;
 		^pt;
 	}
 
@@ -109,7 +154,7 @@ InterpolatorPoint : AbstractInterpolatorPoint {
 
 	coordinate_ { |coordinate, value|
 		position.put(coordinate, value);
-		interpolator.weightsCalculator.calculate;
+		interpolator.calculateWeights;
 		// this.calculateWeight;
 		this.changed(\pointPosition, position);
 	}
@@ -159,7 +204,7 @@ InterpolatorPoint : AbstractInterpolatorPoint {
 		interpolator.points.do({|i|
 			i.removeDependant(this);
 		});
-		interpolator.weightsCalculator.calculate;
+		interpolator.calculateWeights;
 		this.changed(\pointRemoved);
 	}
 
@@ -204,7 +249,7 @@ InterpolatorCursor : AbstractInterpolatorPoint {
 
 	coordinate_ { |coordinate, value|
 		position.put(coordinate, value);
-		interpolator.weightsCalculator.calculate;
+		interpolator.calculateWeights;
 		this.changed(\cursorPosition, position);
 	}
 
@@ -242,72 +287,12 @@ InterpolatorCursor : AbstractInterpolatorPoint {
 				// args[0] is the value of the Feature.
 				featureActions.at(model).value(args[0]);
 			},
-			// \pointAdded, {
-			// 	this.calculateRadius;
-			// },
-			// \pointPosition, {
-			// 	this.calculateRadius;
-			// },
-			// \pointRemoved, {
-			// 	this.calculateRadius;
-			// }
+			\pointAdded, {
+			},
+			\pointPosition, {
+			},
+			\pointRemoved, {
+			}
 		);
 	}
 }
-
-WeightsCalculator {
-	var <interpolator, <>algo;
-
-	*new { |interpolator, algo|
-		^super.newCopyArgs(interpolator, algo).init();
-	}
-
-	init {
-		algo = algo ? { |cursor, points|
-			var cursorOnPoint=false; // True if the cursor is exactly on a point.
-			var radii, cursorRadius, weights;
-
-			weights = Array.fill(points.size, 0);
-
-			points.do({|i,j|
-				(i.position == cursor.position).if({
-					weights[j] = 1.0;
-					cursorOnPoint = true;
-				});
-			});
-
-			cursorOnPoint.not.if({
-				// calculate radii
-				radii = points.collect({ |i|
-					var otherPoints;
-					otherPoints = interpolator.allPoints;
-					otherPoints.remove(i);
-					i.nearestDist(otherPoints);
-				});
-				cursorRadius = cursor.nearestDist(points);
-				// calculate weights
-				points.do({ |i,j|
-					// only if circles intersect
-					(i.dist(cursor) < (cursorRadius + radii[j])).if({
-						weights[j] = i.position.intersectArea(
-							radii[j], cursor.position, cursorRadius
-						) / (pi * radii[j].squared);
-					});
-				});
-			});
-			
-			weights.normalizeSum;
-		};
-	}
-
-	calculate {
-		var weights;
-		weights = algo.value(interpolator.cursor, interpolator.points);
-
-		interpolator.points.do({|i,j|
-			i.weight_(weights[j]);
-		});
-	}
-}
-
-
