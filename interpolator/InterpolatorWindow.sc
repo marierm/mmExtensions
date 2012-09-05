@@ -1,5 +1,5 @@
 InterpolatorWindow {
-	var model, tree, addButtonItem, cursorLine, pointViews, cursorView;
+	var model, window, tree, addButtonItem, cursorLine, pointViews, cursorView;
 
 	*new { |model|
 		^super.newCopyArgs(model).init;
@@ -7,6 +7,13 @@ InterpolatorWindow {
 
 	init {
 		var dimensions;
+		model.addDependant(this);
+
+		window = Window(
+			"Interpolator",
+			Rect.aboutPoint(Window.screenBounds.center, 400, 100)
+		);
+
 		// Create the name of the dimensions.  "dimensions"" will be an array
 		// of strings that could look like this (if numDim is 14):
 		// [ u, v, w, x, y, z, uu, vv, ww, xx, yy, zz, xxx, yyy ]
@@ -19,9 +26,9 @@ InterpolatorWindow {
 		pointViews = List[];
 		
 		// Define the treeView and its Header.
-		tree = TreeView().columns_(
+		tree = TreeView(window, window.bounds.origin_(0@0)).columns_(
 			["Weight", "Delete"] ++ dimensions
-		).front;
+		).resize_(5);
 
 		// the add button
 		tree.addItem([""]).setView(
@@ -40,11 +47,10 @@ InterpolatorWindow {
 
 
 		tree.setProperty(\windowTitle,"Interpolator");
-		tree.onClose_({
+		window.onClose_({
 			model.removeDependant(this);
 		});
-		tree.front;
-		^this;
+		window.front;
 	}
 
 	update { |model, what ... args|
