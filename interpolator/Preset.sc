@@ -132,5 +132,5 @@ Preset {
 		^(name: name, parameters: parameters);
 	}
 
-	guiClass { ^PresetGui2 }
+	makeWindow { ^PresetWindow(this) }
 }
