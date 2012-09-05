@@ -78,7 +78,7 @@ Interpolator {
 		^InterpolatorWindow(this);
 	}
 
-	makeGraph { |x, y, size, spec|
+	makeGraph { |x=0, y=1, size=400, spec|
 		^InterpolatorGraph(this, x, y, size, spec);
 	}
 }
