@@ -3,7 +3,7 @@ InterpolatorGraph {
 	var model, xAxis, yAxis, size, uv, grabbedPoint, diff, bounds, pointsSpec,
 	xSpec, ySpec, window;
 
-	*new { |model, x=0, y=1, size=400, spec|
+	*new { |model, x, y, size, spec|
 		^super.newCopyArgs(model, x, y, size).init(spec);
 	}
 
