@@ -1,7 +1,10 @@
 Parameter {
 
 	var <name, <value, <spec, <>action, <siblings, <sendOSC, <>netAddr,
-	<oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan, oscAction;
+	<oscMess, oscAction;
+	// MIDI not implemented and probably will never be.
+	// Why am I leaving this code here again?...
+	// <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan ; 
 	//value is unmapped (between 0 and 1);
 	
 	*new { |name, spec, value|
@@ -28,7 +31,7 @@ Parameter {
 		netAddr = NetAddr.localAddr;
 		oscMess = "/" ++ name;
 		sendOSC = false;
-		sendMIDI = false;
+		// sendMIDI = false;
 	}
 
 	initFromSibling { |sblng|
@@ -37,12 +40,6 @@ Parameter {
 			i.siblings.add(this);
 		}
 	}
-
-	// initOSC { |netAd, mess|
-	// 	netAddr = netAd ? NetAddr.localAddr;
-	// 	oscMess = mess ? ("/" ++ name);
-	// 	sendOSC = true;
-	// }
 
 	sendOSC_ { |bool|
 		bool.if({
@@ -55,9 +52,6 @@ Parameter {
 			action = action.removeFunc(oscAction);
 			this.changed(\OSC, false)
 		});
-		// sendMIDI.if{
-		// 	midiPort.control(midiChan, midiCtl, \midi.asSpec.map(value));
-		// };
 	}
 	
 	oscMess_ { |string|
@@ -65,15 +59,17 @@ Parameter {
 		this.changed(\OSC);
 	}
 
-	initMIDI { |portNum, chan, ctl|
-		MIDIClient.initialized.not.if{
-			MIDIClient.init;
-		};
-		midiPort = MIDIOut(portNum);
-		midiChan = chan;
-		midiCtl = ctl;
-		sendMIDI = true;
-	}
+	// MIDI is not implemented... and will probably never be.
+	// 
+	// initMIDI { |portNum, chan, ctl|
+	// 	MIDIClient.initialized.not.if{
+	// 		MIDIClient.init;
+	// 	};
+	// 	midiPort = MIDIOut(portNum);
+	// 	midiChan = chan;
+	// 	midiCtl = ctl;
+	// 	sendMIDI = true;
+	// }
 
 	spec_ { |sp|
 		spec = sp;
@@ -119,7 +115,7 @@ Parameter {
 		this.changed(\paramRemoved);
 	}
 
-	guiClass { ^ParameterGui2 }
+	makeWindow { ^ParameterWindow(this) }
 
 	update { |controlSpec, what ... args|
 		// Dependant of its spec only.  this would have to be changed if
