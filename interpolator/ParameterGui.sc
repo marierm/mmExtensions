@@ -1,99 +1,121 @@
-ParameterGui : AbstractInterpolatorGui { 
-	var <name, <slider, <mapped, <unmapped, mouseDownFunc, specWindow;
+ParameterWindow { 
+	var model;
 
-	calculateLayoutSize {
-		^Rect(0,0,300,80)
+	*new { |model|
+		^super.newCopyArgs(model).init();
 	}
 
 	init {
-		actions = IdentityDictionary[
-			\spec -> {|model, what, spec|
-				slider.value_(model.value);
-				mapped.value_(model.mapped);
-				unmapped.value_(model.value);
-			},
-			\value -> {|model, what, mppd, val|
-				slider.value_(val);
-				mapped.value_(mppd);
-				unmapped.value_(val);
-			},
-			\name -> {|model, what, nm|
-				name.value_(nm);
-			}
-		];
-		mouseDownFunc = {
-			arg view, x, y, modifiers, buttonNumber, clickCount;
-			var win, text;
-			if (clickCount == 2){ // double click
-				model.spec.makeWindow(
-					x: this.bounds.right,
-					y: this.bounds.bottom - this.bounds.bottom,
-					action: { |spec|
-						model.spec_(spec);
-					},
-					name: model.name.asString + "Spec"
-				)
-			};
-		};
-	}
-	
-	guiBody {|lay|
-		layout = lay;
-		name = TextField( layout, (layout.bounds.width - 70)@16 )
-		.string_(model.name)
-		.align_(\left)
-		.background_(Color.clear)
-		.resize_(2)
-		.action_({ |tf|
-			model.name_(tf.value);
-		});
-		Button( layout, 16@16)
-		.states_([["O"]])
-		.resize_(3)
-		.action_({
-			OscConfigurationGui.new(model).performList(\gui);
-		});
-		Button( layout, 16@16)
-		.states_([["M"]])
-		.resize_(3)
-		.action_({
-			MIDIClient.initialized.not.if{
-				MIDIClient.init;
-			};
-			MidiConfigurationGui.new(model).performList(\gui);
-		});
-		Button( layout, 16@16)
-		.states_([["X"]])
-		.resize_(3)
-		.action_({
-			model.remove;
-		});
-		slider = Slider(layout, (layout.bounds.width - 4)@16)
-		.value_(model.value)
-		.resize_(2)
-		.action_({ |sl|
-			model.value_(sl.value);
-		})
-		.mouseDownAction_(mouseDownFunc);
-		StaticText(layout, 70@16)
-		.string_("unmapped")
-		.resize_(2)
-		.align_(\right);
-		unmapped = NumberBox(layout, (layout.decorator.indentedRemaining.width)@16)
-		.value_(model.value)
-		.resize_(3)
-		.action_({ |nb|
-			model.value_(nb.value);
-		});
-		StaticText(layout, 70@16)
-		.string_("mapped")
-		.resize_(2)
-		.align_(\right);
-		mapped = NumberBox(layout, (layout.decorator.indentedRemaining.width)@16)
-		.value_(model.mapped)
-		.resize_(3)
-		.action_({ |nb|
-			model.mapped_(nb.value);
-		});
+		var tree;
+		// layout.resize_(3);
+		tree = TreeView().columns_(
+			// ["Name", "", "Mapped", "Unmapped", "OSC","MIDI",""]
+			["Name", "", "Mapped", "Unmapped", "OSC",""]
+		).resize_(3);
+		ParameterView(tree, model, 0);
+		tree.front;
 	}
 }
+
+ParameterView {
+	var tree, <parameter, <treeItem;
+	var slider, mapped, unmapped, name, oscButt;
+
+	*new { |parent, parameter, id|
+		^super.new.init(parent, parameter, id)
+	}
+
+	init { |parent, aParameter, id|
+		tree = parent;
+		parameter = aParameter;
+		parameter.addDependant(this);
+		treeItem = tree.insertItem( id,[""]);
+		[
+			name = TextField().string_(
+				parameter.name
+			).action_({ |tf|
+				parameter.name_(tf.value);
+			}),
+			slider = Slider(nil, 200@20).value_(
+				parameter.value
+			).action_({ |sl|
+				parameter.value_(sl.value);
+			}),
+			mapped = NumberBox().maxDecimals_(12).value_(
+				parameter.mapped
+			).action_({ |nb|
+				parameter.mapped_(nb.value);
+			}),
+			unmapped = NumberBox().maxDecimals_(12).value_(
+				parameter.value
+			).action_({ |nb|
+				parameter.value_(nb.value);
+			}),
+			oscButt = Button().states_(
+				parameter.sendOSC.if({
+					[[parameter.oscMess, Color.black, Color.white]]
+				},{
+					[["none",Color.grey(0.3), Color.grey(0.4)]]
+				})
+			).value_(
+				parameter.sendOSC.asInteger;
+			).action_({|butt|
+				OscConfigurationWindow(parameter);
+			}),
+			// MIDI not implemented.
+			// Button().states_([ 
+			// 	["",Color.grey(0.3), Color.grey(0.4)],
+			// 	["X",Color.black, Color.white]
+			// ]).value_(
+			// 	parameter.sendMIDI.asInteger;
+			// ),
+			Button().states_([
+				["X",Color.grey(0.3), Color.white],
+			]).action_({
+				parameter.remove;
+			})
+		].do({|i,j| treeItem.setView(j,i) });
+
+		ControlSpecView(
+			treeItem,
+			parameter.spec,
+			this
+		);
+		
+		// parameter.view_(this);
+	}
+
+	update { |parameter, what ... args|
+		what.switch(
+			\spec, {
+				slider.value_(parameter.value);
+				mapped.value_(parameter.mapped);
+				unmapped.value_(parameter.value);
+			},
+			\value, {
+				slider.value_(parameter.value);
+				mapped.value_(parameter.mapped);
+				unmapped.value_(parameter.value);
+			},
+			\name, {
+				name.string_(parameter.name);
+			},
+			\paramRemoved, {
+				parameter.removeDependant(this);
+				// tree.removeItem(treeItem);
+			},
+			\OSC, {
+				parameter.sendOSC.if({
+					oscButt.states_(
+						[[parameter.oscMess, Color.black, Color.white]]
+					)				
+				},{
+					oscButt.states_(
+						[["none",Color.grey(0.3), Color.grey(0.4)]]
+					)
+				});
+			}
+		);
+	}
+}
+
