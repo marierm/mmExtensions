@@ -1,7 +1,8 @@
 * TODO make addDim method;
 * TODO actions hould not be saved;
 * TODO make save button.
-* TODO fix: parameter removal in PresetGui.
+* DONE fix: parameter removal in PresetGui.
+  CLOSED: [2012-09-05 Wed 16:40]
 * TODO test Mac OSX
 * TODO fix: window name should change when preset name is changed in Gui.
 * DONE fix: scaling gui when points are added or moved outside of frame.
