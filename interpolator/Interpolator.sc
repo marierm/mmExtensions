@@ -64,7 +64,7 @@ Interpolator { //More than 2 dimensions
 			//check if point has pos identical to another point.
 			//points cannot share the same position.
 			points.indexOfEqual(point).isNil.if{
-				colors.add(Color.getNextPresetColor(colors.last));
+				colors = colors.add(Color.getNextPresetColor(colors.last));
 				points.add( point );
 				rads.add( 0 );
 				this.changed(\pointAdded, point);
