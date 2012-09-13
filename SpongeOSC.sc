@@ -217,16 +217,20 @@ AbstractSponge {
 
 
 SpongePD : AbstractSponge {
-	var oscDef, pdProcess;
+	var oscDef, <pdProcess;
 
 	init { arg br;
 		var pdCommand;
-		pdCommand = ("pd -send \";udpsend connect 127.0.0.1" + NetAddr.langPort
-			+ ";comport baud" + br
-			++ ";comport devicename" + portName ++ "\"" 
-			+ Platform.userExtensionDir +/+ "mmExtensions/serialSponge.pd");
 
-		pdProcess = pdCommand.unixCmd({|res,pid| "Pure Data is now dead.".warn;});
+		pdCommand = (
+			"pd -nogui -noaudio -nomidi"
+			+ "-send \";udpsend connect 127.0.0.1" + NetAddr.langPort
+			+ ";comport baud" + br ++ ";comport devicename" + portName
+			++ "\"" 
+			+ Platform.userExtensionDir +/+ "mmExtensions/serialSponge.pd"
+		);
+
+		pdProcess = pdCommand.unixCmd({|res,pid| "Pure Data is now dead.".postln;});
 		
 		values = Int16Array.newClear(9);
 
@@ -252,6 +256,12 @@ SpongePD : AbstractSponge {
 			i.remove;
 		};
 		("kill" + pdProcess).unixCmd;
+		("killall pd").unixCmd;
+	}
+
+	kill {
+		this.close;
+		// ("killall pd").unixCmd;
 	}
 
 }
