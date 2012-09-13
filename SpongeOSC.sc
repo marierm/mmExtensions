@@ -52,7 +52,7 @@ AbstractSponge {
 	}
 	
 	activateFeature { |key ... args|
-		var fe, nameList, inputs;
+		var fe, nameList, inputs, newFeat;
 		this.featureNames.includes(key).if{
 			"Feature % already exists.\n".postf(key);
 			^this[key];
@@ -77,11 +77,12 @@ AbstractSponge {
 			inputs = fe[\input];
 		};
 		// use the right method (.sensor, .lang or .synth)
-		Feature.performList(
+		newFeat = Feature.performList(
 			fe[\type],
 			[fe[\name], this, inputs, fe[\func], fe[\args]]
 		);
 		this.changed(\featureActivated, fe);
+		^newFeat;
 	}
 
 	deactivateFeature { |key|

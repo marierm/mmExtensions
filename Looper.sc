@@ -71,7 +71,7 @@ Looper {
 				);
 				Out.kr(
 					lengthBus, Latch.kr(
-						Phasor.kr(t_reset,1,0, ControlRate.ir * 60).poll(t_trig),
+						Phasor.kr(t_reset,1,0, ControlRate.ir * 60),// .poll(t_trig),
 						t_trig
 					)
 				);
@@ -197,17 +197,17 @@ Looper {
 }
 
 LooperFeature : Feature {
-	var <>looper;
+	var <>looper, <looperControl;
 
 	*new { |name, interface, input, xFade=0.1, maxDur=60 |
-		^super.newCopyArgs(name, interface, input).init( xFade, maxDur );
+		^super.newCopyArgs(name, interface, [input]).init( xFade, maxDur );
 	}
 
 	init { |xFade, maxDur|
 		super.init;
-		input.dependantFeatures.add(this);
+		input[0].dependantFeatures.add(this);
 		fork {
-			looper = Looper(input.bus, xFade, maxDur);
+			looper = Looper(input[0].bus, xFade, maxDur);
 			server.sync;
 			bus = looper.outBus;
 		};
@@ -221,6 +221,7 @@ LooperFeature : Feature {
 		interface.action_(interface.action.addFunc(fullFunc));
 		interface.features.add(this);
 		interface.featureNames.add(name);
+		interface.changed(\featureActivated);
 	}
 
 	startRec { looper.startRec }
@@ -232,17 +233,104 @@ LooperFeature : Feature {
 		super.remove;
 		// remove myself from the
 		// dependantFeatures list of others.
-		input.dependantFeatures.remove(this);
+		input[0].dependantFeatures.remove(this);
 		looper.free;
+	}
+
+	controlWith { |rec, pb|
+		rec = rec.featurize(interface);
+		pb = pb.featurize(interface);
+		looperControl = LooperControl(this, rec, pb);
+	}
+}
+
+
+LooperControl {
+	var looperFeature, recTrig, pbTrig;
+	var <startRecVal=1, <stopRecVal=0, <startPbVal=1, <stopPbVal=0;
+	*new { |looperFeature, recTrig, pbTrig|
+		^super.newCopyArgs(looperFeature, recTrig, pbTrig).init;
+	}
+
+	init {
+		this.startRecVal_(1);
+		this.startPbVal_(1);
+	}
+
+	startRecVal_ {|val=1|
+		startRecVal = val;
+		recTrig.action_({|val|
+			val.switch(
+				startRecVal, { looperFeature.startRec; },
+				stopRecVal, { looperFeature.stopRec; }
+			);
+		});
+	}
+
+	stopRecVal_ {|val=0|
+		stopRecVal = val;
+		recTrig.action_({|val|
+			val.switch(
+				startRecVal, { looperFeature.startRec; },
+				stopRecVal, { looperFeature.stopRec; }
+			);
+		});
+	}
+
+	startPbVal_ {|val=1|
+		startPbVal = val;
+		pbTrig.action_({|val|
+			val.switch(
+				startPbVal, { looperFeature.startPb; },
+				stopPbVal, { looperFeature.stopPb; }
+			);
+		});
+	}
+
+	stopPbVal_ {|val=1|
+		stopPbVal = val;
+		pbTrig.action_({|val|
+			val.switch(
+				startPbVal, { looperFeature.startPb; },
+				stopPbVal, { looperFeature.stopPb; }
+			);
+		});
 	}
 }
 
 + Feature {
 	loop { |xFade=0.1, maxDur=60|
-		^Feature.looper( name ++ "looper", interface, this,	xFade, maxDur );
+		^Feature.looper( name ++ "Looper", interface, this,	xFade, maxDur );
 	}
 
 	*looper { |name, interface, input, xFade=0.1, maxDur=60|
 		^LooperFeature( name, interface, input, xFade, maxDur );
+	}
+
+	featurize {	^this }
+}
+
++ Integer {
+	featurize { |interface, prefix|
+		var featureName, ftr;
+		featureName = (prefix ++ this).asSymbol;
+		ftr = interface.activateFeature(featureName);
+		^ftr;
+	}
+}
+
++ Symbol {
+	featurize { |interface|
+		var ftr;
+		ftr = interface.activateFeature(this);
+		^ftr;
+	}
+}
+
++ String {
+	featurize { |interface|
+		var ftr;
+		ftr = interface.activateFeature(this.asSymbol);
+		^ftr;
 	}
 }

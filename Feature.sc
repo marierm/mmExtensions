@@ -118,6 +118,10 @@ Feature {
 		^ButtonFeature.new(name, interface, input, function, args)
 	}
 
+	*trim { |name, interface, input|
+		^TrimFeature.new(name, interface, input)
+	}
+
 	init {
 		server = try{input[0].server} ? Server.default;
 		server.serverRunning.not.if {
@@ -333,6 +337,92 @@ ButtonFeature : Feature {
 		// remove myself from the
 		// dependantFeatures list of others.
 		input.do({|i| i.dependantFeatures.remove(this); });
+	}
+
+}
+
+
+// The trim feature is used to trim other features.  In works like the trim
+// automation mode available in most DAW.  Its output is its input and its
+// target mixed together.  We have to specify how much the input will affect
+// the target.  Therefore, the range of the input (inMin and inMax) and the
+// amount applied to the target (amount) must be specified.
+TrimFeature : Feature {
+	var <target, <inMin, <inMax, <amount, <synth, def;
+
+	// Unlike the other features, input is a Feature, not an Array of
+	// Features.
+	*new { |name, interface, input, target, inMin=0, inMax=1023, amount=1.0|
+		^super.newCopyArgs(name, interface, input).init(
+			target, inMin, inMax, amount
+		);
+	}
+
+	init { |min, max, amnt|
+		super.init;
+		server.serverRunning.not.if {
+			("Synth features need a server to work properly.").warn;
+			("Feature '" ++ name ++ "' will not be activated.").warn;
+			^nil;
+		};
+		inMin = min;
+		inMax = max;
+		amount = amnt;
+		
+		def = SynthDef(
+			\trimmer,
+			// in0 is the bus number of the feature that will trim another
+			// one.  target is is the bus number of the feature that will be
+			// trimmed by in0.  out is the bus number of the result.  We have
+			// to specify how much the input will affect the target.
+			// Therefore, the range of the input (inMin and inMax) and the
+			// amount applied to the target (amount) must be specified.
+			{ |out=100, in0=0, target=1, inMin=0, inMax=1023, amount=1.0|
+				var in;
+				in = In.kr(in0, 1);
+				// scale in between 1.0 and 1.0
+				in = ( (2 * (in - inMin)) * (inMax - inMin).reciprocal) - 1;
+				Out.kr( out, Mix([target, in * amount]) );
+			}
+		);
+
+		fork {
+			bus = Bus.control(server);
+			def.add;
+			server.sync;
+			synth = Synth.tail(
+				server,
+				def.name,
+				[
+					\out, bus.index,
+					\in0, input.bus.index,
+					\target, target.bus.index,
+					\inMin, inMin,
+					\inMax, inMax,
+					\amount, amount
+				]
+			);
+			server.sync;
+		};
+
+		
+		fullFunc = {
+			bus.get{|value|
+				action.value(value);
+				// netAddr.sendMsg(oscPath, value);
+			};
+		};
+		
+		interface.action_(interface.action.addFunc(fullFunc));
+		interface.features.add(this);
+		interface.featureNames.add(name);
+	}
+
+	remove {
+		super.remove;
+		// remove myself from the
+		// dependantFeatures list of others.
+		input.dependantFeatures.remove(this);
 	}
 
 }
