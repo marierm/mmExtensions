@@ -188,19 +188,61 @@ Looper {
 		xFade = dur;
 		recSynth.set(\fadeTime, dur);
 	}
+
+	free {
+		pbSynth.free;
+		recSynth.free;
+		buffer.free;
+	}
 }
 
-FeatureLooper : Looper{
-	var <>feature;
+LooperFeature : Feature {
+	var <>looper;
 
-	*new { |feature, xFade=0.1, maxDur=60 |
-		^super.new(feature.bus, xFade, maxDur).feature_(feature);
+	*new { |name, interface, input, xFade=0.1, maxDur=60 |
+		^super.newCopyArgs(name, interface, input).init( xFade, maxDur );
 	}
 
+	init { |xFade, maxDur|
+		super.init;
+		input.dependantFeatures.add(this);
+		fork {
+			looper = Looper(input.bus, xFade, maxDur);
+			server.sync;
+			bus = looper.outBus;
+		};
+		fullFunc = {
+			bus.get{|value|
+				action.value(value);
+				// netAddr.sendMsg(oscPath, value);
+			};
+		};
+
+		interface.action_(interface.action.addFunc(fullFunc));
+		interface.features.add(this);
+		interface.featureNames.add(name);
+	}
+
+	startRec { looper.startRec }
+	stopRec { looper.stopRec }
+	startPb { looper.startPb }
+	stopPb { looper.stopPb }
+
+	remove {
+		super.remove;
+		// remove myself from the
+		// dependantFeatures list of others.
+		input.dependantFeatures.remove(this);
+		looper.free;
+	}
 }
 
 + Feature {
 	loop { |xFade=0.1, maxDur=60|
-		^FeatureLooper(this, xFade=0.1, maxDur=60);
+		^Feature.looper( name ++ "looper", interface, this,	xFade, maxDur );
+	}
+
+	*looper { |name, interface, input, xFade=0.1, maxDur=60|
+		^LooperFeature( name, interface, input, xFade, maxDur );
 	}
 }
