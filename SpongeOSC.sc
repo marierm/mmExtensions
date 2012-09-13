@@ -249,6 +249,9 @@ SpongePD : AbstractSponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
+
+		CmdPeriod.doOnce(this);
+		ShutDown.add({this.close});
 	}
 
 	close {
@@ -264,4 +267,7 @@ SpongePD : AbstractSponge {
 		// ("killall pd").unixCmd;
 	}
 
+	cmdPeriod {
+		this.close;
+	}
 }
