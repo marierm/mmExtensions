@@ -222,6 +222,8 @@ LooperFeature : Feature {
 		interface.features.add(this);
 		interface.featureNames.add(name);
 		interface.changed(\featureActivated);
+
+		looperControl = LooperControl(this, nil, nil);
 	}
 
 	startRec { looper.startRec }
@@ -240,67 +242,80 @@ LooperFeature : Feature {
 	controlWith { |rec, pb|
 		rec = rec.featurize(interface);
 		pb = pb.featurize(interface);
-		looperControl = LooperControl(this, rec, pb);
+		looperControl.recTrig_(rec);
+		looperControl.pbTrig_(pb);
 	}
+
 }
 
-
 LooperControl {
-	var looperFeature, recTrig, pbTrig;
+	var looperFeature, <recTrig, <pbTrig;
 	var <startRecVal=1, <stopRecVal=0, <startPbVal=1, <stopPbVal=0;
-	*new { |looperFeature, recTrig, pbTrig|
-		^super.newCopyArgs(looperFeature, recTrig, pbTrig).init;
+	var recAction, pbAction;
+	*new { |looperFeature, recTrig, pbTrig, startVal=1, stopVal=0|
+		^super.newCopyArgs(looperFeature, recTrig, pbTrig).init(
+			startVal, stopVal
+		);
 	}
 
-	init {
-		this.startRecVal_(1);
-		this.startPbVal_(1);
-	}
-
-	startRecVal_ {|val=1|
-		startRecVal = val;
-		recTrig.action_({|val|
+	init { |startVal, stopVal|
+		recAction = {|val|
 			val.switch(
-				startRecVal, { looperFeature.startRec; },
-				stopRecVal, { looperFeature.stopRec; }
+				startVal, { looperFeature.startRec; },
+				stopVal, { looperFeature.stopRec; }
 			);
+		};
+		pbAction = {|val|
+			val.switch(
+				startVal, { looperFeature.startPb; },
+				stopVal, { looperFeature.stopPb; }
+			);
+		};
+
+		this.recTrig_(recTrig);
+		this.recTrig_(pbTrig);
+	}
+
+	recTrig_ { |feature|
+		recTrig.notNil.if({
+			recTrig.action_(recTrig.action.removeFunc(recAction));
+		});
+		recTrig = feature;
+		recTrig.isKindOf(Feature).if({
+			recTrig.action_(recTrig.action.addFunc(recAction));
 		});
 	}
 
-	stopRecVal_ {|val=0|
-		stopRecVal = val;
-		recTrig.action_({|val|
-			val.switch(
-				startRecVal, { looperFeature.startRec; },
-				stopRecVal, { looperFeature.stopRec; }
-			);
+	pbTrig_ { |feature|
+		pbTrig.notNil.if({
+			pbTrig.action_(pbTrig.action.removeFunc(pbAction));
 		});
-	}
-
-	startPbVal_ {|val=1|
-		startPbVal = val;
-		pbTrig.action_({|val|
-			val.switch(
-				startPbVal, { looperFeature.startPb; },
-				stopPbVal, { looperFeature.stopPb; }
-			);
-		});
-	}
-
-	stopPbVal_ {|val=1|
-		stopPbVal = val;
-		pbTrig.action_({|val|
-			val.switch(
-				startPbVal, { looperFeature.startPb; },
-				stopPbVal, { looperFeature.stopPb; }
-			);
+		pbTrig = feature;
+		pbTrig.isKindOf(Feature).if({
+			pbTrig.action_(pbTrig.action.addFunc(pbAction));
 		});
 	}
 }
 
 + Feature {
 	loop { |xFade=0.1, maxDur=60|
-		^Feature.looper( name ++ "Looper", interface, this,	xFade, maxDur );
+		// Add a numver and increment if a LooperFeature with the same name
+		// already exists.
+		var newName, i;
+		newName = (name ++ "Looper").asSymbol;
+		i = 1;
+		{interface.featureNames.includes( newName)}.while({
+			newName = (name ++ "Looper" ++ i).asSymbol;
+			i = i + 1;
+		});
+
+		^Feature.looper(
+			newName,
+			interface,
+			this,
+			xFade,
+			maxDur
+		);
 	}
 
 	*looper { |name, interface, input, xFade=0.1, maxDur=60|
@@ -332,5 +347,11 @@ LooperControl {
 		var ftr;
 		ftr = interface.activateFeature(this.asSymbol);
 		^ftr;
+	}
+}
+
++ Nil {
+	featurize {
+		^nil;
 	}
 }
