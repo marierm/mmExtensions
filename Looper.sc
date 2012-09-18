@@ -322,36 +322,4 @@ LooperControl {
 		^LooperFeature( name, interface, input, xFade, maxDur );
 	}
 
-	featurize {	^this }
-}
-
-+ Integer {
-	featurize { |interface, prefix|
-		var featureName, ftr;
-		featureName = (prefix ++ this).asSymbol;
-		ftr = interface.activateFeature(featureName);
-		^ftr;
-	}
-}
-
-+ Symbol {
-	featurize { |interface|
-		var ftr;
-		ftr = interface.activateFeature(this);
-		^ftr;
-	}
-}
-
-+ String {
-	featurize { |interface|
-		var ftr;
-		ftr = interface.activateFeature(this.asSymbol);
-		^ftr;
-	}
-}
-
-+ Nil {
-	featurize {
-		^nil;
-	}
 }

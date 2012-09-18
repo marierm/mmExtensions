@@ -1,5 +1,5 @@
 FeatureGui : ObjectGui {
-	var <>actions, prefixView, portView, addrView, monitor;
+	var <>actions, prefixView, portView, addrView, monitor, w;
 
 	*new { arg model;
 		var new;
@@ -31,7 +31,7 @@ FeatureGui : ObjectGui {
 	}
 
 	gui { arg ... args;
-		var w;
+		// var w;
 		w = Window("A Feature GUI");
 		w.layout_(QVLayout());
 		w.layout.add(
@@ -121,6 +121,24 @@ FeatureGui : ObjectGui {
 					model.loop;
 				}).maxHeight_(22)
 			)
+		);
+
+		w.layout.add(
+			QHLayout(
+				[
+					StaticText(w).string_("Trim this Feature With:").align_(\right)
+					.minWidth_(250).maxSize_(300@22), s:1
+				],
+				[
+					PopUpMenu(w, 85@22).items_(
+						model.interface.featureNames.asArray;
+					).action_({ |menu|
+						model.trim(
+							model.interface[menu.item.asSymbol]
+						);
+					}).maxHeight_(22), s:1
+				]
+			);
 		);
 
 		(model.class == LooperFeature).if {
