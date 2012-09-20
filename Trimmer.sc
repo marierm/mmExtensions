@@ -16,14 +16,27 @@ TrimFeature : Feature {
 		);
 	}
 
+	// saveDictionary {
+	// 	var dict;
+	// 	dict = super.saveDictionary.interpret;
+	// 	dict.put(\target, target.name);
+	// 	dict.put(\inMin, inMin);
+	// 	dict.put(\inMax, inMax);
+	// 	dict.put(\amount, amount);
+	// 	^dict.asCompileString;
+	// }
+
 	saveDictionary {
-		var dict;
-		dict = super.saveDictionary.interpret;
-		dict.put(\target, target.name);
-		dict.put(\inMin, inMin);
-		dict.put(\inMax, inMax);
-		dict.put(\amount, amount);
-		^dict.asCompileString;
+		^IdentityDictionary.newFrom([
+			\class, this.class,
+			\name, name.asSymbol,
+			\interface, interface.class,
+			\input, input.collect(_.name),
+			\target, target.name,
+			\inMin, inMin,
+			\inMax, inMax,
+			\amount, amount
+		]);
 	}
 
 	init { |tgt, min, max, amnt|

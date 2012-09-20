@@ -7,6 +7,62 @@ AbstractSponge {
 		^super.newCopyArgs(portName).init(baudRate);
 	}
 
+	save { |path|
+		var file, content;
+		path = path ? (Platform.userAppSupportDir ++"/scratch.sponge");
+		file = File.new( path, "w" );
+		content = this.features.collect(_.saveDictionary).asCompileString;
+		file.write(content);
+		file.close;
+	}
+
+	load {|path|
+		var file, content;
+		path = path ? (Platform.userAppSupportDir ++"/scratch.sponge");
+		file = File.new( path, "r" );
+		content = file.readAllString.interpret;
+		file.close;
+
+		//deactivate everything
+		features.do({|i|
+			(i.class != SensorFeature).if({
+				i.remove;
+			});
+		});
+
+		content.do({ |i|
+			i.at(\class).switch(
+				SensorFeature, {},
+				LangFeature, {
+					this.activateFeature(i[\name]);
+				},
+				ButtonFeature, {
+					this.activateFeature(i[\name]);
+				},
+				SynthFeature, {
+					this.activateFeature(i[\name], *i[\args]);
+				},
+				LooperFeature, {
+					this.at(i[\input][0]).loop(
+						i[\xFade],
+						i[\maxDur]
+					).controlWith(
+						i[\recControl],
+						i[\pbControl]
+					);
+				},
+				TrimFeature, {
+					this.at(i[\target]).trim(
+						this.at(i[\input][0]),
+						i[\inMin],
+						i[\inMax],
+						i[\amount]
+					);
+				}
+			)
+		});
+	}
+
 	activateAllFeatures {
 		Sponge.featureList.collect({|i| i[\name] }).do{ |i|
 			this.activateFeature(i);

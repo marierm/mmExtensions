@@ -204,12 +204,25 @@ LooperFeature : Feature {
 	}
 
 	saveDictionary {
-		var dict;
-		dict = super.saveDictionary.interpret;
-		dict.put(\xFade, looper.xFade);
-		dict.put(\maxDur, looper.maxDur);
-		^dict.asCompileString;
+		^IdentityDictionary.newFrom([
+			\class, this.class,
+			\name, name.asSymbol,
+			\interface, interface.class,
+			\input, input.collect(_.name),
+			\xFade, looper.xFade,
+			\maxDur, looper.maxDur,
+			\recControl, looperControl.recTrig.name,
+			\pbControl, looperControl.pbTrig.name
+		]);
 	}
+
+	// saveDictionary {
+	// 	var dict;
+	// 	dict = super.saveDictionary.interpret;
+	// 	dict.put(\xFade, looper.xFade);
+	// 	dict.put(\maxDur, looper.maxDur);
+	// 	^dict.asCompileString;
+	// }
 
 	init { |xFade, maxDur|
 		super.init;

@@ -169,7 +169,7 @@ Feature {
 			\name, name.asSymbol,
 			\interface, interface.class,
 			\input, input.collect(_.name)
-		]).asCompileString;
+		]);
 	}
 }
 
@@ -183,10 +183,13 @@ SynthFeature : Feature {
 	}
 
 	saveDictionary {
-		var dict;
-		dict = super.saveDictionary.interpret;
-		dict.put(\args, args.getPairs);
-		^dict.asCompileString;
+		^IdentityDictionary.newFrom([
+			\class, this.class,
+			\name, name.asSymbol,
+			\interface, interface.class,
+			\input, input.collect(_.name),
+			\args, args.getPairs
+		]);
 	}
 
 	init { |synthDef, arguments|
@@ -269,7 +272,7 @@ SensorFeature : Feature { // the raw data from the sensor
 			\name, name.asSymbol,
 			\interface, interface.class,
 			\input, input
-		]).asCompileString;
+		]);
 	}
 
 	init { 
