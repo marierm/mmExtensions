@@ -76,6 +76,11 @@ AbstractSponge {
 		} {
 			inputs = fe[\input];
 		};
+		// use the args supplied as arguments to activateFeatures.
+		// (Replace the default ones.)
+		args.pairsDo({|i,j|
+			fe[\args][fe[\args].indexOf(i) + 1] = j;
+		});
 		// use the right method (.sensor, .lang or .synth)
 		newFeat = Feature.performList(
 			fe[\type],

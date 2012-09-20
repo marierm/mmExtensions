@@ -162,15 +162,31 @@ Feature {
 	guiClass { ^FeatureGui }
 
 	featurize {	^this }
+
+	saveDictionary {
+		^IdentityDictionary.newFrom([
+			\class, this.class,
+			\name, name.asSymbol,
+			\interface, interface.class,
+			\input, input.collect(_.name)
+		]).asCompileString;
+	}
 }
 
 SynthFeature : Feature {
-	var <synth, <def;
+	var <synth, <def, <args;
 	// Inputs of SynthDef should be named \in0, \in1,
 	// \in2, etc Other args are appended.  User is responsible for scaling the
 	// data inside the synth.
 	*new { |name, interface, input, synthDef, args|
 		^super.newCopyArgs(name, interface, input).init(synthDef, args);
+	}
+
+	saveDictionary {
+		var dict;
+		dict = super.saveDictionary.interpret;
+		dict.put(\args, args.getPairs);
+		^dict.asCompileString;
 	}
 
 	init { |synthDef, arguments|
@@ -181,6 +197,7 @@ SynthFeature : Feature {
 			^nil;
 		};
 		def = synthDef;
+		args = IdentityDictionary.newFrom(arguments);
 		arguments = input.collect{|i,j|
 			i.dependantFeatures.add(this);
 			[(\in ++ j).asSymbol, i.bus.index];
@@ -217,6 +234,7 @@ SynthFeature : Feature {
 
 	// set a parameter of the synth.
 	set { |argName, value|
+		args.put(argName, value);
 		synth.set(argName, value);
 	}
 
@@ -243,6 +261,15 @@ SensorFeature : Feature { // the raw data from the sensor
 
 	*new { |name, interface, input|
 		^super.newCopyArgs(name, interface, input).init;
+	}
+
+	saveDictionary {
+		^IdentityDictionary.newFrom([
+			\class, this.class,
+			\name, name.asSymbol,
+			\interface, interface.class,
+			\input, input
+		]).asCompileString;
 	}
 
 	init { 

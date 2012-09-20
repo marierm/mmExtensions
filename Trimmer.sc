@@ -16,6 +16,16 @@ TrimFeature : Feature {
 		);
 	}
 
+	saveDictionary {
+		var dict;
+		dict = super.saveDictionary.interpret;
+		dict.put(\target, target.name);
+		dict.put(\inMin, inMin);
+		dict.put(\inMax, inMax);
+		dict.put(\amount, amount);
+		^dict.asCompileString;
+	}
+
 	init { |tgt, min, max, amnt|
 		super.init;
 		input[0].dependantFeatures.add(this);

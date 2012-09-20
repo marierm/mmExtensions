@@ -203,6 +203,14 @@ LooperFeature : Feature {
 		^super.newCopyArgs(name, interface, [input]).init( xFade, maxDur );
 	}
 
+	saveDictionary {
+		var dict;
+		dict = super.saveDictionary.interpret;
+		dict.put(\xFade, looper.xFade);
+		dict.put(\maxDur, looper.maxDur);
+		^dict.asCompileString;
+	}
+
 	init { |xFade, maxDur|
 		super.init;
 		input[0].dependantFeatures.add(this);
@@ -237,6 +245,7 @@ LooperFeature : Feature {
 		// dependantFeatures list of others.
 		input[0].dependantFeatures.remove(this);
 		looper.free;
+		looperControl.free;
 	}
 
 	controlWith { |rec, pb|
@@ -294,6 +303,11 @@ LooperControl {
 		pbTrig.isKindOf(Feature).if({
 			pbTrig.action_(pbTrig.action.addFunc(pbAction));
 		});
+	}
+
+	free {
+		this.recTrig_(nil);
+		this.pbTrig_(nil);
 	}
 }
 
