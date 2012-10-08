@@ -75,7 +75,7 @@ AbstractSponge {
 	
 	// Connect or disconnect to a PresetInterpolator
 	connect { |prInt|
-		interpAction = { |...msg|
+		interpAction = { |msg|
 			prInt.cursorPos_(msg.keep(prInt.numDim));
 		};
 		action = action.addFunc(interpAction);
@@ -298,7 +298,7 @@ SpongePD : AbstractSponge {
 
 		oscDef = OSCdef(\sponge, {|data|
 			values.putEach((0..8), data[1..]);
-			action.value(*data[1..]);
+			action.value(values);
 		},"/sponge");
 		
 		features = List[];
@@ -332,4 +332,40 @@ SpongePD : AbstractSponge {
 	cmdPeriod {
 		this.close;
 	}
+}
+
+SpongeOSC : AbstractSponge {
+	var oscDef;
+
+	init {
+		values = Int16Array.newClear(9);
+		oscDef = OSCdef(\sponge, {|data|
+			0.forBy( 16, 2, {|i, j|
+				values[j] =  data[1][i] << 5 + data[1][i+1] >> 2;
+			});
+			action.value(values);
+		},"/sponge/blob");
+
+		features = List[];
+		featureNames = List[];
+		// Add Features for each sensor
+		[
+			\acc1x, \acc1y, \acc1z,
+			\acc2x, \acc2y, \acc2z,
+			\fsr1, \fsr2, \buttons
+		].do{|i,j|
+			Feature.sensor(i,this,j);
+		};
+
+		CmdPeriod.doOnce(this);
+		ShutDown.add({this.close});
+	}
+
+	close {
+		oscDef.remove;
+	}
+
+	// cmdPeriod {
+	// 	this.close;
+	// }
 }

@@ -4,8 +4,164 @@
 
 Looper {
 
-	var inBus, <xFade, <maxDur, server, <buffer, recSynth, pbSynth,
-	<outBus, <lengthBus, <isRecording, <isPlaying;
+	var inBus, <xFade, <maxDur, server, <buffer, recSynth, pbSynth, odSynth,
+	<outBus, <lengthBus, <readPosBus, <isRecording, <isPlaying, <looperControl,
+	<isOverdubbing;
+
+
+	*new { |inBus, xFade=0.1, maxDur=60 |
+		^super.newCopyArgs(inBus, xFade, maxDur).init;
+	}
+
+	init {
+		fork{
+			var dur, recDefName, pbDefName, odDefName;
+			server = inBus.server;
+			dur = maxDur * server.sampleRate;
+			// Make a shorter buffer if we record control rate.
+			(inBus.rate == 'control').if {
+				dur = dur div: server.options.blockSize;
+			};
+
+			recDefName = ("looperrec" ++ inBus.rate ++ inBus.numChannels).asSymbol;
+			pbDefName = ("looperpb" ++ inBus.rate ++ inBus.numChannels).asSymbol;
+			odDefName = ("looperod" ++ inBus.rate ++ inBus.numChannels).asSymbol;
+
+			buffer = Buffer.alloc( server, dur, inBus.numChannels);
+			// outBus = Bus.alloc(inBus.rate, server, inBus.numChannels);
+			outBus = Bus.alloc(inBus.rate, server, inBus.numChannels);
+			lengthBus = Bus.alloc(inBus.rate, server, 1);
+			readPosBus = Bus.alloc(inBus.rate, server, 1);
+			
+			server.sync;
+
+			recSynth = Synth.new(
+				recDefName, [
+					\inBus, inBus.index,
+					\bufnum, buffer.bufnum,
+					\lengthBus, lengthBus.index,
+					\run, 1,
+					\fadeTime, xFade
+				],
+				server,
+				\addToTail
+			);
+			pbSynth = Synth.basicNew( pbDefName, server	);
+			odSynth = Synth.new(
+				recDefName, [
+					\inBus, inBus.index,
+					\bufnum, buffer.bufnum,
+					\lengthBus, lengthBus.index,
+					\run, 1,
+					\fadeTime, xFade
+				],
+				server,
+				\addToTail
+			);
+
+			looperControl = LooperControl(this, nil, nil);
+		};
+	}
+
+	startRec {
+		isRecording = true;
+		this.stopPb;
+		// start recording now
+		server.sendBundle(
+			0.05,
+			recSynth.setMsg(\t_trig, 1, \gate, 1, \run, 1, \t_reset, 1)
+		);
+	}
+
+	startOd {
+		// Overdub
+		isRecording.not.if{
+			isOverdubbing = true;
+			server.sendBundle(
+				0.05,
+				odSynth.setMsg(
+					\t_trig, 1,
+					\gate, 1, 
+					\run, 1,
+					\readPosBus, readPosBus.index,
+					\fadeTime, xFade
+				)
+			);
+		};
+	}
+
+	stopOd {
+		isOverdubbing.if {
+			isOverdubbing = false;
+
+			server.sendBundle(
+				0.05, odSynth.setMsg(\run, 0)
+			);
+		}
+	}
+
+	stopRec {
+		isRecording.if {
+			isRecording = false;
+			// Stop only if currently recording.
+
+			// Go to beginning of buffer and overdub while
+			// crossfading.
+			server.sendBundle(
+				0.05,
+				recSynth.setMsg(\gate, 0, \t_trig, 1)
+			);
+			// stop recording in xFade seconds
+			server.sendBundle(
+				xFade + 0.05,
+				recSynth.setMsg(\run, 0)
+			);
+		}
+	}
+
+	startPb {
+		isPlaying.not.if{
+			isPlaying = true;
+			this.stopRec;
+			server.sendBundle(
+				0.05,
+				pbSynth.addAfterMsg(
+					recSynth, [
+						\out, outBus.index,
+						\bufnum, buffer.bufnum,
+						\lengthBus, lengthBus.index,
+						\readPosBus, readPosBus.index
+					]
+				);
+				// pbSynth.runMsg(true)
+			);
+		}
+	}
+
+	stopPb {
+		pbSynth.free;
+		isPlaying = false;
+	}
+
+	xFade_ { |dur|
+		xFade = dur;
+		recSynth.set(\fadeTime, dur);
+		odSynth.set(\fadeTime, dur);
+	}
+
+	free {
+		pbSynth.free;
+		recSynth.free;
+		buffer.free;
+		looperControl.free;
+	}
+
+	controlWith { |rec, pb, interface|
+		try { rec = rec.featurize(interface); };
+		try { pb = pb.featurize(interface); };
+		looperControl.recTrig_(rec);
+		looperControl.pbTrig_(pb);
+	}
 
 	*initClass {
 		16.do{|i|
@@ -77,123 +233,41 @@ Looper {
 				);
 			}).writeDefFile();
 			SynthDef(("looperpbcontrol" ++ numChannels).asSymbol, {
-				arg out=0, bufnum=0, lengthBus;
-				var dur, player;
+				arg out=0, bufnum=0, lengthBus, readPosBus;
+				var dur, player, readPos;
 				dur = In.kr(lengthBus, 1); // * ControlDur.ir;
+				readPos = Phasor.kr(0,1, 0, dur - 1);
+				Out.kr(readPosBus, readPos);
 				player = PlayBuf.kr(
 					numChannels: numChannels,
 					bufnum: bufnum,
 					rate: 1,
-					trigger: Phasor.kr(0,1, 0, dur - 1),
+					trigger: readPos,
 					startPos: 0,
 					loop: 1
 				);
 				Out.kr(out, player);
 			}).writeDefFile();
-		}
-	}
-
-	*new { |inBus, xFade=0.1, maxDur=60 |
-		^super.newCopyArgs(inBus, xFade, maxDur).init;
-	}
-
-	init {
-		fork{
-			var dur, recDefName, pbDefName;
-			server = inBus.server;
-			dur = maxDur * server.sampleRate;
-			// Make a shorter buffer if we record control rate.
-			(inBus.rate == 'control').if {
-				dur = dur div: server.options.blockSize;
-			};
-
-			recDefName = ("looperrec" ++ inBus.rate ++ inBus.numChannels).asSymbol;
-			pbDefName = ("looperpb" ++ inBus.rate ++ inBus.numChannels).asSymbol;
-
-			buffer = Buffer.alloc( server, dur, inBus.numChannels);
-			// outBus = Bus.alloc(inBus.rate, server, inBus.numChannels);
-			outBus = Bus.alloc(inBus.rate, server, inBus.numChannels);
-			lengthBus = Bus.alloc(inBus.rate, server, 1);
-			
-			server.sync;
-
-			recSynth = Synth.new(
-				recDefName, [
-					\inBus, inBus.index,
-					\bufnum, buffer.bufnum,
-					\lengthBus, lengthBus.index,
-					\run, 1,
-					\fadeTime, xFade
-				],
-				server,
-				\addToTail
-			);
-			pbSynth = Synth.basicNew( pbDefName, server	);
-		};
-	}
-
-	startRec {
-		isRecording = true;
-		this.stopPb;
-		// start recording now
-		server.sendBundle(
-			0.05,
-			recSynth.setMsg(\t_trig, 1, \gate, 1, \run, 1, \t_reset, 1)
-		);
-	}
-
-	stopRec {
-		isRecording.if {
-			isRecording = false;
-			// Stop only if currently recording.
-
-			// Go to beginning of buffer and overdub while
-			// crossfading.
-			server.sendBundle(
-				0.05,
-				recSynth.setMsg(\gate, 0, \t_trig, 1)
-			);
-			// stop recording in xFade seconds
-			server.sendBundle(
-				xFade + 0.05,
-				recSynth.setMsg(\run, 0)
-			);
-		}
-	}
-
-	startPb {
-		isPlaying.not.if{
-			isPlaying = true;
-			this.stopRec;
-			server.sendBundle(
-				0.05,
-				pbSynth.addAfterMsg(
-					recSynth, [
-						\out, outBus.index,
-						\bufnum, buffer.bufnum,
-						\lengthBus, lengthBus.index
-					]
+			SynthDef(("looperodcontrol" ++ numChannels).asSymbol, {
+				arg inBus=0, bufnum=0, lengthBus, readPosBus, t_trig=1, gate, fadeTime=0.1, run=0;
+				var readPos, offsetPos, recLevel, offset;
+				recLevel = VarLag.kr(gate, fadeTime, warp:\welch);
+				readPos = In.kr(readPosBus, 1);
+				offset = Latch.kr(readPos, t_trig);
+				RecordBuf.kr(
+					In.kr(inBus, numChannels),
+					bufnum,
+					offset: offset,
+					recLevel: recLevel,
+					preLevel: 1,
+					run: run,
+					loop: 0,
+					trigger: readPos
 				);
-				// pbSynth.runMsg(true)
-			);
+			}).writeDefFile();
 		}
 	}
 
-	stopPb {
-		pbSynth.free;
-		isPlaying = false;
-	}
-
-	xFade_ { |dur|
-		xFade = dur;
-		recSynth.set(\fadeTime, dur);
-	}
-
-	free {
-		pbSynth.free;
-		recSynth.free;
-		buffer.free;
-	}
 }
 
 LooperFeature : Feature {
@@ -244,7 +318,7 @@ LooperFeature : Feature {
 		interface.featureNames.add(name);
 		interface.changed(\featureActivated);
 
-		looperControl = LooperControl(this, nil, nil);
+		// looperControl = LooperControl(this, nil, nil);
 	}
 
 	startRec { looper.startRec }
@@ -258,40 +332,46 @@ LooperFeature : Feature {
 		// dependantFeatures list of others.
 		input[0].dependantFeatures.remove(this);
 		looper.free;
-		looperControl.free;
+		// looperControl.free;
 	}
 
 	controlWith { |rec, pb|
-		rec = rec.featurize(interface);
-		pb = pb.featurize(interface);
-		looperControl.recTrig_(rec);
-		looperControl.pbTrig_(pb);
+		looper.controlWith(rec,pb);
+		// rec = rec.featurize(interface);
+		// pb = pb.featurize(interface);
+		// looperControl.recTrig_(rec);
+		// looperControl.pbTrig_(pb);
 	}
 
 }
 
 LooperControl {
-	var looperFeature, <recTrig, <pbTrig;
+	var looper, <recTrig, <pbTrig;
 	var <startRecVal=1, <stopRecVal=0, <startPbVal=1, <stopPbVal=0;
 	var recAction, pbAction;
-	*new { |looperFeature, recTrig, pbTrig, startVal=1, stopVal=0|
-		^super.newCopyArgs(looperFeature, recTrig, pbTrig).init(
+	var recToggle, pbToggle;
+	*new { |looper, recTrig, pbTrig, startVal=1, stopVal=0|
+		^super.newCopyArgs(looper, recTrig, pbTrig).init(
 			startVal, stopVal
 		);
 	}
 
 	init { |startVal, stopVal|
+		recToggle = 0;
+		pbToggle = 0;
 		recAction = {|val|
 			val.switch(
-				startVal, { looperFeature.startRec; },
-				stopVal, { looperFeature.stopRec; }
+				startVal, { looper.startRec; },
+				stopVal, { looper.stopRec; }
 			);
 		};
 		pbAction = {|val|
-			val.switch(
-				startVal, { looperFeature.startPb; },
-				stopVal, { looperFeature.stopPb; }
-			);
+			val.asBoolean.if{
+				pbToggle.switch(
+					0, { pbToggle = 1; looper.startPb; \play.postln},
+					1, { pbToggle = 0; looper.stopPb; \stop.postln}
+				);
+			};
 		};
 
 		this.recTrig_(recTrig);

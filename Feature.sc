@@ -278,7 +278,7 @@ SensorFeature : Feature { // the raw data from the sensor
 	init { 
 		super.init;
 		bus = Bus.control(server);
-		fullFunc = { |...msg|
+		fullFunc = { |msg|
 			value = msg[input];
 			action.value(value);
 			bus.set(value);
