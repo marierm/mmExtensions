@@ -1,3 +1,105 @@
+SpongeSLIP : AbstractSponge {
+	var <port, inputThread;
+
+	init { arg br;
+		port = SerialPort(
+			port:portName,
+			baudrate:br,
+			databits:8,
+			stopbit:true,
+			parity:nil,
+			crtscts:false,
+			xonxoff:false,
+			exclusive:false
+		);
+		inputThread = fork {
+			// SLIP ENCODED SPONGE 
+			// ===================
+			// 
+			// The sponge has 8 sontinuous sensors and 10 buttons.  Each
+			// sensor has a 10 bit value encoded in two bytes.  A sponge
+			// packet contains 18 bytes:
+			// 
+			// |  0 | acc1x-MSB   |
+			// |  1 | acc1x-LSB   |
+			// |  2 | acc1y-MSB   |
+			// |  3 | acc1y-LSB   |
+			// |  4 | acc1z-MSB   |
+			// |  5 | acc1z-LSB   |
+			// |  6 | acc2x-MSB   |
+			// |  7 | acc2x-LSB   |
+			// |  8 | acc2y-MSB   |
+			// |  9 | acc2y-LSB   |
+			// | 10 | acc2z-MSB   |
+			// | 11 | acc2z-LSB   |
+			// | 12 | fsr1-MSB    |
+			// | 13 | fsr1-LSB    |
+			// | 14 | fsr2-MSB    |
+			// | 15 | fsr2-LSB    |
+			// | 16 | buttons 0-7 |
+			// | 17 | buttons 8-9 |
+			// 
+			// The packets are SLIP encoded using these special characters:
+			// end = 8r300 (2r11000000 or 0xc0 or 192)
+			// esc = 8r333 (2r11011011 or 0xdb or 219)
+			// esc_end = 8r334 (2r011011100 or 0xdc or 220)
+			// esc_esc = 8r335 (2r011011101 or 0xdd or 221)
+
+			var data, buffer, serialByte;
+			var packetSize = 18;
+			var slipEND = 8r300;
+			var slipESC = 8r333;
+			var slipESC_END = 8r334;
+			var slipESC_ESC = 8r335;
+			buffer = Int16Array(maxSize:18);
+			{
+				serialByte = port.read;
+				serialByte.switch(
+					slipEND, {
+						(buffer.size == packetSize).if({
+							data = buffer.clump(2).collect({|i|
+								(i[0] << 8) + i[1];
+							});
+							values = data;
+							action.value(data);
+						},{
+							buffer = Int16Array(maxSize:18)
+						})
+					},
+					slipESC, {
+						serialByte = port.read;
+						serialByte.switch(
+							slipESC_END, { buffer.add(slipEND) },
+							slipESC_ESC, { buffer.add(slipESC) },
+							{"SLIP encoding error.".error }
+						)
+					},
+					{ buffer.add(serialByte) }
+				);
+			}.loop
+		};
+
+		features = List[];
+		featureNames = List[];
+		// Add Features for each sensor
+		[
+			\acc1x, \acc1y, \acc1z,
+			\acc2x, \acc2y, \acc2z,
+			\fsr1, \fsr2, \buttons
+		].do{|i,j|
+			Feature.sensor(i,this,j);
+		};
+	}
+	
+	close {
+		features.do{|i|
+			i.remove;
+		};
+		inputThread.stop;
+		port.close;
+	}
+}
+
 Sponge : AbstractSponge {
 	var <port, inputThread;
 
@@ -42,7 +144,7 @@ Sponge : AbstractSponge {
 				// data[2] = (data[2] * -1) + 1023;
 				// data[5] = (data[5] * -1) + 1023;
 				values = data;
-				action.value(*data);
+				action.value(data);
 			}.loop;
 		};
 
