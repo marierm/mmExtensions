@@ -1,4 +1,4 @@
-// Copyright 2011 Martin Marier
+// Copyright 2011-2012 Martin Marier
 
 Interpolator { //More than 2 dimensions
 
