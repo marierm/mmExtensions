@@ -1,7 +1,8 @@
 Parameter {
 
 	var <name, <value, <spec, <>action, <siblings, <sendOSC, <>netAddr,
-	<oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan, oscAction;
+	<oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan, oscAction,
+	<bus;
 	//value is unmapped (between 0 and 1);
 	
 	*new { |name, spec, value|
@@ -29,6 +30,8 @@ Parameter {
 		oscMess = "/" ++ name;
 		sendOSC = false;
 		sendMIDI = false;
+		bus = Bus.control();
+		action = action.addFunc({|mapped| bus.set(mapped)});
 	}
 
 	initFromSibling { |sblng|
@@ -38,6 +41,24 @@ Parameter {
 		}
 	}
 
+	*load { |eventString|
+
+	}
+
+	saveable {
+		^(
+			name: name,
+			spec: spec,
+			value: value,
+			sendOSC: sendOSC,
+			netAddr: [netAddr.ip, netAddr.port],
+			oscMess: oscMess,
+			sendMIDI: sendMIDI,
+			midiPort: midiPort,
+			midiCtl: midiCtl,
+			midiChan: midiChan
+		).asCompileString;
+	}
 	// initOSC { |netAd, mess|
 	// 	netAddr = netAd ? NetAddr.localAddr;
 	// 	oscMess = mess ? ("/" ++ name);
