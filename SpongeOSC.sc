@@ -1,9 +1,9 @@
 AbstractSponge {
-	classvar <>featureList;
+	classvar <>featureList, <>sponges;
 	var <portName, <featureNames, <features;
-	var <>action, <values, interpAction;
+	var <>action, <values, <interpActions;
 
-	*new { arg portName="/dev/ttyUSB0", baudRate=57600;
+	*new { arg portName="/dev/ttyUSB0", baudRate=115200;
 		^super.newCopyArgs(portName).init(baudRate);
 	}
 
@@ -75,14 +75,21 @@ AbstractSponge {
 	
 	// Connect or disconnect to a PresetInterpolator
 	connect { |prInt|
-		interpAction = { |msg|
+		var func;
+		interpActions = interpActions ? Dictionary(); // Should probably be in
+													  // init method.
+		func = { |msg|
 			prInt.cursorPos_(msg.keep(prInt.numDim));
 		};
-		action = action.addFunc(interpAction);
+		interpActions.put(prInt, func);
+		action = action.addFunc(interpActions[prInt]);
 	}
 
-	disconnect {
-		action = action.removeFunc(interpAction);
+	disconnect {|prInt|
+		action = action.removeFunc(interpActions.at(prInt));
+		interpActions.removeAt(prInt);
+		// This is messy.  If the sponge is connected to more than one
+		// interpolator,this will not work.
 	}
 
 	setOSCport { |port|
@@ -99,13 +106,13 @@ AbstractSponge {
 		}
 	}
 	
-	createFeature { |key ... args|
-		this.deprecated(
-			thisMethod,
-			this.class.findRespondingMethodFor(\activateFeature)
-		);
-		this.activateFeature(key, *args);
-	}
+	// createFeature { |key ... args|
+	// 	this.deprecated(
+	// 		thisMethod,
+	// 		this.class.findRespondingMethodFor(\activateFeature)
+	// 	);
+	// 	this.activateFeature(key, *args);
+	// }
 	
 	activateFeature { |key ... args|
 		var fe, nameList, inputs, newFeat;
@@ -154,6 +161,8 @@ AbstractSponge {
 	guiClass { ^SpongeGui }
 
 	*initClass {
+		sponges = List[]; // A list of all active sponges.
+		
 		// featureList contains a list of predefined features.  They have to
 		// be activated with aSponge.activateFeature(\name) This list is
 		// ordered because of dependancies: Features that depend on others
@@ -263,6 +272,12 @@ AbstractSponge {
 					args:[\freq, 100]
 				).know_(false)
 			);
+			featureList.add(
+				(name:(i ++ \Trig).asSymbol, input:[(i ++ \HP).asSymbol],
+					func:Feature.synthDefs[\trig], type:\synth,
+					args:[\thresh, 10]
+				).know_(false)
+			);
 		};
 		// buttons
 		10.do{|i|
@@ -314,6 +329,8 @@ SpongePD : AbstractSponge {
 
 		CmdPeriod.doOnce(this);
 		ShutDown.add({this.close});
+		
+		this.class.sponges.add(this);
 	}
 
 	close {
@@ -322,6 +339,7 @@ SpongePD : AbstractSponge {
 		};
 		("kill" + pdProcess).unixCmd;
 		("killall pd").unixCmd;
+		this.class.sponges.remove(this);
 	}
 
 	kill {
@@ -359,13 +377,17 @@ SpongeOSC : AbstractSponge {
 
 		CmdPeriod.doOnce(this);
 		ShutDown.add({this.close});
+
+		this.class.sponges.add(this);
 	}
 
 	close {
 		oscDef.remove;
+		this.class.sponges.add(this);
 	}
 
-	// cmdPeriod {
-	// 	this.close;
-	// }
+	cmdPeriod {
+		this.class.sponges.remove(this);
+		this.close;
+	}
 }
