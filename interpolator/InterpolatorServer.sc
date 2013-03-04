@@ -43,7 +43,7 @@ InterpolatorServer {
 			cursorBus.setn(0.5!n);
 			this.buildKDTree;
 			server.sync;
-			updateTask = Tdef(\updateInterpolator, { 
+			updateTask = { 
 				loop{
 					cursorBus.getn(n, {|v| cursor = v});
 					weightsBus.getn(weights.size, {|v|
@@ -52,7 +52,8 @@ InterpolatorServer {
 					{this.changed(\weights, (0..points.size), weights)}.defer;
 					0.05.wait;
 				}
-			}).play; 
+			}.fork;
+			updateTask.play; 
 
 		}.fork;
 		
