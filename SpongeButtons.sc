@@ -1,4 +1,8 @@
 ButtonBank {
+	// A ButtonBank manages a bank of buttons.  The input has to be a
+	// ButtonInput.  This class makes it easier to assign different behaviors
+	// to a set of buttons.
+
 	var <input, <modes, <currentMode, function;
 	
 	// input is a ButtonInput.
@@ -47,6 +51,7 @@ ButtonBank {
 }
 
 ButtonMode {
+	// a ButtonMode has a ButtonFunction for each button.  
 	var <bank, <>buttonFunctions, <>level;
 
 	*new { |buttonBank, buttonFuncs|
@@ -74,6 +79,11 @@ ButtonMode {
 }
 
 ButtonFunction {
+	// Holds the functions for a single button.  A ButtonFunction has two
+	// Arrays of functions: one for when the button is turned ON and another
+	// one for when it is turned off.  Other buttons can act as modifier keys
+	// and change the "level".
+
 	var <buttonMode, <id, <>functions, <>level;
 		
 	// functions is an IdentityDictionary with two pairs: true: [{},{}, ...]
@@ -121,25 +131,53 @@ ButtonFunction {
 
 
 ButtonInput {
-	var <size, <>action;
+	// This set of classes was designed to work with the sponge, but it is
+	// possible to use any kind of button input.  ButtonInput is a bridge to
+	// hardware buttons.
 
-	*new { |size, initAction|
-		^super.newCopyArgs(size).init(initAction);
+	// The .sponge method initializes a Button input so that it gets its
+	// values from an instance of Sponge.  The generic *new method is not
+	// really usable at this point.
+	var <interface, <size, <>action;
+
+	*new { |interface, size|
+		^super.newCopyArgs(interface, size).init();
 	}
 
 	*sponge { |sponge|
-		^super.new().spongeInit(sponge);
+		^SpongeButtonInput.new(sponge);
 	}
 	
-	init { |initAction|
-		initAction.value;
+	init {
+		var oldVal = 0;
+		// size = numButtons;
+		interface.action_(
+			interface.action.addFunc({|buttsVal|
+				// buttsVal should be an integer.
+				var ids;
+				// Get the bits that changed.
+				ids = (	buttsVal bitXor: oldVal);
+				// If at least one bit changed:
+				ids.asBoolean.if({
+					action.value(buttsVal, ids);
+				});
+				oldVal = buttsVal;
+			});
+		);
 	}
 
-	spongeInit { |sponge|
+}
+
+SpongeButtonInput : ButtonInput{
+	// *new { |sponge|
+	// 	^super.new().init(sponge);
+	// }
+
+	init {
 		var oldVal = 0;
 		size = 10;
-		sponge.action_(
-			sponge.action.addFunc({|values|
+		interface.action_(
+			interface.action.addFunc({|values|
 				var ids;
 				// Get the bits that changed.
 				ids = (	values[8] bitXor: oldVal);
@@ -151,4 +189,5 @@ ButtonInput {
 			});
 		);
 	}
+
 }
