@@ -195,6 +195,7 @@ InterpolatorServer2DGui : AbstractInterpolatorGui {
 	}
 
 	init {
+		grabbed = false;
 		actions = IdentityDictionary[
 			\weights -> {|model, what|
 				uv.refresh;
