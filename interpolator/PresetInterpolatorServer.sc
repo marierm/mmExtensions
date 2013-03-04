@@ -6,6 +6,7 @@ PresetInterpolatorServer {
 		model = model ?? {InterpolatorServer()};
 		^super.newCopyArgs(model).init;
 	}
+	
 	update { arg theChanger, what ... moreArgs;
 		var action;
 		if(actions.notNil) {
@@ -20,7 +21,7 @@ PresetInterpolatorServer {
 		var e;
 		e = path.load;
 		^super.newCopyArgs(
-			Interpolator(e.at(\points)[0].size)
+			InterpolatorServer(e.at(\points)[0].size)
 		).init.initWithEvent(e);
 	}
 
@@ -28,7 +29,7 @@ PresetInterpolatorServer {
 		var e;
 		e = path.load;
 		^super.newCopyArgs(
-			Interpolator(e.at(\points)[0].size)
+			InterpolatorServer(e.at(\points)[0].size)
 		).init.initWithEventOld(e);
 	}
 
@@ -42,28 +43,34 @@ PresetInterpolatorServer {
 	// colors: [color, color, ...]
 	// )
 	initWithEvent { |e|
-		model.cursor_(e.at(\cursorPos));
-		//move point 0 (it is already there) and remove it from the event.
-		model.movePoint(0, e.at(\points)[0]);
-		e.at(\points).removeAt(0);
-		// add all other points
-		e.at(\points).do{|i|
-			model.add(i);
-		};
-		// add parameters to cursor.
-		// they will be added to other points as well (they are siblings).
-		e.at(\cursor).at(\parameters).do{|i|
-			cursor.add(i);
-		};
-		// name presets set their parameter values.
-		presets.do{ |i,j|
-			i.name_(e.at(\presets)[j].at(\name));
-			i.parameters.do{|k,l|
-				k.value_(e.at(\presets)[j].at(\parameters)[l].value);
+		{
+			model.server.bootSync;
+			model.server.sync;
+			model.cursor_(e.at(\cursorPos));
+			//move point 0 (it is already there) and remove it from the event.
+			model.movePoint(0, e.at(\points)[0]);
+			e.at(\points).removeAt(0);
+			model.movePoint(1, e.at(\points)[1]);
+			e.at(\points).removeAt(1);
+			// add all other points
+			e.at(\points).do{|i|
+				model.add(i);
 			};
-		};
-		// set colors
-		model.colors_(e.at(\colors));
+			// add parameters to cursor.
+			// they will be added to other points as well (they are siblings).
+			e.at(\cursor).at(\parameters).do{|i|
+				cursor.add(i);
+			};
+			// name presets set their parameter values.
+			presets.do{ |i,j|
+				i.name_(e.at(\presets)[j].at(\name));
+				i.parameters.do{|k,l|
+					k.value_(e.at(\presets)[j].at(\parameters)[l].value);
+				};
+			};
+			// set colors
+			model.colors_(e.at(\colors));
+		}.fork;
 	}
 
 	initWithEventOld { |e|
@@ -94,18 +101,21 @@ PresetInterpolatorServer {
 	}
 
 	init {
-		model.addDependant(this);
-		cursor = Preset(nil, "cursor");
-		presets = List[];
-		model.points.do{
-			presets.add(Preset.newFromSibling(cursor));
-		};
-		presets.do{ |i|
-			// make the interpolator refresh the weights when a preset is
-			// modified.
-			i.addDependant(this);
-		};
-		this.initActions;
+		{
+			model.server.sync;
+			model.addDependant(this);
+			cursor = Preset(nil, "cursor");
+			presets = List[];
+			model.points.do{
+				presets.add(Preset.newFromSibling(cursor));
+			};
+			presets.do{ |i|
+				// make the interpolator refresh the weights when a preset is
+				// modified.
+				i.addDependant(this);
+			};
+			this.initActions;
+		}.fork;
 	}
 	
 	initActions {
