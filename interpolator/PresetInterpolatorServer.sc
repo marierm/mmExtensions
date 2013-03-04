@@ -129,7 +129,7 @@ PresetInterpolatorServer {
 			\pointDuplicated -> {|interpolator, what, point, pointId|
 				var paramValues;
 				paramValues = presets[pointId].parameters.collect(_.value);
-				model.add(point);
+				model.add(point * 1.01);
 				presets.last.parameters.do{ |i,j|
 					i.value_(paramValues[j].value);
 				};
@@ -235,7 +235,7 @@ PresetInterpolatorServer {
 	}
 
 	gui2D { arg  ... args;
-		^Interpolator2DGui.new(model).performList(\gui,args);
+		^InterpolatorServer2DGui.new(model).performList(\gui,args);
 	}
 
 	namesGui { arg  ... args;
