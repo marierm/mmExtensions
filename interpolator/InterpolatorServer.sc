@@ -36,12 +36,14 @@ InterpolatorServer {
 			server.bootSync;
 			cursorBus = Bus.control(server, n);
 			cursorRadiusBus = Bus.control(server, 1);
+			weightsBus = Bus.control(server, 1); // avoid error; this will be
+												// changed very soon.
+			pointsSynthGrp = ParGroup();
 			this.addTwoPoints;
-			pointsSynthGrp = ParGroup.after(cursorSynth);
 
 			server.sync;
-			cursorBus.setn(0.5!n);
-			this.buildKDTree;
+			cursorBus.setn([0.5,0.5].extend(n,0));
+			// this.buildKDTree;
 			server.sync;
 			updateTask = { 
 				loop{
@@ -54,9 +56,8 @@ InterpolatorServer {
 				}
 			}.fork;
 			updateTask.play; 
-
 		}.fork;
-		
+
 	}
 
 	buildKDTree {
