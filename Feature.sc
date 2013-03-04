@@ -39,9 +39,11 @@ Feature {
 			}, metadata:( specs:(freq:[1,1000,\exp]) ) ),
 			\trig -> SynthDef(\featureTrig, {
 				arg out=0, in0 = 0, thresh = 10, dur = 0.05;
-				var sig;
+				var sig, trig;
 				sig = In.kr(in0, 1);
-				SendTrig.kr(Trig1.kr(sig.abs - thresh, dur), 0, sig);
+				trig = Trig1.kr(sig.abs - thresh, dur);
+				SendTrig.kr(trig, 0, sig);
+				Out.kr(out, trig);
 			}, metadata:( specs:(thresh:[0.1,100,\exp], dur:[0.001,1.0,\exp]) ) )
 
 		];
