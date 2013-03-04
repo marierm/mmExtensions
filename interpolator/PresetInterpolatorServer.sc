@@ -3,7 +3,7 @@ PresetInterpolatorServer {
 	var <model, actions, <presets, <cursor;
 
 	*new { arg model;
-		model = model ? Interpolator();
+		model = model ?? {InterpolatorServer()};
 		^super.newCopyArgs(model).init;
 	}
 	update { arg theChanger, what ... moreArgs;
@@ -231,7 +231,7 @@ PresetInterpolatorServer {
 	guiClass { ^PresetInterpolatorFullGui }
 
 	interpolatorGui { arg  ... args;
-		^InterpolatorGui.new(model).performList(\gui,args);
+		^InterpolatorServerGui.new(model).performList(\gui,args);
 	}
 
 	gui2D { arg  ... args;
