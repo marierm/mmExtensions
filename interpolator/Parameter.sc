@@ -31,7 +31,8 @@ Parameter {
 		sendOSC = false;
 		sendMIDI = false;
 		bus = Bus.control();
-		action = action.addFunc({|mapped| bus.set(mapped)});
+		bus.set(value);
+		action = action.addFunc({|mapped, unmapped| bus.set(unmapped)});
 	}
 
 	initFromSibling { |sblng|
