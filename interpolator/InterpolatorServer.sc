@@ -1,8 +1,7 @@
 // Copyright 2011-2013 Martin Marier
 // Depends on MCLD plugins (NearestN UGen) and KDTree Quark.
 
-// Or not...
-// Found a bug in NearestN and, in the mean time, I am using a simple
+// Or not...  Found a bug in NearestN and, in the mean time, using a simple
 // iterative algo to find the nearest point(s).
 
 InterpolatorServer {
@@ -43,7 +42,7 @@ InterpolatorServer {
 
 			server.sync;
 			cursorBus.setn([0.5,0.5].extend(n,0));
-			// this.buildKDTree;
+			this.buildKDTree;
 			server.sync;
 			updateTask = { 
 				loop{
@@ -60,6 +59,7 @@ InterpolatorServer {
 
 	}
 
+	// Because of a bug in NearestN, not a KDTree for the moment.
 	buildKDTree {
 		{
 			server.sync;
@@ -117,7 +117,12 @@ InterpolatorServer {
 					\out, cursorRadiusBus,
 					\buf, pointsBuf,
 					\cursorBus, cursorBus
-				]);
+				]
+			);
+			server.sync;
+			// send message to PresetInterpolatorServer so that it knows it
+			// has to update its synth as well.
+			this.changed(\kdtreeRebuilt)
 		}.forkIfNeeded;
 	}
 

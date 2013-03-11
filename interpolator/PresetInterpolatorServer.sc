@@ -1,36 +1,17 @@
-//Inspired by Marije Baalman's ParameterSpace
-PresetInterpolatorServer {
-	var <model, actions, <presets, <cursor;
+PresetInterpolatorServer : PresetInterpolator {
+	var <synth, <bus;
 
 	*new { arg model;
 		model = model ?? {InterpolatorServer()};
 		^super.newCopyArgs(model).init;
 	}
 	
-	update { arg theChanger, what ... moreArgs;
-		var action;
-		if(actions.notNil) {
-			action = actions.at(what);
-			if (action.notNil, {
-				action.valueArray(theChanger, what, moreArgs);
-			});
-		};
-	}
-
 	*load { |path|
 		var e;
 		e = path.load;
 		^super.newCopyArgs(
 			InterpolatorServer(e.at(\points)[0].size)
 		).init.initWithEvent(e);
-	}
-
-	*loadOld { |path|
-		var e;
-		e = path.load;
-		^super.newCopyArgs(
-			InterpolatorServer(e.at(\points)[0].size)
-		).init.initWithEventOld(e);
 	}
 
 	// used by .load
@@ -70,34 +51,9 @@ PresetInterpolatorServer {
 			};
 			// set colors
 			model.colors_(e.at(\colors));
+			model.server.sync;
+			this.buildSynthDef;
 		}.fork;
-	}
-
-	initWithEventOld { |e|
-		model.cursor_(e.at(\cursor));
-		//move point 0 (it is already there) and remove it from the event.
-		model.movePoint(0, e.at(\points)[0]);
-		e.at(\points).removeAt(0);
-		// add all other points
-		e.at(\points).do{|i|
-			model.add(i);
-		};
-		// add parameters to cursor.
-		// they will be added to other points as well (they are siblings).
-		e.at(\presets)[0].at(\parameters).do{|i|
-			cursor.add(
-				Parameter().name_(i.name).spec_(i.spec);
-			)
-		};
-		// name presets set their parameter values.
-		presets.do{ |i,j|
-			i.name_(e.at(\presets)[j].at(\name));
-			i.parameters.do{|k,l|
-				k.value_(e.at(\presets)[j].at(\parameters)[l].value);
-			};
-		};
-		// set colors
-		model.colors_(e.at(\colors));
 	}
 
 	init {
@@ -115,7 +71,49 @@ PresetInterpolatorServer {
 				i.addDependant(this);
 			};
 			this.initActions;
+			model.server.sync;
+			this.buildSynthDef;
 		}.fork;
+	}
+
+	buildSynthDef{
+		{
+			model.server.sync;
+			synth.free;
+			model.server.sync;
+			bus.free;
+			bus = Bus.control(model.server, cursor.parameters.size);
+			model.server.sync;
+			SynthDef(
+				"presetInt_%_%".format(model.points.size, cursor.parameters.size),
+				{
+					arg out=0, in=0;
+					var weights, siblingValues, cursorValues;
+					weights = In.kr(in, model.points.size);
+					siblingValues = 0 ! model.points.size;
+					cursorValues = 0 ! cursor.parameters.size;
+					cursor.parameters.do({|param,i|
+						presets.do({|pset,j|
+							siblingValues[j] = In.kr(pset.parameters[i].bus, 1);
+						});
+						cursorValues[i] = siblingValues.wmean(weights);
+					});
+					Out.kr(out, cursorValues)
+				}
+			).add;
+			model.server.sync;
+			synth = Synth.after(
+				model.weightsSynth,
+				"presetInt_%_%".format(model.points.size, cursor.parameters.size),
+				[\out, bus, \in, model.weightsBus]
+			);
+		}.fork;
+	}
+
+	free {
+		model.free;
+		synth.free;
+		bus.free;
 	}
 	
 	initActions {
@@ -135,6 +133,10 @@ PresetInterpolatorServer {
 				presets.add(Preset.newFromSibling(cursor));
 				presets.last.addDependant(this);
 				this.changed(\presetAdded, presets.last);
+				// this.buildSynthDef;
+			},
+			\kdtreeRebuilt -> {
+				this.buildSynthDef;
 			},
 			\pointDuplicated -> {|interpolator, what, point, pointId|
 				var paramValues;
@@ -143,6 +145,7 @@ PresetInterpolatorServer {
 				presets.last.parameters.do{ |i,j|
 					i.value_(paramValues[j].value);
 				};
+				// this.buildSynthDef;
 				this.changed(\presetAdded, presets.last);
 			},
 			\cursorDuplicated ->{|interpolator, what, point, pointId|
@@ -152,10 +155,12 @@ PresetInterpolatorServer {
 				presets.last.parameters.do{ |i,j|
 					i.value_(paramValues[j].value);
 				};
+				// this.buildSynthDef;
 				this.changed(\presetAdded, presets.last);
 			},
 			\pointRemoved -> {|interpolator, what, i|
 				presets.removeAt(i);
+				// this.buildSynthDef;
 				this.changed(\presetRemoved, i);
 			},
 			\makeCursorGui -> {|model, what|
@@ -166,6 +171,18 @@ PresetInterpolatorServer {
 			},
 			\paramValue -> {|preset, what, param, paramId, val|
 				model.moveAction.value;
+			},
+			\paramRemoved -> { |model|
+				// do this only once (not for every point/preset)
+				(model === presets[0]).if({
+					this.buildSynthDef;
+				})
+			},
+			\paramAdded -> { |model|
+				// do this only once (not for every point/preset)
+				(model === presets[0]).if({
+					this.buildSynthDef;
+				})
 			},
 			\presetName -> {|preset, what, name|
 				this.changed(
@@ -178,74 +195,9 @@ PresetInterpolatorServer {
 		];
 	}
 	
-	save { |path|
-		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
-		(
-			points: model.points,
-			colors: model.colors,
-			cursor: cursor.saveable,
-			cursorPos: model.cursor,
-			presets: presets.collect(_.saveable)
-		).writeArchive(path);
-	}
-
-	// access to model
-	getPresetColor {|i|
-		^model.colors[i];
-	}
-
-	numDim {
-		^model.n;
-	}
-
-	cursorPos {
-		^model.cursor;
-	}
-
-	cursorPos_ {|pos|
-		// var newPos;
-		// i is the index of an axis (0 for, 1 for y, 2 for z, ...)
-		// pos is the position on the axis
-		// newPos = model.cursor;
-		// newPos[i] = pos;
-		model.cursor_(pos);
-	}
-
-	action_ { |function|
-		model.action_(function);
-	}
-
-	attachedPoint_ {|i|
-		model.attachedPoint_(i);
-	}
-
-	attachedPoint {
-		^model.attachedPoint;
-	}
-
-	initOSC { |netAd, mess|
-		mess = mess ? "/PresetInterpolator";
-		cursor.parameters.do{|i|
-			i.initOSC(netAd, mess ++ "/" ++ i.name);
-		};
-	}
-
-	connect { |axis, feature|
-		model.connect(axis, feature);
-	}
-
-	disconnect { |axis|
-		model.disconnect(axis);
-	}
 	// gui stuff
-	guiClass { ^PresetInterpolatorFullGui }
-
 	interpolatorGui { arg  ... args;
 		^InterpolatorServerGui.new(model).performList(\gui,args);
-	}
-
-	gui2D { arg  ... args;
-		^InterpolatorServer2DGui.new(model).performList(\gui,args);
 	}
 
 	namesGui { arg  ... args;
