@@ -7,11 +7,11 @@ PresetInterpolatorServer : PresetInterpolator {
 	}
 	
 	*load { |path|
-		var e;
+		var e, interp;
 		e = path.load;
 		^super.newCopyArgs(
 			InterpolatorServer(e.at(\points)[0].size)
-		).init.initWithEvent(e);
+		).init(e);
 	}
 
 	// used by .load
@@ -40,8 +40,18 @@ PresetInterpolatorServer : PresetInterpolator {
 			// add parameters to cursor.
 			// they will be added to other points as well (they are siblings).
 			e.at(\cursor).at(\parameters).do{|i|
-				cursor.add(i);
+				var p;
+				p = ParameterServer(i.name, i.spec, i.value, cursor);
+				p.netAddr_(i.netAddr);
+				p.oscMess_(i.oscMess);
+				p.sendMIDI_(i.sendMIDI);
+				p.sendOSC_(i.sendOSC);
+				cursor.add(p);
+				model.server.sync;
 			};
+			// e.presets[0].parameters.do{|i|
+			// 	presets[0].add(i);
+			// };
 			// name presets set their parameter values.
 			presets.do{ |i,j|
 				i.name_(e.at(\presets)[j].at(\name));
@@ -53,14 +63,14 @@ PresetInterpolatorServer : PresetInterpolator {
 			model.colors_(e.at(\colors));
 			model.server.sync;
 			this.buildSynthDef;
-		}.fork;
+		}.forkIfNeeded;
 	}
 
-	init {
+	init {|e|
 		{
 			model.server.sync;
 			model.addDependant(this);
-			cursor = Preset(nil, "cursor");
+			cursor = PresetServer(nil, "cursor", this);
 			presets = List[];
 			model.points.do{
 				presets.add(Preset.newFromSibling(cursor));
@@ -73,14 +83,14 @@ PresetInterpolatorServer : PresetInterpolator {
 			this.initActions;
 			model.server.sync;
 			this.buildSynthDef;
-		}.fork;
+			model.server.sync;
+			e.notNil.if({this.initWithEvent(e)});
+		}.forkIfNeeded;
 	}
 
 	buildSynthDef{
 		{
-			model.server.sync;
 			synth.free;
-			model.server.sync;
 			bus.free;
 			bus = Bus.control(model.server, cursor.parameters.size);
 			model.server.sync;
@@ -107,13 +117,19 @@ PresetInterpolatorServer : PresetInterpolator {
 				"presetInt_%_%".format(model.points.size, cursor.parameters.size),
 				[\out, bus, \in, model.weightsBus]
 			);
-		}.fork;
+			// Send the unmapped values of parameters the "ControlSpec Synths".
+			model.server.sync;
+			cursor.parameters.do({|i,j|
+				i.synth.map(\in, bus.index + j);
+			});
+		}.forkIfNeeded;
 	}
 
 	free {
 		model.free;
 		synth.free;
 		bus.free;
+		cursor.free;
 	}
 	
 	initActions {

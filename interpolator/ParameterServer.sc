@@ -1,42 +1,43 @@
 ParameterServer : Parameter {
 
-	var  <synth, <server, <inBus;
+	var  <synth, group, server;
 	
-	*new { |name, spec, value, server|
-		^super.new.init(name, spec, value, server);
-	}
-
-	init { |nm, sp, val, serv|
-		server = serv ? Server.default;
-		name = nm ? "Parameter";
+	// *new { |name, spec, value, preset|
+	// 	^super.newCopy(name, spec, value, preset);
+	// }
+	init {
+		server = preset.server;
+		group = preset.group;
 		siblings = List[];
-		try {sp = sp.asSpec};
-		spec = sp ? ControlSpec();
+		spec = spec.asSpec;
 		spec.addDependant(this);
-		try {val = val.clip(0,1)};
-		value = val ? spec.unmap(spec.default);
+		value = value ? spec.unmap(spec.default);
 		netAddr = NetAddr.localAddr;
 		oscMess = "/" ++ name;
 		sendOSC = false;
 		sendMIDI = false;
+		bus = Bus.control(server);
+		bus.set(value);
+		action = action.addFunc({|mapped, unmapped| bus.set(unmapped)});
 		this.createSynth;
-		// action = action.addFunc({|mapped| bus.set(mapped)});
 	}
 
 	createSynth {
 		var target, addAction, func;
-		synth.notNil.if({
-			target = synth;
-			addAction = \addReplace;
-		},{
-			target = server;
-			addAction = \addToTail;
-		});
-		func = {
-			arg out=0, in=0;
-			Out.kr(out, spec.map(in))
-		};
 		{
+			bus.free;
+			server.sync;
+			synth.notNil.if({
+				target = synth;
+				addAction = \addReplace;
+			},{
+				target = group;
+				addAction = \addToTail;
+			});
+			func = {
+				arg out=0, in=0;
+				Out.kr(out, spec.map(in))
+			};
 			server.sync;
 			bus = Bus.control(server);
 			SynthDef("spec" ++ func.hash.asString, func).add;
@@ -46,8 +47,8 @@ ParameterServer : Parameter {
 				[\out, bus],
 				target, 
 				addAction
-			).map(\in, inBus);
-		}.fork;
+			);// .map(\in, inBus);
+		}.forkIfNeeded;
 	}
 
 	spec_ { |sp|
@@ -59,5 +60,10 @@ ParameterServer : Parameter {
 		};
 		this.createSynth;
 		this.changed(\spec, spec);
+	}
+	
+	free {
+		synth.free;
+		bus.free;
 	}
 }

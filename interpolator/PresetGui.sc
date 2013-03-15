@@ -51,7 +51,7 @@ PresetGui : AbstractInterpolatorGui {
 		).action_({
 			var name;
 			// model.parameters.collect(_.name);
-			model.add(Parameter());
+			model.add(model.paramClass.new);
 		});
 				
 		model.parameters.do{|i, j|

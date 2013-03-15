@@ -1,12 +1,12 @@
 Preset {
-	var <parameters, <name, <>siblings, <>actions;
+	var <parameters, <name, <>siblings, <>actions, <presetInterpolator;
 
-	*new { arg params, name;
-		^super.new.init(params, name);
+	*new { arg params, name, presetInterpolator;
+		^super.new.init(name, presetInterpolator).initParams(params);
 	}
 
-	*newFromSibling { arg sibling, name;
-		^super.new.initFromSibling(sibling, name);
+	*newFromSibling { arg sibling, name, presetInterpolator;
+		^super.new.init(name, presetInterpolator).initFromSibling(sibling);
 	}
 	
 	*load { |path|
@@ -16,34 +16,28 @@ Preset {
 		^this.new(e.at(\parameters), e.at(\name));
 	}
 
-	initFromSibling { arg sibling, nm;
-		name = nm ? "Preset";
-		parameters = List[];
+	initFromSibling { arg sibling;
 		sibling.parameters.do { |i, j|
-			this.add(Parameter.newFromSibling(i));
+			this.add(this.paramClass.newFromSibling(i, this));
 			parameters[j].addDependant(this);
 		};
 		siblings = List.newUsing(sibling.siblings ++ [sibling]);
 		siblings.do{ |i|
 			i.siblings.add(this);
 		};
-		actions = IdentityDictionary[
-			\paramRemoved -> {|param, what|
-				this.remove(param);
-			},
-			\value -> {|param, what, val|
-				this.changed(\paramValue, param, parameters.indexOf(param), val);
-			}
-		];
 	}
 
-	init { arg params, nm;
-		name = nm ? "Preset";
-		parameters = List[];
+	initParams {|params|
 		params.do({ |i, j|
 			this.add(i);
 			i.addDependant(this);
 		});
+	}
+
+	init { arg nm, presetInt;
+		parameters = List[];
+		name = nm ? "Preset";
+		presetInterpolator = presetInt;
 		actions = IdentityDictionary[
 			\paramRemoved -> {|param, what|
 				this.remove(param);
@@ -55,21 +49,29 @@ Preset {
 		siblings = List[];
 	}
 	
+	paramClass {
+		^Parameter;
+	}
+
 	add { |thing|
-		(thing.class == Parameter).if {
-			parameters.add(thing);
-			thing.addDependant(this);
-			siblings.do { |i|
-				(i.parameters.size != parameters.size).if {
-					i.add(
-						Parameter.newFromSibling(thing);
-					);
-				}
-			};
-			this.changed(\paramAdded, thing);
-		} {
-			"Not a Parameter".warn;
-		}
+		thing.class.switch(
+			this.paramClass, { // if arg is an appropriate Parameter
+				parameters.add(thing);
+				thing.addDependant(this);
+				siblings.do { |i|
+					(i.parameters.size != parameters.size).if {
+						i.add(
+							i.paramClass.newFromSibling(thing, i);
+						);
+					}
+				};
+				this.changed(\paramAdded, thing);
+			},
+			Nil, { // if arg is nil, add a "default Parameter"
+				this.add(this.paramClass.new(preset:this))
+			},
+			{"Cannot add this Parameter.".warn;}
+		);
 	}
 
 	removeAt { |id|
@@ -133,4 +135,33 @@ Preset {
 	}
 
 	guiClass { ^PresetGui2 }
+}
+
+PresetServer : Preset {
+	var <server, <group;
+	
+	init { arg nm, presetInt;
+		parameters = List[];
+		name = nm ? "Preset";
+		presetInterpolator = presetInt;
+		server = presetInterpolator.model.server;
+		group = ParGroup(presetInterpolator.model.group,\addToTail);
+		actions = IdentityDictionary[
+			\paramRemoved -> {|param, what|
+				this.remove(param);
+			},
+			\value -> {|param, what, val|
+				this.changed(\paramValue, param, val);
+			}
+		];
+		siblings = List[];
+	}
+
+	paramClass {
+		^ParameterServer;
+	}
+
+	free {
+		group.free;
+	}
 }

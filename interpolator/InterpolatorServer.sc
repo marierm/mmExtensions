@@ -6,7 +6,7 @@
 
 InterpolatorServer {
 
-	var <n, <server, <points, <pointsBuf, <pointsSynthGrp;
+	var <n, <server, <group, <points, <pointsBuf, <pointsSynthGrp;
 	var <cursorBus, <cursorRadiusBus, <cursorSynth, <cursor;
 	var <weightsSynth, <weightsBus, <weights;
 	var <>colors, <attachedPoint, connections;
@@ -33,11 +33,12 @@ InterpolatorServer {
 
 		{
 			server.bootSync;
+			group = Group(server);
 			cursorBus = Bus.control(server, n);
 			cursorRadiusBus = Bus.control(server, 1);
 			weightsBus = Bus.control(server, 1); // avoid error; this will be
 												// changed very soon.
-			pointsSynthGrp = ParGroup();
+			pointsSynthGrp = ParGroup(group);
 			this.addTwoPoints;
 
 			server.sync;

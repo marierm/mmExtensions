@@ -1,31 +1,30 @@
 Parameter {
 
-	var <name, <value, <spec, <>action, <siblings, <sendOSC, <>netAddr,
-	<oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan, oscAction,
-	<bus;
+	var <name, <spec, <value, <preset, <>action, <siblings, <sendOSC,
+	<>netAddr, <oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan,
+	oscAction, <bus;
 	//value is unmapped (between 0 and 1);
 	
-	*new { |name, spec, value|
-		^super.new.init(name, spec, value);
+	*new { |name="Parameter", spec, value, preset|
+		^super.newCopyArgs(name, spec, value, preset).init;
 	}
 
-	*newFromSibling { |sibling|
+	*newFromSibling { |sibling, preset|
 		//Parameters can have siblings that will share spec, name
 		//(but not value)
-		^super.new.init(
-			nm: sibling.name,
-			sp: sibling.spec
-		).initFromSibling(sibling);
+		^super.newCopyArgs(
+			sibling.name,
+			sibling.spec,
+			sibling.value,
+			preset 						// used by subclass
+		).init.initFromSibling(sibling);
 	}
-	
-	init { |nm, sp, val|
-		name = nm ? "Parameter";
+
+	init {
 		siblings = List[];
-		try {sp = sp.asSpec};
-		spec = sp ? ControlSpec();
+		spec = spec.asSpec;
 		spec.addDependant(this);
-		try {val = val.clip(0,1)};
-		value = val ? spec.unmap(spec.default);
+		value = value ? spec.unmap(spec.default);
 		netAddr = NetAddr.localAddr;
 		oscMess = "/" ++ name;
 		sendOSC = false;
@@ -138,6 +137,7 @@ Parameter {
 	}
 
 	remove {
+		this.free;
 		this.changed(\paramRemoved);
 	}
 
@@ -150,5 +150,9 @@ Parameter {
 		// Siblings could eventually depend on each other.  This would probably
 		// make things simpler.
 		this.spec_(controlSpec);
+	}
+
+	free {
+		bus.free;
 	}
 }
