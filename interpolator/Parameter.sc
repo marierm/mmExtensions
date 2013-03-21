@@ -1,8 +1,8 @@
 Parameter {
 
-	var <name, <spec, <value, <preset, <>action, <siblings, <sendOSC,
-	<>netAddr, <oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan,
-	oscAction, <bus;
+	var <name, <spec, <value, <preset, <>action, <sendOSC, <>netAddr,
+	<oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan, oscAction, <bus,
+	<>mediator;
 	//value is unmapped (between 0 and 1);
 	
 	*new { |name="Parameter", spec, value, preset|
@@ -16,12 +16,14 @@ Parameter {
 			sibling.name,
 			sibling.spec,
 			sibling.value,
-			preset 						// used by subclass
+			preset
 		).init.initFromSibling(sibling);
 	}
 
 	init {
-		siblings = List[];
+		preset.notNil.if({
+			preset.mediator.register(this);
+		});
 		spec = spec.asSpec;
 		spec.addDependant(this);
 		value = value ? spec.unmap(spec.default);
@@ -34,12 +36,17 @@ Parameter {
 		action = action.addFunc({|mapped, unmapped| bus.set(unmapped)});
 	}
 
-	initFromSibling { |sblng|
-		siblings.array_(sblng.siblings ++ [sblng]);
-		siblings.do{ |i|
-			i.siblings.add(this);
-		}
+	initFromSibling { |sibling|
+		sibling.mediator.register(this);
 	}
+
+	// mediator {
+	// 	mediator.isNil.if({
+	// 		mediator = Mediator();
+	// 		mediator.register(this);
+	// 	});
+	// 	^mediator;
+	// }
 
 	*load { |eventString|
 
@@ -97,27 +104,32 @@ Parameter {
 	}
 
 	spec_ { |sp|
+		mediator.spec_(sp, this);
+	}
+
+	prSpec_ {|sp|
 		spec = sp;
-		siblings.do{ |param|
-			if (param.spec != spec) {
-				param.spec_(spec);
-			}
-		};
 		this.changed(\spec, spec);
 	}
 	
 	name_ { |na|
+		mediator.name_(na, this);
+	}
+	
+	prName_ { |na|
 		name = na;
-		siblings.do{ |param|
-			if (param.name != name) {
-				param.name_(name);
-			}
-		};
 		this.changed(\name, name);
-		// sendOSC.if{
-			oscMess = oscMess.dirname ++ "/" ++ name;
-		// };
+		oscMess = oscMess.dirname ++ "/" ++ name;
 		this.changed(\OSC);
+	}
+
+	remove {
+		mediator.remove(this);
+	}
+	
+	prRemove {
+		this.free;
+		this.changed(\paramRemoved);
 	}
 
 	mapped {
@@ -130,15 +142,10 @@ Parameter {
 	
 	value_ { |val|
 		var mapped;
-		mapped = this.mapped;
 		value = val;
+		mapped = this.mapped;
 		this.changed(\value, mapped, value);
-		action.value(this.mapped, value);
-	}
-
-	remove {
-		this.free;
-		this.changed(\paramRemoved);
+		action.value(mapped, value);
 	}
 
 	guiClass { ^ParameterGui2 }

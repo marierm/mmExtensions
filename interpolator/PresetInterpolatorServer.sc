@@ -39,16 +39,17 @@ PresetInterpolatorServer : PresetInterpolator {
 			};
 			// add parameters to cursor.
 			// they will be added to other points as well (they are siblings).
-			e.at(\cursor).at(\parameters).do{|i|
+			e.at(\cursor).at(\parameters).do({|i|
 				var p;
 				p = ParameterServer(i.name, i.spec, i.value, cursor);
+				model.server.sync;
 				p.netAddr_(i.netAddr);
 				p.oscMess_(i.oscMess);
 				p.sendMIDI_(i.sendMIDI);
 				p.sendOSC_(i.sendOSC);
 				cursor.add(p);
 				model.server.sync;
-			};
+			});
 			// e.presets[0].parameters.do{|i|
 			// 	presets[0].add(i);
 			// };
@@ -68,12 +69,13 @@ PresetInterpolatorServer : PresetInterpolator {
 
 	init {|e|
 		{
+			mediator = PIMediator();
 			model.server.sync;
 			model.addDependant(this);
-			cursor = PresetServer(nil, "cursor", this);
+			cursor = PresetServer(nil, "Cursor", this);
 			presets = List[];
 			model.points.do{
-				presets.add(Preset.newFromSibling(cursor));
+				presets.add(Preset.newFromSibling(cursor, "Preset"));
 			};
 			presets.do{ |i|
 				// make the interpolator refresh the weights when a preset is
@@ -176,7 +178,7 @@ PresetInterpolatorServer : PresetInterpolator {
 			},
 			\pointRemoved -> {|interpolator, what, i|
 				presets.removeAt(i);
-				// this.buildSynthDef;
+				mediator.removePreset(presets[i]);
 				this.changed(\presetRemoved, i);
 			},
 			\makeCursorGui -> {|model, what|

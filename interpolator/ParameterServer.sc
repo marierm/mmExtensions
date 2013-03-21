@@ -6,19 +6,9 @@ ParameterServer : Parameter {
 	// 	^super.newCopy(name, spec, value, preset);
 	// }
 	init {
+		super.init;
 		server = preset.server;
 		group = preset.group;
-		siblings = List[];
-		spec = spec.asSpec;
-		spec.addDependant(this);
-		value = value ? spec.unmap(spec.default);
-		netAddr = NetAddr.localAddr;
-		oscMess = "/" ++ name;
-		sendOSC = false;
-		sendMIDI = false;
-		bus = Bus.control(server);
-		bus.set(value);
-		action = action.addFunc({|mapped, unmapped| bus.set(unmapped)});
 		this.createSynth;
 	}
 
@@ -51,17 +41,12 @@ ParameterServer : Parameter {
 		}.forkIfNeeded;
 	}
 
-	spec_ { |sp|
+	prSpec_ {|sp|
 		spec = sp;
-		siblings.do{ |param|
-			if (param.spec != spec) {
-				param.spec_(spec);
-			}
-		};
 		this.createSynth;
 		this.changed(\spec, spec);
 	}
-	
+
 	free {
 		synth.free;
 		bus.free;

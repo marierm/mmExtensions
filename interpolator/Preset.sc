@@ -1,12 +1,15 @@
 Preset {
-	var <parameters, <name, <>siblings, <>actions, <presetInterpolator;
+	var <name, <presetInterpolator, <parameters, <>actions, <>mediator;
 
-	*new { arg params, name, presetInterpolator;
-		^super.new.init(name, presetInterpolator).initParams(params);
+	*new { arg params, name="Preset", presetInterpolator;
+		^super.newCopyArgs(name, presetInterpolator).init.initParams(params);
 	}
 
-	*newFromSibling { arg sibling, name, presetInterpolator;
-		^super.new.init(name, presetInterpolator).initFromSibling(sibling);
+	*newFromSibling { arg sibling, name="Preset";
+		^super.newCopyArgs(
+			name, 
+			sibling.presetInterpolator
+		).init.initFromSibling(sibling);
 	}
 	
 	*load { |path|
@@ -17,92 +20,56 @@ Preset {
 	}
 
 	initFromSibling { arg sibling;
-		sibling.parameters.do { |i, j|
-			this.add(this.paramClass.newFromSibling(i, this));
-			parameters[j].addDependant(this);
-		};
-		siblings = List.newUsing(sibling.siblings ++ [sibling]);
-		siblings.do{ |i|
-			i.siblings.add(this);
-		};
+		sibling.mediator.registerPreset(this);
 	}
 
 	initParams {|params|
 		params.do({ |i, j|
 			this.add(i);
-			i.addDependant(this);
 		});
 	}
 
-	init { arg nm, presetInt;
+	init {
+		presetInterpolator.isNil.if({
+			PIMediator().registerPreset(this);
+		},{
+			presetInterpolator.mediator.registerPreset(this);
+		});
 		parameters = List[];
-		name = nm ? "Preset";
-		presetInterpolator = presetInt;
 		actions = IdentityDictionary[
-			\paramRemoved -> {|param, what|
-				this.remove(param);
-			},
 			\value -> {|param, what, val|
 				this.changed(\paramValue, param, val);
 			}
 		];
-		siblings = List[];
 	}
 	
 	paramClass {
 		^Parameter;
 	}
 
-	add { |thing|
-		thing.class.switch(
-			this.paramClass, { // if arg is an appropriate Parameter
-				parameters.add(thing);
-				thing.addDependant(this);
-				siblings.do { |i|
-					(i.parameters.size != parameters.size).if {
-						i.add(
-							i.paramClass.newFromSibling(thing, i);
-						);
-					}
-				};
-				this.changed(\paramAdded, thing);
-			},
-			Nil, { // if arg is nil, add a "default Parameter"
-				this.add(this.paramClass.new(preset:this))
-			},
-			{"Cannot add this Parameter.".warn;}
-		);
+	add { |parameter|
+		mediator.add(parameter);
+	}
+
+	prAdd { |parameter|
+		parameters.add(parameter);		
+		this.changed(\paramAdded, parameter);
 	}
 
 	removeAt { |id|
-		// ( id < parameters.size && parameters.size > 1).if {
-			parameters.removeAt(id);
-			siblings.do { |i|
-				(i.parameters.size != parameters.size).if {
-					i.removeAt(id);
-				}
-			};
-			this.changed(\paramRemoved, parameters[id], id);
-		// } {
-		// 	"This Parameter cannot be removed".warn;
-		// }
+		mediator.remove(parameters[id]);
 	}
 
-	remove { |thing|
+	prRemove { |parameter|
 		var id;
-		// ( parameters.size > 1).if {
-			id = parameters.indexOf(thing);
-			parameters.remove(thing);
-			siblings.do { |i|
-				(i.parameters.size != parameters.size).if {
-					i.removeAt(id);
-				}
-			};
-			this.changed(\paramRemoved, thing, id);
-		// } {
-		// 	"This Parameter cannot be removed".warn;
-		// }
-	}	
+		id = parameters.indexOf(parameter);
+		parameters.remove(parameter); // Should be done by Mediator?
+		this.changed(\paramRemoved, parameter, id);
+	}
+	
+	remove { |parameter|
+		mediator.remove(parameter);
+	}
 
 	name_ { |nm|
 		name = nm.asString;
@@ -112,6 +79,7 @@ Preset {
 	at {|i|
 		^parameters[i];
 	}
+
 	update { arg model, what ... args;
 		var action;
 		action = actions.at(what);
@@ -135,26 +103,17 @@ Preset {
 	}
 
 	guiClass { ^PresetGui2 }
+	
+	free {}
 }
 
 PresetServer : Preset {
 	var <server, <group;
-	
-	init { arg nm, presetInt;
-		parameters = List[];
-		name = nm ? "Preset";
-		presetInterpolator = presetInt;
+
+	init {
+		super.init;
 		server = presetInterpolator.model.server;
 		group = ParGroup(presetInterpolator.model.group,\addToTail);
-		actions = IdentityDictionary[
-			\paramRemoved -> {|param, what|
-				this.remove(param);
-			},
-			\value -> {|param, what, val|
-				this.changed(\paramValue, param, val);
-			}
-		];
-		siblings = List[];
 	}
 
 	paramClass {

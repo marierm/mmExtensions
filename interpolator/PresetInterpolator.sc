@@ -1,11 +1,12 @@
 //Inspired by Marije Baalman's ParameterSpace
 PresetInterpolator {
-	var <model, actions, <presets, <cursor;
+	var <model, actions, <presets, <cursor, <mediator;
 
 	*new { arg model;
 		model = model ? Interpolator();
 		^super.newCopyArgs(model).init;
 	}
+
 	update { arg theChanger, what ... moreArgs;
 		var action;
 		if(actions.notNil) {
@@ -94,6 +95,7 @@ PresetInterpolator {
 	}
 
 	init {
+		mediator = Mediator();
 		model.addDependant(this);
 		cursor = Preset(nil, "cursor");
 		presets = List[];
@@ -146,6 +148,7 @@ PresetInterpolator {
 			},
 			\pointRemoved -> {|interpolator, what, i|
 				presets.removeAt(i);
+				mediator.removePreset(presets[i]);
 				this.changed(\presetRemoved, i);
 			},
 			\makeCursorGui -> {|model, what|
