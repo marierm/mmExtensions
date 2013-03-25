@@ -95,7 +95,7 @@ PresetInterpolator {
 	}
 
 	init {
-		mediator = Mediator();
+		mediator = PIMediator();
 		model.addDependant(this);
 		cursor = Preset(nil, "cursor");
 		presets = List[];
