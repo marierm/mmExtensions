@@ -1,0 +1,61 @@
+#N canvas 780 231 1056 759 10;
+#X obj 656 598 packOSC;
+#X obj 670 621 receive udpsend;
+#X text 586 43 SPONGE BYTE PARSING ====================== Each sensor
+is 10 bits. 10 bit values are encoded on 3 bytes. First byte is status
+byte : 00000xxx where xxx is the input sensor id. The second and third
+bytes are data bytes : 1xxxxxxx and 10000xxx The first one contains
+the 7 MSB bits. The second one contains the 3 LSB bits. The first 8
+status bytes (00000000 through 00000111) are for the 8 analog sensors
+of the sponge. The last status byte (00001000) is for the 10 buttons.
+Status bytes in a nutchell: 0 | Accelerometer 1x 1 | Accelerometer
+1y 10 | Accelerometer 1z 11 | Accelerometer 2x 100 | Accelerometer
+2y 101 | Accelerometer 2z 110 | Pressure sensor 1 111 | Pressure sensor
+2 1000 | The 10 buttons (1 bit per button);
+#X msg 656 576 sendtyped /sponge iiiiiiiii \$1 \$2 \$3 \$4 \$5 \$6
+\$7 \$8 \$9;
+#X obj 98 628 print;
+#X obj 44 142 unpack f f f f f f f f f f f f f f f f f f;
+#X obj 128 101 >> 2;
+#X obj 454 371 expr ($f1 << 3) + ($f2 >> 2);
+#X obj -91 402 expr ($f1 << 3) + ($f2 >> 2);
+#X obj -42 370 expr ($f1 << 3) + ($f2 >> 2);
+#X obj 0 344 expr ($f1 << 3) + ($f2 >> 2);
+#X obj 56 309 expr ($f1 << 3) + ($f2 >> 2);
+#X obj 108 278 expr ($f1 << 3) + ($f2 >> 2);
+#X obj 134 251 expr ($f1 << 3) + ($f2 >> 2);
+#X obj 166 227 expr ($f1 << 3) + ($f2 >> 2);
+#X obj 201 203 expr ($f1 << 3) + ($f2 >> 2);
+#X obj 261 173 expr ($f1 << 3) + ($f2 >> 2);
+#X obj 72 552 pack f f f f f f f f f;
+#X obj -84 47 udpreceive 57120;
+#X connect 3 0 0 0;
+#X connect 5 0 8 0;
+#X connect 5 1 8 1;
+#X connect 5 2 9 0;
+#X connect 5 3 9 1;
+#X connect 5 4 10 0;
+#X connect 5 5 10 1;
+#X connect 5 6 11 0;
+#X connect 5 7 11 1;
+#X connect 5 8 12 0;
+#X connect 5 9 12 1;
+#X connect 5 10 13 0;
+#X connect 5 11 13 1;
+#X connect 5 12 14 0;
+#X connect 5 13 14 1;
+#X connect 5 14 15 0;
+#X connect 5 15 15 1;
+#X connect 5 16 16 0;
+#X connect 5 17 16 1;
+#X connect 8 0 17 0;
+#X connect 9 0 17 1;
+#X connect 10 0 17 2;
+#X connect 11 0 17 3;
+#X connect 12 0 17 4;
+#X connect 13 0 17 5;
+#X connect 14 0 17 6;
+#X connect 15 0 17 7;
+#X connect 16 0 17 8;
+#X connect 17 0 4 0;
+#X connect 18 0 5 0;

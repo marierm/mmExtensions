@@ -1,10 +1,20 @@
 //Inspired by Marije Baalman's ParameterSpace
-PresetInterpolator : SimpleController {
-	var <presets, <cursor;
+PresetInterpolator {
+	var <model, actions, <presets, <cursor, <mediator;
 
 	*new { arg model;
 		model = model ? Interpolator();
 		^super.newCopyArgs(model).init;
+	}
+
+	update { arg theChanger, what ... moreArgs;
+		var action;
+		if(actions.notNil) {
+			action = actions.at(what);
+			if (action.notNil, {
+				action.valueArray(theChanger, what, moreArgs);
+			});
+		};
 	}
 
 	*load { |path|
@@ -85,6 +95,7 @@ PresetInterpolator : SimpleController {
 	}
 
 	init {
+		mediator = PIMediator();
 		model.addDependant(this);
 		cursor = Preset(nil, "cursor");
 		presets = List[];
@@ -137,6 +148,7 @@ PresetInterpolator : SimpleController {
 			},
 			\pointRemoved -> {|interpolator, what, i|
 				presets.removeAt(i);
+				mediator.removePreset(presets[i]);
 				this.changed(\presetRemoved, i);
 			},
 			\makeCursorGui -> {|model, what|

@@ -1,0 +1,83 @@
+#N canvas 627 313 1056 759 10;
+#X obj 184 236 >> 7;
+#X obj 145 187 comport;
+#X obj 211 282 == 0;
+#X obj 145 325 spigot;
+#X obj 193 368 float;
+#X obj 194 344 t f b;
+#X obj 145 212 t f f f;
+#X obj 145 384 float;
+#X obj 145 354 t f b;
+#X obj 237 364 % 128;
+#X obj 193 390 % 128;
+#X obj 193 412 << 3;
+#X obj 222 442 +;
+#X obj 145 472 pack f f;
+#X obj 145 499 route 0 1 2 3 4 5 6 7 8;
+#X obj 145 571 packOSC;
+#X obj 145 620 udpsend;
+#X obj 145 527 pack f f f f f f f f f;
+#X obj 164 282 spigot;
+#X obj 210 320 t f f;
+#X obj 145 649 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+1;
+#X obj 184 259 t f f;
+#X obj 145 162 receive comport;
+#X obj 159 594 receive udpsend;
+#X obj 296 66 loadbang;
+#X msg 296 92 \; comport devicename /dev/ttyUSB0 \; comport baud 57600
+\; udpsend connect 127.0.0.1 57120;
+#X text 259 453 Et il y en a qui disent que SuperCollider (ou Python)
+\, c'est compliqué!;
+#X text 586 43 SPONGE BYTE PARSING ====================== Each sensor
+is 10 bits. 10 bit values are encoded on 3 bytes. First byte is status
+byte : 00000xxx where xxx is the input sensor id. The second and third
+bytes are data bytes : 1xxxxxxx and 10000xxx The first one contains
+the 7 MSB bits. The second one contains the 3 LSB bits. The first 8
+status bytes (00000000 through 00000111) are for the 8 analog sensors
+of the sponge. The last status byte (00001000) is for the 10 buttons.
+Status bytes in a nutchell: 0 | Accelerometer 1x 1 | Accelerometer
+1y 10 | Accelerometer 1z 11 | Accelerometer 2x 100 | Accelerometer
+2y 101 | Accelerometer 2z 110 | Pressure sensor 1 111 | Pressure sensor
+2 1000 | The 10 buttons (1 bit per button);
+#X msg 145 549 sendtyped /sponge iiiiiiiii \$1 \$2 \$3 \$4 \$5 \$6
+\$7 \$8 \$9;
+#X connect 0 0 21 0;
+#X connect 1 0 6 0;
+#X connect 2 0 3 1;
+#X connect 3 0 8 0;
+#X connect 4 0 10 0;
+#X connect 5 0 4 1;
+#X connect 5 1 4 0;
+#X connect 6 0 3 0;
+#X connect 6 1 18 0;
+#X connect 6 2 0 0;
+#X connect 7 0 13 0;
+#X connect 8 0 7 1;
+#X connect 8 1 7 0;
+#X connect 9 0 12 1;
+#X connect 10 0 11 0;
+#X connect 11 0 12 0;
+#X connect 12 0 13 1;
+#X connect 13 0 14 0;
+#X connect 14 0 17 0;
+#X connect 14 1 17 1;
+#X connect 14 2 17 2;
+#X connect 14 3 17 3;
+#X connect 14 4 17 4;
+#X connect 14 5 17 5;
+#X connect 14 6 17 6;
+#X connect 14 7 17 7;
+#X connect 14 8 17 8;
+#X connect 15 0 16 0;
+#X connect 16 0 20 0;
+#X connect 17 0 28 0;
+#X connect 18 0 19 0;
+#X connect 19 0 5 0;
+#X connect 19 1 9 0;
+#X connect 21 0 18 1;
+#X connect 21 1 2 0;
+#X connect 22 0 1 0;
+#X connect 23 0 16 0;
+#X connect 24 0 25 0;
+#X connect 28 0 15 0;

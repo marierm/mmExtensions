@@ -25,7 +25,7 @@ PresetWindow {
 		buttons = tree.addItem(["",""]).setView(
 			0,
 			Button().states_([["Add"]]).action_({
-				model.add(Parameter())
+				model.add()
 			})
 		).setView(
 			1,

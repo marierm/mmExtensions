@@ -1,4 +1,4 @@
-// Copyright 2010 Martin Marier
+// Copyright 2010-2012 Martin Marier
 
 // Features are streams of data extracted from a (musical) interface.  A
 // SensorFeature contains the data straight from sensor (not processed), a
@@ -36,7 +36,16 @@ Feature {
 				Out.kr(
 					out, HPF.kr(In.kr(in0, 1), freq)
 				);
-			}, metadata:( specs:(freq:[1,1000,\exp]) ) )
+			}, metadata:( specs:(freq:[1,1000,\exp]) ) ),
+			\trig -> SynthDef(\featureTrig, {
+				arg out=0, in0 = 0, thresh = 10, dur = 0.05;
+				var sig, trig;
+				sig = In.kr(in0, 1);
+				trig = Trig1.kr(sig.abs - thresh, dur);
+				SendTrig.kr(trig, 0, sig);
+				Out.kr(out, trig);
+			}, metadata:( specs:(thresh:[0.1,100,\exp], dur:[0.001,1.0,\exp]) ) )
+
 		];
 		funcs = IdentityDictionary[
 			\accelGlobal -> { |data| // takes x, y and z as an input.
@@ -160,15 +169,36 @@ Feature {
 	}
 
 	guiClass { ^FeatureGui }
+
+	featurize {	^this }
+
+	saveDictionary {
+		^IdentityDictionary.newFrom([
+			\class, this.class,
+			\name, name.asSymbol,
+			\interface, interface.class,
+			\input, input.collect(_.name)
+		]);
+	}
 }
 
 SynthFeature : Feature {
-	var <synth, <def;
+	var <synth, <def, <args;
 	// Inputs of SynthDef should be named \in0, \in1,
 	// \in2, etc Other args are appended.  User is responsible for scaling the
 	// data inside the synth.
 	*new { |name, interface, input, synthDef, args|
 		^super.newCopyArgs(name, interface, input).init(synthDef, args);
+	}
+
+	saveDictionary {
+		^IdentityDictionary.newFrom([
+			\class, this.class,
+			\name, name.asSymbol,
+			\interface, interface.class,
+			\input, input.collect(_.name),
+			\args, args.getPairs
+		]);
 	}
 
 	init { |synthDef, arguments|
@@ -179,6 +209,7 @@ SynthFeature : Feature {
 			^nil;
 		};
 		def = synthDef;
+		args = IdentityDictionary.newFrom(arguments);
 		arguments = input.collect{|i,j|
 			i.dependantFeatures.add(this);
 			[(\in ++ j).asSymbol, i.bus.index];
@@ -216,6 +247,7 @@ SynthFeature : Feature {
 
 	// set a parameter of the synth.
 	set { |argName, value|
+		args.put(argName, value);
 		synth.set(argName, value);
 	}
 
@@ -244,10 +276,19 @@ SensorFeature : Feature { // the raw data from the sensor
 		^super.newCopyArgs(name, interface, input).init;
 	}
 
+	saveDictionary {
+		^IdentityDictionary.newFrom([
+			\class, this.class,
+			\name, name.asSymbol,
+			\interface, interface.class,
+			\input, input
+		]);
+	}
+
 	init { 
 		super.init;
 		bus = Bus.control(server);
-		fullFunc = { |...msg|
+		fullFunc = { |msg|
 			value = msg[input];
 			action.value(value);
 			bus.set(value);
@@ -339,4 +380,35 @@ ButtonFeature : Feature {
 		input.do({|i| i.dependantFeatures.remove(this); });
 	}
 
+}
+
++ Integer {
+	featurize { |interface, prefix|
+		var featureName, ftr;
+		featureName = (prefix ++ this).asSymbol;
+		ftr = interface.activateFeature(featureName);
+		^ftr;
+	}
+}
+
++ Symbol {
+	featurize { |interface|
+		var ftr;
+		ftr = interface.activateFeature(this);
+		^ftr;
+	}
+}
+
++ String {
+	featurize { |interface|
+		var ftr;
+		ftr = interface.activateFeature(this.asSymbol);
+		^ftr;
+	}
+}
+
++ Nil {
+	featurize {
+		^nil;
+	}
 }

@@ -1,12 +1,15 @@
 Preset {
-	var <parameters, <name, <>siblings, <>actions;
+	var <name, <presetInterpolator, <parameters, <>actions, <>mediator;
 
-	*new { arg params, name;
-		^super.new.init(params, name);
+	*new { arg params, name="Preset", presetInterpolator;
+		^super.newCopyArgs(name, presetInterpolator).init.initParams(params);
 	}
 
-	*newFromSibling { arg sibling, name;
-		^super.new.initFromSibling(sibling, name);
+	*newFromSibling { arg sibling, name="Preset";
+		^super.newCopyArgs(
+			name, 
+			sibling.presetInterpolator
+		).init.initFromSibling(sibling);
 	}
 	
 	*load { |path|
@@ -16,91 +19,57 @@ Preset {
 		^this.new(e.at(\parameters), e.at(\name));
 	}
 
-	initFromSibling { arg sibling, nm;
-		name = nm ? "Preset";
-		parameters = List[];
-		sibling.parameters.do { |i, j|
-			this.add(Parameter.newFromSibling(i));
-			parameters[j].addDependant(this);
-		};
-		siblings = List.newUsing(sibling.siblings ++ [sibling]);
-		siblings.do{ |i|
-			i.siblings.add(this);
-		};
-		actions = IdentityDictionary[
-			\paramRemoved -> {|param, what|
-				this.remove(param);
-			},
-			\value -> {|param, what, val|
-				this.changed(\paramValue, param, parameters.indexOf(param), val);
-			}
-		];
+	initFromSibling { arg sibling;
+		sibling.mediator.registerPreset(this);
 	}
 
-	init { arg params, nm;
-		name = nm ? "Preset";
-		parameters = List[];
+	initParams {|params|
 		params.do({ |i, j|
 			this.add(i);
-			i.addDependant(this);
 		});
+	}
+
+	init {
+		presetInterpolator.isNil.if({
+			PIMediator().registerPreset(this);
+		},{
+			presetInterpolator.mediator.registerPreset(this);
+		});
+		parameters = List[];
 		actions = IdentityDictionary[
-			\paramRemoved -> {|param, what|
-				this.remove(param);
-			},
 			\value -> {|param, what, val|
 				this.changed(\paramValue, param, val);
 			}
 		];
-		siblings = List[];
 	}
 	
-	add { |thing|
-		(thing.class == Parameter).if {
-			parameters.add(thing);
-			thing.addDependant(this);
-			siblings.do { |i|
-				(i.parameters.size != parameters.size).if {
-					i.add(
-						Parameter.newFromSibling(thing);
-					);
-				}
-			};
-			this.changed(\paramAdded, thing);
-		} {
-			"Not a Parameter".warn;
-		}
+	paramClass {
+		^Parameter;
+	}
+
+	add { |parameter|
+		mediator.add(parameter);
+	}
+
+	prAdd { |parameter|
+		parameters.add(parameter);		
+		this.changed(\paramAdded, parameter);
 	}
 
 	removeAt { |id|
-		// ( id < parameters.size && parameters.size > 1).if {
-			parameters.removeAt(id);
-			siblings.do { |i|
-				(i.parameters.size != parameters.size).if {
-					i.removeAt(id);
-				}
-			};
-			this.changed(\paramRemoved, parameters[id], id);
-		// } {
-		// 	"This Parameter cannot be removed".warn;
-		// }
+		mediator.remove(parameters[id]);
 	}
 
-	remove { |thing|
+	prRemove { |parameter|
 		var id;
-		// ( parameters.size > 1).if {
-			id = parameters.indexOf(thing);
-			parameters.remove(thing);
-			siblings.do { |i|
-				(i.parameters.size != parameters.size).if {
-					i.removeAt(id);
-				}
-			};
-			this.changed(\paramRemoved, thing, id);
-		// } {
-		// 	"This Parameter cannot be removed".warn;
-		// }
-	}	
+		id = parameters.indexOf(parameter);
+		parameters.remove(parameter); // Should be done by Mediator?
+		this.changed(\paramRemoved, parameter, id);
+	}
+	
+	remove { |parameter|
+		mediator.remove(parameter);
+	}
 
 	name_ { |nm|
 		name = nm.asString;
@@ -110,6 +79,7 @@ Preset {
 	at {|i|
 		^parameters[i];
 	}
+
 	update { arg model, what ... args;
 		var action;
 		action = actions.at(what);
@@ -132,5 +102,25 @@ Preset {
 		^(name: name, parameters: parameters);
 	}
 
-	makeWindow { ^PresetWindow(this) }
+	guiClass { ^PresetGui2 }
+	
+	free {}
+}
+
+PresetServer : Preset {
+	var <server, <group;
+
+	init {
+		super.init;
+		server = presetInterpolator.model.server;
+		group = ParGroup(presetInterpolator.model.group,\addToTail);
+	}
+
+	paramClass {
+		^ParameterServer;
+	}
+
+	free {
+		group.free;
+	}
 }

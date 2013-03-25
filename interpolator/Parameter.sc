@@ -1,45 +1,76 @@
 Parameter {
 
-	var <name, <value, <spec, <>action, <siblings, <sendOSC, <>netAddr,
-	<oscMess, oscAction;
-	// MIDI not implemented and probably will never be.
-	// Why am I leaving this code here again?...
-	// <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan ; 
+	var <name, <spec, <value, <preset, <>action, <sendOSC, <>netAddr,
+	<oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan, oscAction, <bus,
+	<>mediator;
 	//value is unmapped (between 0 and 1);
 	
-	*new { |name, spec, value|
-		^super.new.init(name, spec, value);
+	*new { |name="Parameter", spec, value, preset|
+		^super.newCopyArgs(name, spec, value, preset).init;
 	}
 
-	*newFromSibling { |sibling|
+	*newFromSibling { |sibling, preset|
 		//Parameters can have siblings that will share spec, name
 		//(but not value)
-		^super.new.init(
-			nm: sibling.name,
-			sp: sibling.spec
-		).initFromSibling(sibling);
+		^super.newCopyArgs(
+			sibling.name,
+			sibling.spec,
+			sibling.value,
+			preset
+		).init.initFromSibling(sibling);
 	}
-	
-	init { |nm, sp, val|
-		name = nm ? "Parameter";
-		siblings = List[];
-		try {sp = sp.asSpec};
-		spec = sp ? ControlSpec();
+
+	init {
+		preset.notNil.if({
+			preset.mediator.register(this);
+		});
+		spec = spec.asSpec;
 		spec.addDependant(this);
-		try {val = val.clip(0,1)};
-		value = val ? spec.unmap(spec.default);
+		value = value ? spec.unmap(spec.default);
 		netAddr = NetAddr.localAddr;
 		oscMess = "/" ++ name;
 		sendOSC = false;
-		// sendMIDI = false;
+		sendMIDI = false;
+		bus = Bus.control();
+		bus.set(value);
+		action = action.addFunc({|mapped, unmapped| bus.set(unmapped)});
 	}
 
-	initFromSibling { |sblng|
-		siblings.array_(sblng.siblings ++ [sblng]);
-		siblings.do{ |i|
-			i.siblings.add(this);
-		}
+	initFromSibling { |sibling|
+		sibling.mediator.register(this);
 	}
+
+	// mediator {
+	// 	mediator.isNil.if({
+	// 		mediator = Mediator();
+	// 		mediator.register(this);
+	// 	});
+	// 	^mediator;
+	// }
+
+	*load { |eventString|
+
+	}
+
+	saveable {
+		^(
+			name: name,
+			spec: spec,
+			value: value,
+			sendOSC: sendOSC,
+			netAddr: [netAddr.ip, netAddr.port],
+			oscMess: oscMess,
+			sendMIDI: sendMIDI,
+			midiPort: midiPort,
+			midiCtl: midiCtl,
+			midiChan: midiChan
+		).asCompileString;
+	}
+	// initOSC { |netAd, mess|
+	// 	netAddr = netAd ? NetAddr.localAddr;
+	// 	oscMess = mess ? ("/" ++ name);
+	// 	sendOSC = true;
+	// }
 
 	sendOSC_ { |bool|
 		bool.if({
@@ -52,6 +83,9 @@ Parameter {
 			action = action.removeFunc(oscAction);
 			this.changed(\OSC, false)
 		});
+		// sendMIDI.if{
+		// 	midiPort.control(midiChan, midiCtl, \midi.asSpec.map(value));
+		// };
 	}
 	
 	oscMess_ { |string|
@@ -59,40 +93,43 @@ Parameter {
 		this.changed(\OSC);
 	}
 
-	// MIDI is not implemented... and will probably never be.
-	// 
-	// initMIDI { |portNum, chan, ctl|
-	// 	MIDIClient.initialized.not.if{
-	// 		MIDIClient.init;
-	// 	};
-	// 	midiPort = MIDIOut(portNum);
-	// 	midiChan = chan;
-	// 	midiCtl = ctl;
-	// 	sendMIDI = true;
-	// }
+	initMIDI { |portNum, chan, ctl|
+		MIDIClient.initialized.not.if{
+			MIDIClient.init;
+		};
+		midiPort = MIDIOut(portNum);
+		midiChan = chan;
+		midiCtl = ctl;
+		sendMIDI = true;
+	}
 
 	spec_ { |sp|
+		mediator.spec_(sp, this);
+	}
+
+	prSpec_ {|sp|
 		spec = sp;
-		siblings.do{ |param|
-			if (param.spec != spec) {
-				param.spec_(spec);
-			}
-		};
 		this.changed(\spec, spec);
 	}
 	
 	name_ { |na|
+		mediator.name_(na, this);
+	}
+	
+	prName_ { |na|
 		name = na;
-		siblings.do{ |param|
-			if (param.name != name) {
-				param.name_(name);
-			}
-		};
 		this.changed(\name, name);
-		// sendOSC.if{
-			oscMess = oscMess.dirname ++ "/" ++ name;
-		// };
+		oscMess = oscMess.dirname ++ "/" ++ name;
 		this.changed(\OSC);
+	}
+
+	remove {
+		mediator.remove(this);
+	}
+	
+	prRemove {
+		this.free;
+		this.changed(\paramRemoved);
 	}
 
 	mapped {
@@ -105,17 +142,13 @@ Parameter {
 	
 	value_ { |val|
 		var mapped;
-		mapped = this.mapped;
 		value = val;
+		mapped = this.mapped;
 		this.changed(\value, mapped, value);
-		action.value(this.mapped, value);
+		action.value(mapped, value);
 	}
 
-	remove {
-		this.changed(\paramRemoved);
-	}
-
-	makeWindow { ^ParameterWindow(this) }
+	guiClass { ^ParameterGui2 }
 
 	update { |controlSpec, what ... args|
 		// Dependant of its spec only.  this would have to be changed if
@@ -124,5 +157,9 @@ Parameter {
 		// Siblings could eventually depend on each other.  This would probably
 		// make things simpler.
 		this.spec_(controlSpec);
+	}
+
+	free {
+		bus.free;
 	}
 }
