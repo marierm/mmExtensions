@@ -231,7 +231,6 @@ SynthFeature : Feature {
 			bus.get{|value|
 				action.value(value);
 				// netAddr.sendMsg(oscPath, value);
-				this.changed(\featureValue, value);
 			};
 		};
 		
@@ -293,7 +292,6 @@ SensorFeature : Feature { // the raw data from the sensor
 			action.value(value);
 			bus.set(value);
 			// netAddr.sendMsg(oscPath, value);
-			this.changed(\featureValue, value);
 		};
 		interface.action_(interface.action.addFunc(fullFunc));
 		interface.features.add(this);
@@ -325,7 +323,6 @@ LangFeature : Feature {
 			action.value(value, inputData);
 			// netAddr.sendMsg(oscPath, value);
 			bus.set(value);
-			this.changed(\featureValue, value);
 		};
 		interface.action_(interface.action.addFunc(fullFunc));
 		interface.features.add(this);
@@ -364,7 +361,6 @@ ButtonFeature : Feature {
 				action.value(value, oldVal );
 				// netAddr.sendMsg(oscPath, value);
 				bus.set(value);
-				this.changed(\featureValue, value);
 			};
 			oldVal = newVal;
 		};
