@@ -28,7 +28,7 @@ InterpolatorServer {
 			weightsBus.getn(weights.size, {|v|
 				weights.putEach((0..weights.size-1), v)
 			});
-			{this.changed(\weights, (0..points.size), weights)}.defer;
+			{this.changed(\weights, (0..(points.size - 1)), weights)}.defer;
 		};
 
 		{
@@ -51,7 +51,7 @@ InterpolatorServer {
 					weightsBus.getn(weights.size, {|v|
 						weights.putEach((0..weights.size-1), v)
 					});
-					this.changed(\weights, (0..points.size), weights);
+					this.changed(\weights, (0..(points.size - 1)), weights);
 					0.05.wait;
 				}
 			}.fork(AppClock);

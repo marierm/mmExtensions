@@ -190,17 +190,17 @@ PresetInterpolatorServer : PresetInterpolator {
 			\paramValue -> {|preset, what, param, paramId, val|
 				model.moveAction.value;
 			},
-			\paramRemoved -> { |model|
-				// do this only once (not for every point/preset)
-				(model === presets[0]).if({
+			\cursorParamRemoved -> { |model|
+				// do this only for cursor.
+				// (model === presets[0]).if({
 					this.buildSynthDef;
-				})
+				// })
 			},
-			\paramAdded -> { |model|
-				// do this only once (not for every point/preset)
-				(model === presets[0]).if({
+			\cursorParamAdded -> { |model|
+				// do this only for cursor.
+				// (model === presets[0]).if({
 					this.buildSynthDef;
-				})
+				// })
 			},
 			\presetName -> {|preset, what, name|
 				this.changed(

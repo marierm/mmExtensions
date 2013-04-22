@@ -123,4 +123,19 @@ PresetServer : Preset {
 	free {
 		group.free;
 	}
+
+	prAdd { |parameter|
+		parameters.add(parameter);		
+		this.changed(\cursorParamAdded, parameter);
+		this.changed(\paramAdded, parameter);
+	}
+
+	prRemove { |parameter|
+		var id;
+		id = parameters.indexOf(parameter);
+		parameters.remove(parameter); // Should be done by Mediator?
+		this.changed(\cursorParamRemoved, parameter, id);
+		this.changed(\paramRemoved, parameter, id);
+	}
+
 }
