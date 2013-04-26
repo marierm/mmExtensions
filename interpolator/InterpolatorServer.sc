@@ -51,8 +51,8 @@ InterpolatorServer {
 					weightsBus.getn(weights.size, {|v|
 						weights.putEach((0..weights.size-1), v)
 					});
-					this.changed(\weights, (0..(points.size - 1)), weights);
 					0.05.wait;
+					try{this.changed(\weights, (0..(points.size - 1)), weights)};
 				}
 			}.fork(AppClock);
 		}.fork;

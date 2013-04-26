@@ -9,12 +9,10 @@ PresetInterpolator {
 
 	update { arg theChanger, what ... moreArgs;
 		var action;
-		if(actions.notNil) {
-			action = actions.at(what);
-			if (action.notNil, {
-				action.valueArray(theChanger, what, moreArgs);
-			});
-		};
+		action = actions.at(what);
+		if (action.notNil, {
+			action.valueArray(theChanger, what, moreArgs);
+		});
 	}
 
 	*load { |path|
