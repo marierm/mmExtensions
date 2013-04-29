@@ -5,13 +5,21 @@ ParameterServer : Parameter {
 	// *new { |name, spec, value, preset|
 	// 	^super.newCopy(name, spec, value, preset);
 	// }
+
 	init {
 		super.init;
 		server = preset.server;
 		group = preset.group;
 		this.createSynth;
 	}
+	
+	initBus {
+		// action = action.addFunc({|mapped, unmapped| bus.set(unmapped)});
 
+		// just override the parent's method.
+		// Bus is initialized in createSynth.
+	}
+	
 	createSynth {
 		var target, addAction, func;
 		{
@@ -26,7 +34,7 @@ ParameterServer : Parameter {
 			});
 			func = {
 				arg out=0, in=0;
-				Out.kr(out, spec.map(in))
+				ReplaceOut.kr(out, spec.map(in))
 			};
 			server.sync;
 			bus = Bus.control(server);

@@ -171,14 +171,14 @@ InterpolatorServer {
 		SynthDef("interpolatorCursor" ++ n ++ "_" ++ points.size,{
 			arg out = 0, buf, cursorBus=0;
 			var cursorRadiusSquared;
-			// Cursor coordinates are in a Bus (numChannels = ~numDim);
+			// Cursor coordinates are on a Bus (numChannels = ~numDim);
 			# cursorRadiusSquared = NearestDistBuf.kr(
 				buf,
 				In.kr(cursorBus, n),
 				points.size,
 				n
 			);
-			Out.kr(out, cursorRadiusSquared )
+			ReplaceOut.kr(out, cursorRadiusSquared )
 		}).add;
 		SynthDef("interpolatorPoint" ++ n ++ "_" ++ points.size,{
 			arg out=0, buf, cursorBus=0, cursorRadiusBus=0;
@@ -200,7 +200,7 @@ InterpolatorServer {
 				[weight, 1.0]
 			);
 
-			Out.kr(out, RemoveBadValues.kr(weight));
+			ReplaceOut.kr(out, RemoveBadValues.kr(weight));
 		}).add;
 		SynthDef("interpolatorWeights" ++ points.size,{
 			arg in=0;
@@ -320,7 +320,7 @@ InterpolatorServer {
 	free {
 
 		[ cursorBus, cursorRadiusBus, cursorSynth, pointsSynthGrp, pointsBuf,
-			weightsSynth, weightsBus ].do(_.free);
+			weightsSynth, weightsBus, group ].do(_.free);
 		connections.do(_.free);
 		updateTask.stop;
 

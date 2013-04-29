@@ -1,8 +1,8 @@
 PIMediator {
-	var <dict;
+	var <presetInterpolator, <dict;
 	
-	*new {
-		^super.new.init;
+	*new { |presetInterpolator|
+		^super.newCopyArgs(presetInterpolator).init;
 	}
 
 	init {
@@ -37,6 +37,7 @@ PIMediator {
 		this.getSiblings(parameter).do({|i|
 			i.prSpec_(spec);
 		});
+		presetInterpolator.mapToParameter;
 	}
 
 	name_ { |name, parameter|
@@ -61,6 +62,7 @@ PIMediator {
 			parameter.free; // the parameter itself is never added, just
 			// siblings of it.  We free the synth and bus.
 		});
+		// presetInterpolator.buildSynthDef;
 	}
 
 	removePreset {|preset|
@@ -79,6 +81,7 @@ PIMediator {
 			dict[i.preset].remove(i);
 			i.release;
 		});
+		// presetInterpolator.buildSynthDef;
 	}
 
 	getSiblings { |parameter|

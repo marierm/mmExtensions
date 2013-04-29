@@ -69,7 +69,7 @@ PresetInterpolatorServer : PresetInterpolator {
 
 	init {|e|
 		{
-			mediator = PIMediator();
+			mediator = PIMediator(this);
 			model.server.sync;
 			model.addDependant(this);
 			cursor = PresetServer(nil, "Cursor", this);
@@ -77,6 +77,7 @@ PresetInterpolatorServer : PresetInterpolator {
 			model.points.do{
 				presets.add(Preset.newFromSibling(cursor, "Preset"));
 			};
+			cursor.addDependant(this);
 			presets.do{ |i|
 				// make the interpolator refresh the weights when a preset is
 				// modified.
@@ -94,34 +95,46 @@ PresetInterpolatorServer : PresetInterpolator {
 		{
 			synth.free;
 			bus.free;
-			bus = Bus.control(model.server, cursor.parameters.size);
-			model.server.sync;
-			SynthDef(
-				"presetInt_%_%".format(model.points.size, cursor.parameters.size),
-				{
-					arg out=0, in=0;
-					var weights, siblingValues, cursorValues;
-					weights = In.kr(in, model.points.size);
-					siblingValues = 0 ! model.points.size;
-					cursorValues = 0 ! cursor.parameters.size;
-					cursor.parameters.do({|param,i|
-						presets.do({|pset,j|
-							siblingValues[j] = In.kr(pset.parameters[i].bus, 1);
+			(cursor.parameters.size != 0).if({
+				bus = Bus.control(model.server, cursor.parameters.size);
+				model.server.sync;
+				SynthDef(
+					"presetInt_%_%".format(model.points.size, cursor.parameters.size),
+					{
+						arg out=0, in=0;
+						var weights, siblingValues, cursorValues;
+						weights = In.kr(in, model.points.size);
+						siblingValues = 0 ! model.points.size;
+						cursorValues = 0 ! cursor.parameters.size;
+						cursor.parameters.do({|param,i|
+							presets.do({|pset,j|
+								siblingValues[j] = In.kr(pset.parameters[i].bus, 1);
+							});
+							cursorValues[i] = siblingValues.wmean(weights);
 						});
-						cursorValues[i] = siblingValues.wmean(weights);
-					});
-					Out.kr(out, cursorValues)
-				}
-			).add;
-			model.server.sync;
-			synth = Synth.after(
-				model.weightsSynth,
-				"presetInt_%_%".format(model.points.size, cursor.parameters.size),
-				[\out, bus, \in, model.weightsBus]
-			);
+						ReplaceOut.kr(out, cursorValues);
+					}
+				).add;
+				model.server.sync;
+				synth = Synth.after(
+					model.weightsSynth,
+					"presetInt_%_%".format(model.points.size, cursor.parameters.size),
+					[\out, bus, \in, model.weightsBus]
+				);
+				this.mapToParameter;
+			});
+			// cursor.parameters.do({|i,j|
+			// 	model.server.sync;
+			// 	i.synth.map(\in, bus.index + j);
+			// });
+		}.forkIfNeeded;
+	}
+
+	mapToParameter {
+		{
 			// Send the unmapped values of parameters the "ControlSpec Synths".
-			model.server.sync;
 			cursor.parameters.do({|i,j|
+				model.server.sync;
 				i.synth.map(\in, bus.index + j);
 			});
 		}.forkIfNeeded;

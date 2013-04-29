@@ -31,9 +31,15 @@ Parameter {
 		oscMess = "/" ++ name;
 		sendOSC = false;
 		sendMIDI = false;
+		this.initBus;
+	}
+	
+	initBus {
 		bus = Bus.control();
 		bus.set(value);
-		action = action.addFunc({|mapped, unmapped| bus.set(unmapped)});
+		action = action.addFunc({|mapped, unmapped|
+			bus.set(unmapped);
+		});
 	}
 
 	initFromSibling { |sibling|
@@ -104,7 +110,7 @@ Parameter {
 	}
 
 	spec_ { |sp|
-		mediator.spec_(sp, this);
+		mediator.spec_(sp.asSpec, this);
 	}
 
 	prSpec_ {|sp|
