@@ -104,13 +104,13 @@ InterpolatorServer {
 					]
 				)
 			});
-			server.sync;
+			// server.sync;
 			weightsSynth = Synth.after(
 				pointsSynthGrp,
 				"interpolatorWeights" ++ points.size,
 				[ \in, weightsBus ]
 			);
-			server.sync;
+			// server.sync;
 			cursorSynth = Synth.before(
 				pointsSynthGrp, 
 				"interpolatorCursor" ++ n ++ "_" ++ points.size, [
