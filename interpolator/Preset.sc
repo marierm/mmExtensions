@@ -126,7 +126,7 @@ PresetServer : Preset {
 
 	prAdd { |parameter|
 		parameters.add(parameter);		
-		this.changed(\cursorParamAdded, parameter);
+		// this.changed(\cursorParamAdded, parameter);
 		this.changed(\paramAdded, parameter);
 	}
 
@@ -134,7 +134,7 @@ PresetServer : Preset {
 		var id;
 		id = parameters.indexOf(parameter);
 		parameters.remove(parameter); // Should be done by Mediator?
-		this.changed(\cursorParamRemoved, parameter, id);
+		// this.changed(\cursorParamRemoved, parameter, id);
 		this.changed(\paramRemoved, parameter, id);
 	}
 

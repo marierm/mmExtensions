@@ -62,7 +62,7 @@ PIMediator {
 			parameter.free; // the parameter itself is never added, just
 			// siblings of it.  We free the synth and bus.
 		});
-		// presetInterpolator.buildSynthDef;
+		{		presetInterpolator.buildSynthDef;}.try;
 	}
 
 	removePreset {|preset|
@@ -81,7 +81,7 @@ PIMediator {
 			dict[i.preset].remove(i);
 			i.release;
 		});
-		// presetInterpolator.buildSynthDef;
+		{		presetInterpolator.buildSynthDef;}.try;
 	}
 
 	getSiblings { |parameter|
