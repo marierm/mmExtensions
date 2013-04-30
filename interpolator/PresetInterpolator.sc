@@ -52,7 +52,13 @@ PresetInterpolator {
 		// add parameters to cursor.
 		// they will be added to other points as well (they are siblings).
 		e.at(\cursor).at(\parameters).do{|i|
-			cursor.add(i);
+			var p;
+			p = Parameter(i.name, i.spec, i.value, cursor);
+			p.netAddr_(i.netAddr);
+			p.oscMess_(i.oscMess);
+			p.sendMIDI_(i.sendMIDI);
+			p.sendOSC_(i.sendOSC);
+			cursor.add(p);
 		};
 		// name presets set their parameter values.
 		presets.do{ |i,j|
