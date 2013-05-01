@@ -318,12 +318,10 @@ InterpolatorServer {
 	}
 
 	free {
-
 		[ cursorBus, cursorRadiusBus, cursorSynth, pointsSynthGrp, pointsBuf,
 			weightsSynth, weightsBus, group ].do(_.free);
-		connections.do(_.free);
+		connections.do(_.disconnect);
 		updateTask.stop;
-
 	}
 
 	// gui stuff
@@ -348,11 +346,12 @@ InterpolatorConnection {
 	init {
 		server = interpolator.server;
 		n = feature.bus.numChannels;
+		axis = axis.min(interpolator.n); // 
 		{
 			server.sync;
 			SynthDef("interpolatorConnection" ++ n, {
 				arg in=0, out=0;
-				Out.kr(out, In.kr(in, n));
+				ReplaceOut.kr(out, In.kr(in, n));
 			}).add;
 			server.sync;
 			synth = Synth.before(
@@ -360,7 +359,7 @@ InterpolatorConnection {
 				"interpolatorConnection" ++ n,
 				[
 					\in, feature.bus,
-					\out, interpolator.cursorBus 
+					\out, interpolator.cursorBus.index + axis
 				]
 			);
 		}.fork;
