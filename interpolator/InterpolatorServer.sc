@@ -9,7 +9,7 @@ InterpolatorServer {
 	var <n, <server, <group, <points, <pointsBuf, <pointsSynthGrp;
 	var <cursorBus, <cursorRadiusBus, <cursorSynth, <cursor;
 	var <weightsSynth, <weightsBus, <weights;
-	var <>colors, <attachedPoint, connections;
+	var <>colors, <attachedPoint, <connections;
 	var <updateTask, <moveAction;
 	
 	*new{ |numDim = 2, server|
@@ -51,7 +51,7 @@ InterpolatorServer {
 					weightsBus.getn(weights.size, {|v|
 						weights.putEach((0..weights.size-1), v)
 					});
-					0.05.wait;
+					0.01.wait;
 					try{this.changed(\weights, (0..(points.size - 1)), weights)};
 				}
 			}.fork(AppClock);
@@ -337,7 +337,7 @@ InterpolatorServer {
 
 
 InterpolatorConnection {
-	var interpolator, axis, feature, server, synth, n;
+	var interpolator, <axis, <feature, server, synth, n;
 	
 	*new { |interpolator, axis, feature|
 		^super.newCopyArgs(interpolator, axis, feature).init;
