@@ -289,6 +289,18 @@ AbstractSponge {
 				).know_(false);
 			);
 		};
+
+	}
+
+	close {
+		features.copy.do{|i|
+			i.remove;
+		};
+		this.class.sponges.remove(this);
+	}
+
+	cmdPeriod {
+		this.close;
 	}
 }
 
@@ -334,12 +346,13 @@ SpongePD : AbstractSponge {
 	}
 
 	close {
-		features.do{|i|
-			i.remove;
-		};
+		super.close;
+		// features.copy.do{|i|
+		// 	i.remove;
+		// };
 		("kill" + pdProcess).unixCmd;
 		("killall pd").unixCmd;
-		this.class.sponges.remove(this);
+		// this.class.sponges.remove(this);
 	}
 
 	kill {

@@ -1,4 +1,4 @@
-SpongeSLIP : AbstractSponge {
+SpongeSLIP : Sponge {
 	var <port, inputThread;
 
 	init { arg br;
@@ -89,14 +89,11 @@ SpongeSLIP : AbstractSponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
-	}
-	
-	close {
-		features.do{|i|
-			i.remove;
-		};
-		inputThread.stop;
-		port.close;
+
+		CmdPeriod.doOnce(this);
+		ShutDown.add({this.close});
+		
+		this.class.sponges.add(this);
 	}
 }
 
@@ -161,9 +158,7 @@ Sponge : AbstractSponge {
 	}
 	
 	close {
-		features.do{|i|
-			i.remove;
-		};
+		super.close;
 		inputThread.stop;
 		port.close;
 	}
@@ -195,5 +190,11 @@ SpongeEmu : Sponge {
 		].do{|i,j|
 			Feature.sensor(i,this,j);
 		};
+
+		CmdPeriod.doOnce(this);
+		ShutDown.add({this.close});
+		
+		this.class.sponges.add(this);
 	}
+
 }
