@@ -10,14 +10,15 @@ Parameter {
 	}
 
 	*newFromSibling { |sibling, preset|
-		//Parameters can have siblings that will share spec, name
-		//(but not value)
+		//Parameters can have siblings that will share spec and name, but not
+		//value.
 		^super.newCopyArgs(
 			sibling.name,
 			sibling.spec,
 			sibling.value,
 			preset
-		).init.initFromSibling(sibling);
+		).init;
+		// .initFromSibling(sibling);
 	}
 
 	init {
@@ -42,9 +43,9 @@ Parameter {
 		});
 	}
 
-	initFromSibling { |sibling|
-		sibling.mediator.register(this);
-	}
+	// initFromSibling { |sibling|
+	// 	sibling.mediator.register(this);
+	// }
 
 	// mediator {
 	// 	mediator.isNil.if({
