@@ -55,7 +55,7 @@ Parameter {
 	// 	^mediator;
 	// }
 
-	*load { |eventString|
+	*load { |path|
 
 	}
 

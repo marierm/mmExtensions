@@ -8,8 +8,13 @@ ParameterServer : Parameter {
 
 	init {
 		super.init;
-		server = preset.server;
-		group = preset.group;
+		preset.notNil.if({
+			server = preset.server;
+			group = preset.group;
+		},{
+			server = Server.default;
+			group = Group(server);
+		});
 		this.createSynth;
 	}
 	
