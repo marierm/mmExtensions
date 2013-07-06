@@ -11,15 +11,27 @@ Parameter {
 
 	*newFromSibling { |sibling, preset|
 		//Parameters can have siblings that will share spec and name, but not
-		//value.
+		//value.  They are now managed by PIMediator.
 		^super.newCopyArgs(
 			sibling.name,
 			sibling.spec,
 			sibling.value,
 			preset
 		).init;
-		// .initFromSibling(sibling);
 	}
+
+	*newFromString { |string, preset|
+		// Creates a new Parameter from a String returned by .saveable.
+		var ev;
+		ev = string.interpret;
+		^super.newCopyArgs(
+			ev.name,
+			ev.spec,
+			ev.value,
+			preset
+		).init;
+	}
+
 
 	init {
 		preset.notNil.if({
@@ -43,21 +55,6 @@ Parameter {
 		});
 	}
 
-	// initFromSibling { |sibling|
-	// 	sibling.mediator.register(this);
-	// }
-
-	// mediator {
-	// 	mediator.isNil.if({
-	// 		mediator = Mediator();
-	// 		mediator.register(this);
-	// 	});
-	// 	^mediator;
-	// }
-
-	*load { |path|
-
-	}
 
 	saveable {
 		^(
@@ -66,11 +63,11 @@ Parameter {
 			value: value,
 			sendOSC: sendOSC,
 			netAddr: [netAddr.ip, netAddr.port],
-			oscMess: oscMess,
-			sendMIDI: sendMIDI,
-			midiPort: midiPort,
-			midiCtl: midiCtl,
-			midiChan: midiChan
+			oscMess: oscMess
+			// sendMIDI: sendMIDI,
+			// midiPort: midiPort,
+			// midiCtl: midiCtl,
+			// midiChan: midiChan
 		).asCompileString;
 	}
 	// initOSC { |netAd, mess|
