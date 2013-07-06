@@ -1,8 +1,7 @@
 Parameter {
 
-	var <name, <spec, <value, <preset, <>action, <sendOSC, <>netAddr,
-	<oscMess, <>sendMIDI, <>midiPort, <>midiCtl, <>midiChan, oscAction, <bus,
-	<>mediator;
+	var <name, <spec, <value, <preset, <sendOSC, <>netAddr, <oscMess,
+	oscAction, <>action, <bus, <>mediator;
 	//value is unmapped (between 0 and 1);
 	
 	*new { |name="Parameter", spec, value, preset|
@@ -25,10 +24,13 @@ Parameter {
 		var ev;
 		ev = string.interpret;
 		^super.newCopyArgs(
-			ev.name,
-			ev.spec,
-			ev.value,
-			preset
+			ev[\name],
+			ev[\spec],
+			ev[\value],
+			preset,
+			ev[\sendOSC],
+			NetAddr(*ev[\netAddr]),
+			ev[\oscMess]
 		).init;
 	}
 
@@ -40,10 +42,9 @@ Parameter {
 		spec = spec.asSpec;
 		spec.addDependant(this);
 		value = value ? spec.unmap(spec.default);
-		netAddr = NetAddr.localAddr;
-		oscMess = "/" ++ name;
-		sendOSC = false;
-		sendMIDI = false;
+		netAddr = netAddr ? NetAddr.localAddr;
+		oscMess = oscMess ? ("/" ++ name);
+		sendOSC = sendOSC ? false;
 		this.initBus;
 	}
 	
@@ -64,10 +65,6 @@ Parameter {
 			sendOSC: sendOSC,
 			netAddr: [netAddr.ip, netAddr.port],
 			oscMess: oscMess
-			// sendMIDI: sendMIDI,
-			// midiPort: midiPort,
-			// midiCtl: midiCtl,
-			// midiChan: midiChan
 		).asCompileString;
 	}
 	// initOSC { |netAd, mess|
@@ -87,24 +84,11 @@ Parameter {
 			action = action.removeFunc(oscAction);
 			this.changed(\OSC, false)
 		});
-		// sendMIDI.if{
-		// 	midiPort.control(midiChan, midiCtl, \midi.asSpec.map(value));
-		// };
 	}
 	
 	oscMess_ { |string|
 		oscMess = string;
 		this.changed(\OSC);
-	}
-
-	initMIDI { |portNum, chan, ctl|
-		MIDIClient.initialized.not.if{
-			MIDIClient.init;
-		};
-		midiPort = MIDIOut(portNum);
-		midiChan = chan;
-		midiCtl = ctl;
-		sendMIDI = true;
 	}
 
 	spec_ { |sp|
