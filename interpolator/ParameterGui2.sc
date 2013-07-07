@@ -3,7 +3,7 @@ ParameterGui2 : ObjectGui {
 		var tree;
 		// layout.resize_(3);
 		tree = TreeView().columns_(
-			["Name", "", "Mapped", "Unmapped", "OSC","MIDI",""]
+			["Name", "", "Mapped", "Unmapped", "OSC",""]
 		).resize_(3);
 		ParameterView(tree, model, 0);
 		tree.front;
@@ -55,12 +55,12 @@ ParameterView {
 			).action_({|butt|
 				OscConfigurationGui.new(parameter).performList(\gui);
 			}),
-			Button().states_([
-				["",Color.grey(0.3), Color.grey(0.4)],
-				["X",Color.black, Color.white]
-			]).value_(
-				parameter.sendMIDI.asInteger;
-			),
+			// Button().states_([
+			// 	["",Color.grey(0.3), Color.grey(0.4)],
+			// 	["X",Color.black, Color.white]
+			// ]).value_(
+			// 	parameter.sendMIDI.asInteger;
+			// ),
 			Button().states_([
 				["X",Color.grey(0.3), Color.white],
 			]).action_({

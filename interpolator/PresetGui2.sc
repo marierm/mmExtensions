@@ -21,7 +21,7 @@ PresetGui2 : ObjectGui {
 
 	gui {arg layout,bounds ... args;
 		tree = TreeView().columns_(
-			["Name", "", "Mapped", "Unmapped", "OSC","MIDI",""]
+			["Name", "", "Mapped", "Unmapped", "OSC",""]
 		).resize_(5);
 
 		model.parameters.do{|i,j|
