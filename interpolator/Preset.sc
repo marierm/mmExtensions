@@ -19,6 +19,24 @@ Preset {
 		^this.new(e.at(\parameters), e.at(\name));
 	}
 
+	*newFromString { |string, presetInterpolator|
+		// Creates a new Preset from a String returned by .saveable.
+		var ev;
+		ev = string.interpret;
+		^super.newCopyArgs(
+			ev[\name],
+			presetInterpolator
+		).init.initFromEvent(ev);
+	}
+
+	initFromEvent { |ev|
+		var params;
+		params = ev[\parameters].collect({|i|
+			this.paramClass.newFromString(i, this)
+		});
+		this.initParams(params);
+	}
+
 	initFromSibling { arg sibling;
 		sibling.mediator.registerPreset(this);
 	}
@@ -99,7 +117,10 @@ Preset {
 	}
 
 	saveable {
-		^(name: name, parameters: parameters);
+		^(
+			name: name,
+			parameters: parameters.collect(_.saveable)
+		).asCompileString;
 	}
 
 	guiClass { ^PresetGui2 }
@@ -112,8 +133,13 @@ PresetServer : Preset {
 
 	init {
 		super.init;
-		server = presetInterpolator.model.server;
-		group = ParGroup(presetInterpolator.model.group,\addToTail);
+		presetInterpolator.notNil.if({
+			server = presetInterpolator.model.server;
+			group = ParGroup(presetInterpolator.model.group,\addToTail);
+		},{
+			server = Server.default;
+			group = Group(server);
+		});
 	}
 
 	paramClass {
