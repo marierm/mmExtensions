@@ -11,13 +11,17 @@ InterpolatorServer {
 	var <weightsSynth, <weightsBus, <weights;
 	var <>colors, <attachedPoint, <connections;
 	var <updateTask, <moveAction;
-	
-	*new{ |numDim = 2, server|
+
+	*new { |numDim = 2, server ... points|
+		points.size.switch(
+			0, { points = [[0,0], [1,1]]; },
+			1, { points = points.add([0,0]); }
+		);
 		server = server ? Server.default;
-		^super.newCopyArgs(numDim, server).init;
+		^super.newCopyArgs(numDim, server).init(*points);
 	}
 	
-	init{
+	init {|... initPoints|
 		connections = Array.newClear(n);
 		colors = List.new;
 		points = List.new;
@@ -39,12 +43,10 @@ InterpolatorServer {
 			weightsBus = Bus.control(server, 1); // avoid error; this will be
 												// changed very soon.
 			pointsSynthGrp = ParGroup(group);
-			this.addTwoPoints;
-
-			server.sync;
 			cursorBus.setn([0.5,0.5].extend(n,0));
-			this.buildKDTree;
-			server.sync;
+			this.add(*initPoints);
+			// this.buildKDTree;
+			// server.sync;
 			updateTask = { 
 				loop{
 					cursorBus.getn(n, {|v| cursor = v});
@@ -55,8 +57,7 @@ InterpolatorServer {
 					try{this.changed(\weights, (0..(points.size - 1)), weights)};
 				}
 			}.fork(AppClock);
-		}.fork;
-
+		}.forkIfNeeded;
 	}
 
 	// Because of a bug in NearestN, not a KDTree for the moment.
@@ -126,46 +127,36 @@ InterpolatorServer {
 		}.forkIfNeeded;
 	}
 
-	addTwoPoints {
-		colors.add(Color.getPresetColor(0));
-		colors.add(Color.getNextPresetColor(colors.last));
-		points.add( 0!n );
-		points.add( 1!n );
-		weights.addAll([0.0,0.0])
-	}
-	
-	add { |... newPoints|
-		// add something if no point is given.
+	add {|...newPoints|
 		(newPoints.size == 0).if({
 			var np;
-			// Summing the last two points to create a new one keeps things in
-			// proportion.
-			np = points.last - points.wrapAt(-2) + points.last;
-			{points.indexOfEqual(np).notNil}.while({
-				np = np + 1;
-			});
+			np = points.mean + (points.stdDev*0.5);
 			newPoints = [np];
 		});
-
+		
 		newPoints.do({ |i,j|
+			(points.size == 0).if({
+				colors.add(Color.getPresetColor(0));
+			},{
+				colors.add(Color.getNextPresetColor(colors.last));
+			});
+			weights.addAll(0.0);
+
 			(i.size != n).if({
 				i = i.extend(n, 0);
 				"Point must be an array of size %".format(n).warn;
-				"Point % was added.".format(i).warn;
+				"Point % is added.".format(i).warn;
 			});
-			points.indexOfEqual(i).isNil.if({
-				colors.add(Color.getNextPresetColor(colors.last));
-				points.add( i );
-				weights.add( 0.0 );
-				this.changed(\pointAdded, i);
-			},{
+			{points.indexOfEqual(i).notNil}.while({
 				"There is already a point at %".format(i).warn;
-				"Point % was not added.".format(i).warn;
+				i = i + 1;
+				"Will try to add point % .".format(i).warn;
 			});
+			points.add( i );
+			this.changed(\pointAdded, i);
 		});
 		this.buildKDTree;
 	}
-
 
 	addSynthDefs{
 		SynthDef("interpolatorCursor" ++ n ++ "_" ++ points.size,{
