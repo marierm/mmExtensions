@@ -38,6 +38,20 @@ PresetInterpolatorServer : PresetInterpolator {
 		).asCompileString;
 	}
 
+	newSave { |path|
+		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
+		File.use(path, "w", {|f| f.write(this.saveable); });
+	}
+
+	*newLoad { |path|
+		var file, string;
+		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
+		file = File.open(path, "r");
+		string = file.readAllString;
+		file.close;
+		^this.newFromString(string);
+	}
+
 	initFromEvent { |ev|
 		// Do not confuse with initWithEvent!!!  This is the new version that
 		// is called by *newFromString.
