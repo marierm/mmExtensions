@@ -311,7 +311,9 @@ InterpolatorServer {
 	free {
 		[ cursorBus, cursorRadiusBus, cursorSynth, pointsSynthGrp, pointsBuf,
 			weightsSynth, weightsBus, group ].do(_.free);
-		connections.do(_.disconnect);
+		connections.do({|i|
+			try{i.disconnect};
+		});
 		updateTask.stop;
 	}
 
