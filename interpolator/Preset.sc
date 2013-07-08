@@ -21,10 +21,10 @@ Preset {
 		^this.new(e.at(\parameters), e.at(\name));
 	}
 
-	*newFromString { |string, presetInterpolator|
+	*newFromEvent { |ev, presetInterpolator|
 		// Creates a new Preset from a String returned by .saveable.
-		var ev;
-		ev = string.interpret;
+		// var ev;
+		// ev = string.interpret;
 		^super.newCopyArgs(
 			ev[\name],
 			presetInterpolator
@@ -34,7 +34,7 @@ Preset {
 	initFromEvent { |ev|
 		presetInterpolator.mediator.registerPreset(this, false);
 		ev[\parameters].do({|i|
-			this.prAdd(this.paramClass.newFromString(i, this));
+			this.prAdd(this.paramClass.newFromEvent(i, this));
 		});
 	}
 
@@ -124,7 +124,7 @@ Preset {
 		^(
 			name: name,
 			parameters: parameters.collect(_.saveable)
-		).asCompileString;
+		);// .asCompileString;
 	}
 
 	guiClass { ^PresetGui2 }

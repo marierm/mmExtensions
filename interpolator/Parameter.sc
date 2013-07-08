@@ -19,10 +19,10 @@ Parameter {
 		).init;
 	}
 
-	*newFromString { |string, preset|
+	*newFromEvent { |ev, preset|
 		// Creates a new Parameter from a String returned by .saveable.
-		var ev;
-		ev = string.interpret;
+		// var ev;
+		// ev = string.interpret;
 		^super.newCopyArgs(
 			ev[\name],
 			ev[\spec],
@@ -65,7 +65,7 @@ Parameter {
 			sendOSC: sendOSC,
 			netAddr: [netAddr.ip, netAddr.port],
 			oscMess: oscMess
-		).asCompileString;
+		);
 	}
 	// initOSC { |netAd, mess|
 	// 	netAddr = netAd ? NetAddr.localAddr;

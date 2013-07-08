@@ -14,10 +14,10 @@ PresetInterpolatorServer : PresetInterpolator {
 		).init(e);
 	}
 
-	*newFromString { |string|
+	*newFromEvent { |ev|
 		// Creates a new PresetInterpolator from a String returned by .saveable.
-		var ev;
-		ev = string.interpret;
+		// var ev;
+		// ev = string.interpret;
 		^super.newCopyArgs(				// model is an InterpolatorServer
 			InterpolatorServer(
 				ev[\points][0].size,	// numDim
@@ -35,21 +35,22 @@ PresetInterpolatorServer : PresetInterpolator {
 			cursor: cursor.saveable,
 			cursorPos: model.cursor,
 			presets: presets.collect(_.saveable)
-		).asCompileString;
+		);// .asCompileString;
 	}
 
 	newSave { |path|
-		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
-		File.use(path, "w", {|f| f.write(this.saveable); });
+		path = path ? ("scratchPreset.pri");
+		File.use(path, "w", {|f| f.write(this.saveable.asCompileString); });
+		// this.saveable.writeArchive(path);
 	}
 
 	*newLoad { |path|
 		var file, string;
-		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
-		file = File.open(path, "r");
-		string = file.readAllString;
+		path = path ? ("scratchPreset.pri");
+		file = File(path, "r");
+		string = String.readNew(file);
 		file.close;
-		^this.newFromString(string);
+		^this.newFromEvent(string.interpret);
 	}
 
 	initFromEvent { |ev|
@@ -57,7 +58,7 @@ PresetInterpolatorServer : PresetInterpolator {
 		// is called by *newFromString.
 		{
 			mediator = PIMediator(this);
-			cursor = PresetServer.newFromString(
+			cursor = PresetServer.newFromEvent(
 				ev[\cursor],
 				this
 			);
@@ -66,7 +67,7 @@ PresetInterpolatorServer : PresetInterpolator {
 			presets = List[];
 			ev[\presets].do({|i|
 				var preset;
-				preset = Preset.newFromString(i, this);
+				preset = Preset.newFromEvent(i, this);
 				presets.add(preset);
 			});
 			model.colors_(ev[\colors]);
