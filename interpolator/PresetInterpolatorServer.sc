@@ -14,6 +14,63 @@ PresetInterpolatorServer : PresetInterpolator {
 		).init(e);
 	}
 
+	*newFromString { |string|
+		// Creates a new PresetInterpolator from a String returned by .saveable.
+		var ev;
+		ev = string.interpret;
+		^super.newCopyArgs(				// model is an InterpolatorServer
+			InterpolatorServer(
+				ev[\points][0].size,	// numDim
+				nil,					// default server
+				*ev[\points]			// itialize Interpolator with points
+										// from the compileString.
+			)
+		).initFromEvent(ev);
+	}
+
+	saveable {
+		^(
+			points: model.points,
+			colors: model.colors,
+			cursor: cursor.saveable,
+			cursorPos: model.cursor,
+			presets: presets.collect(_.saveable)
+		).asCompileString;
+	}
+
+	initFromEvent { |ev|
+		// Do not confuse with initWithEvent!!!  This is the new version that
+		// is called by *newFromString.
+		{
+			mediator = PIMediator(this);
+			cursor = PresetServer.newFromString(
+				ev[\cursor],
+				this
+			);
+			model.server.sync;
+			model.cursor_(ev[\cursorPos]);
+			presets = List[];
+			ev[\presets].do({|i|
+				var preset;
+				preset = Preset.newFromString(i, this);
+				presets.add(preset);
+			});
+			model.colors_(ev[\colors]);
+
+			// // cursor.addDependant(this);
+			presets.do{ |i|
+				// make the interpolator refresh the weights when a preset is
+				// modified.
+				i.addDependant(this);
+			};
+			this.initActions;
+			model.addDependant(this);
+			model.server.sync;
+			this.buildSynthDef;
+			model.server.sync;
+		}.forkIfNeeded;
+	}
+
 	// used by .load
 	// e should be structured like this:
 	// (

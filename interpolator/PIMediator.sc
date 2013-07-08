@@ -7,6 +7,8 @@ PIMediator {
 
 	init {
 		dict = Dictionary();
+		// keys are Presets.
+		// values are Lists of parameters.
 	}
 
 	register { |parameter|
@@ -18,18 +20,23 @@ PIMediator {
 		parameter.mediator_(this);
 	}
 
-	registerPreset { |preset|
-		// Choose a random sibling-preset and add sibling-parameters.
+	registerPreset { |preset, withSibling=true|
+		// If withSibling is true, choose a random sibling-preset and add all
+		// the sibling parameters to preset.  If it is false, no parameters
+		// are added.  This is used when loading PresetInterpolator from a
+		// saved file, which means that the preset already has all the
+		// parameters.
 		preset.mediator_(this);
 		dict.put(preset, List[]);
-		dict.choose.do({|sibling|
- 			preset.prAdd(
-				preset.paramClass.newFromSibling(
-					sibling, preset
-				);
-		     // ).addDependant(preset);
 
-			);
+		withSibling.if({
+			dict.choose.do({|sibling|
+				preset.prAdd(
+					preset.paramClass.newFromSibling(
+						sibling, preset
+					);
+				);
+			});
 		});
 	}
 

@@ -2,7 +2,9 @@ Preset {
 	var <name, <presetInterpolator, <parameters, <>actions, <>mediator;
 
 	*new { arg params, name="Preset", presetInterpolator;
-		^super.newCopyArgs(name, presetInterpolator).init.initParams(params);
+		^super.newCopyArgs(
+			name, presetInterpolator
+		).init.initMediator.initParams(params);
 	}
 
 	*newFromSibling { arg sibling, name="Preset";
@@ -30,11 +32,10 @@ Preset {
 	}
 
 	initFromEvent { |ev|
-		var params;
-		params = ev[\parameters].collect({|i|
-			this.paramClass.newFromString(i, this)
+		presetInterpolator.mediator.registerPreset(this, false);
+		ev[\parameters].do({|i|
+			this.prAdd(this.paramClass.newFromString(i, this));
 		});
-		this.initParams(params);
 	}
 
 	initFromSibling { arg sibling;
@@ -48,17 +49,20 @@ Preset {
 	}
 
 	init {
-		presetInterpolator.isNil.if({
-			PIMediator().registerPreset(this);
-		},{
-			presetInterpolator.mediator.registerPreset(this);
-		});
 		parameters = List[];
 		actions = IdentityDictionary[
 			\value -> {|param, what, val|
 				this.changed(\paramValue, param, val);
 			}
 		];
+	}
+
+	initMediator {
+		presetInterpolator.isNil.if({
+			PIMediator().registerPreset(this);
+		},{
+			presetInterpolator.mediator.registerPreset(this);
+		});
 	}
 	
 	paramClass {
