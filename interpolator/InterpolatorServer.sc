@@ -10,7 +10,7 @@ InterpolatorServer {
 	var <cursorBus, <cursorRadiusBus, <cursorSynth, <cursor;
 	var <weightsSynth, <weightsBus, <weights;
 	var <>colors, <attachedPoint, <connections;
-	var <updateTask, <moveAction;
+	var <updateTask;// , <moveAction;
 
 	*new { |numDim = 2, server ... points|
 		points.size.switch(
@@ -27,13 +27,13 @@ InterpolatorServer {
 		points = List.new;
 		weights = List.new;
 
-		moveAction = {
-			cursorBus.getn(n, {|v| cursor = v});
-			weightsBus.getn(weights.size, {|v|
-				weights.putEach((0..weights.size-1), v)
-			});
-			{this.changed(\weights, (0..(points.size - 1)), weights)}.defer;
-		};
+		// moveAction = {
+		// 	cursorBus.getn(n, {|v| cursor = v});
+		// 	weightsBus.getn(weights.size, {|v|
+		// 		weights.putEach((0..weights.size-1), v)
+		// 	});
+		// 	{this.changed(\weights, (0..(points.size - 1)), weights)}.defer;
+		// };
 
 		{
 			server.bootSync;
@@ -50,8 +50,12 @@ InterpolatorServer {
 			updateTask = { 
 				loop{
 					cursorBus.getn(n, {|v| cursor = v});
-					weightsBus.getn(weights.size, {|v|
-						weights.putEach((0..weights.size-1), v)
+					attachedPoint.notNil.if({
+						this.dragPoint(attachedPoint, cursor);
+					},{
+						weightsBus.getn(weights.size, {|v|
+							weights.putEach((0..weights.size-1), v)
+						});
 					});
 					0.01.wait;
 					try{this.changed(\weights, (0..(points.size - 1)), weights)};
@@ -226,10 +230,10 @@ InterpolatorServer {
 		cursor = pos;
 		cursorBus.setn(pos);
 		this.changed(\cursorMoved);	
-		attachedPoint.notNil.if {
-			// Change this to drag?
-			{ this.movePoint(attachedPoint, pos); }.defer;
-		};
+		// attachedPoint.notNil.if {
+		// 	// Change this to drag?
+		// 	{ this.movePoint(attachedPoint, pos); }.defer;
+		// };
 	}
 	
 	// change only one coordinate
@@ -304,6 +308,9 @@ InterpolatorServer {
 
 
 	attachedPoint_ { |point|
+		attachedPoint.notNil.if({
+			this.dropPoint(attachedPoint);
+		});
 		attachedPoint = point;
 		this.changed(\attachedPoint, point);
 	}
