@@ -3,7 +3,22 @@ AbstractSponge {
 	var <portName, <featureNames, <features;
 	var <>action, <values, <interpActions;
 
-	*new { arg portName="/dev/ttyUSB0", baudRate=115200;
+	*new { arg portName, baudRate=115200;
+		Platform.case(
+			\linux, {
+				SerialPort.devicePattern = "/dev/ttyUSB*"
+			},
+			\osx, {
+				SerialPort.devicePattern = "/dev/tty.usb*"
+			},
+			\windows, {
+				SerialPort.devicePattern = nil
+			},
+		);
+		// If the portname is not specified, select the first matching port.
+		// This is platform dependant, but not thoroughly tested.
+		portName = portName ? SerialPort.devices[0];
+		
 		^super.newCopyArgs(portName).init(baudRate);
 	}
 
