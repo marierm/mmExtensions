@@ -275,7 +275,7 @@ AbstractSponge {
 			featureList.add(
 				(name:(i ++ \Trig).asSymbol, input:[(i ++ \HP).asSymbol],
 					func:Feature.synthDefs[\trig], type:\synth,
-					args:[\thresh, 10]
+					args:[\thresh, 3, \dur, 0.03]
 				).know_(false)
 			);
 		};
