@@ -1,5 +1,5 @@
 PresetInterpolatorServer : PresetInterpolator {
-	var <synth, <bus;
+	var <synth, <bus, def;
 
 	*new { arg model;
 		model = model ?? {InterpolatorServer()};
@@ -167,41 +167,50 @@ PresetInterpolatorServer : PresetInterpolator {
 			(cursor.parameters.size != 0).if({
 				bus = Bus.control(model.server, cursor.parameters.size);
 				model.server.sync;
-				SynthDef(
+				def = SynthDef(
 					"presetInt_%_%".format(model.points.size, cursor.parameters.size),
 					{
 						arg out=0, in=0;
-						var weights, siblingValues, cursorValues;
+						var weights, cursorValues;
 						weights = In.kr(in, model.points.size);
-						siblingValues = 0 ! model.points.size;
 						cursorValues = 0 ! cursor.parameters.size;
-						cursor.parameters.do({|param,i|
-							presets.do({|pset,j|
-								siblingValues[j] = In.kr(pset.parameters[i].bus, 1);
-							});
-							cursorValues[i] = siblingValues.wmean(weights);
+						cursor.parameters.size.do({|i|
+							cursorValues[i] = NamedControl.kr(
+								"param%".format(i),
+								0 ! model.points.size
+							).wmean(weights);
 						});
 						ReplaceOut.kr(out, cursorValues);
 					}
-				).store;
+				).add;
 				model.server.sync;
 				synth = Synth.after(
 					model.weightsSynth,
 					"presetInt_%_%".format(model.points.size, cursor.parameters.size),
 					[\out, bus, \in, model.weightsBus]
+				).map(*
+				// Map the output buses of each sibling to the input of
+				// PresetInt synth.  We have to get the index of each controls
+				// and the output bus of each parameter (for each preset).
+					def.allControlNames.select({|i|
+						i.name.asString.beginsWith("param");
+					}).collect({ |ctlName, i|
+						Array.fill(ctlName.defaultValue.size, {|j|
+							[
+								ctlName.index + j,
+								presets[j].parameters[i].bus
+							]
+						})
+					}).flat
 				);
 				this.mapToParameter;
 			});
-			// cursor.parameters.do({|i,j|
-			// 	model.server.sync;
-			// 	i.synth.map(\in, bus.index + j);
-			// });
 		}.forkIfNeeded;
 	}
 
 	mapToParameter {
 		{
-			// Send the unmapped values of parameters the "ControlSpec Synths".
+			// Send the unmapped values of parameters to the "ControlSpec Synths".
 			cursor.parameters.do({|i,j|
 				model.server.sync;
 				i.synth.map(\in, bus.index + j);
