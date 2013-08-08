@@ -174,7 +174,7 @@ InterpolatorServer {
 				n
 			);
 			ReplaceOut.kr(out, cursorRadiusSquared )
-		}).add;
+		}).store;
 		SynthDef("interpolatorPoint" ++ n ++ "_" ++ points.size,{
 			arg out=0, buf, cursorBus=0, cursorRadiusBus=0;
 			var radiusSquared, arr, distSquared, cursor, weight, point;
@@ -196,11 +196,11 @@ InterpolatorServer {
 			);
 
 			ReplaceOut.kr(out, RemoveBadValues.kr(weight));
-		}).add;
+		}).store;
 		SynthDef("interpolatorWeights" ++ points.size,{
 			arg in=0;
 			ReplaceOut.kr(in, In.kr(in, points.size).normalizeSum );
-		}).add;
+		}).store;
 	}
 	
 	duplicatePoint { |point, pointId|

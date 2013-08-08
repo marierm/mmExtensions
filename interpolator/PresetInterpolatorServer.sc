@@ -183,7 +183,7 @@ PresetInterpolatorServer : PresetInterpolator {
 						});
 						ReplaceOut.kr(out, cursorValues);
 					}
-				).add;
+				).store;
 				model.server.sync;
 				synth = Synth.after(
 					model.weightsSynth,
