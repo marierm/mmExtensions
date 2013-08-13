@@ -12,6 +12,7 @@ SpongeSLIP : Sponge {
 			xonxoff:false,
 			exclusive:false
 		);
+		values = Int16Array.newClear(9);
 		inputThread = fork {
 			// SLIP ENCODED SPONGE 
 			// ===================
@@ -56,14 +57,20 @@ SpongeSLIP : Sponge {
 				serialByte = port.read;
 				serialByte.switch(
 					slipEND, {
+						var i = -1;
 						(buffer.size == packetSize).if({
-							data = buffer.clump(2).collect({|i|
-								(i[0] << 8) + i[1];
+							{buffer.size > 0}.while({
+								values.wrapPut(
+									i, 
+									buffer.pop + ((buffer.pop ? 0) << 8);
+								);
+								i = i - 1;
 							});
-							values = data;
-							action.value(data);
+							action.value(values);
 						},{
-							buffer = Int16Array(maxSize:18)
+							"Irregular sponge packet size".warn;
+							buffer.postln;
+							buffer = Int16Array(maxSize:18);
 						})
 					},
 					slipESC, {
@@ -71,10 +78,10 @@ SpongeSLIP : Sponge {
 						serialByte.switch(
 							slipESC_END, { buffer.add(slipEND) },
 							slipESC_ESC, { buffer.add(slipESC) },
-							{"SLIP encoding error.".error }
+							{"SLIP encoding error.".warn; buffer.postln; }
 						)
 					},
-					{ buffer.add(serialByte) }
+					{ buffer.add(serialByte); }
 				);
 			}.loop
 		};
@@ -176,7 +183,7 @@ SpongeEmu : Sponge {
 			loop {
 				data = Array.rand(9, 0, 1023);
 				values = data;
-				action.value(*data);
+				action.value(data);
 				0.1.wait;
 			};
 		};
