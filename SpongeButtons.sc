@@ -84,10 +84,12 @@ ButtonFunction {
 	// one for when it is turned off.  Other buttons can act as modifier keys
 	// and change the "level".
 
-	var <buttonMode, <id, <>functions, <>level;
+	var <buttonMode, <id, <>functions, <>level, <buttonEvaluator;
 		
-	// functions is an IdentityDictionary with two pairs: true: [{},{}, ...]
-	// and false: [{},{}, ...]
+	// functions is an IdentityDictionary with at least two pairs: 1:
+	// [{},{}, ...]  and 0: [{},{}, ...]
+	// More pairs can be added for double clicks, triple clicks, etc:
+	// 2: [{},{}, ..], 3: [{},{}, ..]
 
 	*new { |buttonMode, id, functions|
 		^super.newCopyArgs(buttonMode, id).init(functions);
@@ -97,14 +99,14 @@ ButtonFunction {
 		level = 0;
 		functions = funcs ? 
 		Dictionary.newFrom([
-			true, Array.fill(4, {|i|
+			1, Array.fill(4, {|i|
 				{|val|
 					"Button id: ".post; id.postln;
 					"Level: ".post; i.postln;
 					"Value: ON".postln; 
 				}
 			}),
-			false, Array.fill(4, {|i|
+			0, Array.fill(4, {|i|
 				{|val|
 					"Button id: ".post; id.postln;
 					"Level: ".post; i.postln;
@@ -112,23 +114,99 @@ ButtonFunction {
 				}
 			})
 		]);
+		buttonEvaluator = ButtonEvaluator(this);
 	}
 
 	value {|val, id|
-		val.if{ level = buttonMode.level; };
-		functions.at(val).wrapAt(level).value(val, level, id);
+		buttonEvaluator.value(val, id);
+		// val.if{ level = buttonMode.level; };
+		// functions.at(val).wrapAt(level).value(val, level, id);
 	}
 
 	makeModifier { |bit|
-		functions[true] = [
+		functions[1] = [
 			{buttonMode.level_(buttonMode.level.setBit(bit,true) )}
 		];
-		functions[false] = [
+		functions[0] = [
 			{buttonMode.level_(buttonMode.level.setBit(bit,false) )}
 		];
 	}
+	
+	enableNclick { |numClick=2, function, levels= #[0], delay=0.1|
+		buttonEvaluator.nClick_(numClick, function, levels, delay)
+	}
+
+	disableNclick { |numClick=2, function, levels= #[0], delay=0.1|
+		buttonEvaluator.removeNclick(numClick);
+	}
 }
 
+ButtonEvaluator {
+	// The button evaluator is used to manage double-clicks (or triple,
+	// quadruple, etc).  It takes care of the waiting mechanism for such a
+	// functionality.  Each ButtonFunction has a ButtonEvaluator.  Multiple
+	// clicks can be activated independantly for eah button.
+
+	var <buttFunc, <buttMode, <evalFunc, maxClickCount, clickCount, routine;
+	
+	*new {|buttonFunction|
+		^super.newCopyArgs(buttonFunction, buttonFunction.buttonMode).init();
+	}
+
+	value {|...args|
+		evalFunc.value(*args);
+	}
+
+	init {
+		clickCount = 0;
+		evalFunc = { |val, id|
+			val.if{ buttFunc.level = buttMode.level; };
+			buttFunc.functions.at(val.asInt).wrapAt(
+				buttFunc.level
+			).value(val, buttFunc.level, id);
+		};
+	}
+	
+	removeNclick { |numClick|
+		buttFunc.functions.removeAt(numClick);
+		maxClickCount = buttFunc.functions.keys.maxItem;
+	}
+
+	nClick_ { |numClick=2, function, levels= #[0], delay=0.2|
+		buttFunc.functions.put(
+			numClick, 
+			Array.fill(levels.maxItem+1, {|i|
+				levels.includes(i).if({
+					function
+				},{
+					nil
+				});
+			});
+		);
+		
+		maxClickCount = buttFunc.functions.keys.maxItem;
+				
+		evalFunc = { |val, id|
+			val.if({
+				routine.stop;
+				clickCount = clickCount + 1;
+				buttFunc.level = buttMode.level;
+				routine = {
+					// clickCount.postln;
+					// Wait for delay time then evaluate '1' function
+					(clickCount < maxClickCount).if({
+						delay.wait;
+					});
+					
+					buttFunc.functions.at(clickCount).wrapAt(
+						buttFunc.level
+					).value(val, buttFunc.level, id);
+					clickCount = 0;
+				}.fork;
+			});
+		};
+	}
+}
 
 ButtonInput {
 	// This set of classes was designed to work with the sponge, but it is
