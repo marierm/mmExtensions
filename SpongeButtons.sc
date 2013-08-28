@@ -72,19 +72,42 @@ ButtonMode {
 		// overall bits that changed (only one should change, but it is not
 		// guaranteed).
 		ids.asBinaryDigits(bank.size).reverse.indicesOfEqual(1).do({ |i|
-			buttonFunctions[i].value(val.bitTest(i), i);
+			buttonFunctions[i].value(val.bitTest(i).asInt, i);
 		});
 	}
-	
+
+	addFunc { |button=0, function, levels = #[0], buttState=1|
+		// Add a function to a button.
+
+		// button is button number;
+
+		// function is a function to which value (0
+		// or 1), id (button number), level (the modifier keys status) and
+		// clickCount (if nClick is enabled) are passed;
+
+		// levels are the modifier keys statuses at which the function will be
+		// evaluated;
+
+		// buttState is 1 when button is pressed and 0 when it is depressed.
+		// Other numbers represent the click count if enableNclick has been
+		// called.
+		var array;
+		array = buttonFunctions[button].functions[
+			buttState
+		].asArray.extend(levels.maxItem + 1);
+		array.putEach(levels, function);
+		buttonFunctions[button].functions.put(buttState, array);
+	}
 }
 
 ButtonFunction {
-	// Holds the functions for a single button.  A ButtonFunction has two
-	// Arrays of functions: one for when the button is turned ON and another
-	// one for when it is turned off.  Other buttons can act as modifier keys
-	// and change the "level".
+	// Holds the functions for a single button.  A ButtonFunction has many
+	// Arrays of functions: one for when the button is turned ON, one for when
+	// it is turned off, and others for higher clickCount.  Other buttons can
+	// act as modifier keys and change the "level".
 
-	var <buttonMode, <id, <>functions, <>level, <buttonEvaluator;
+	var <buttonMode, <id, <>functions, <>level, <>evalFunc, clickCount,
+	routine, <>clickCountDelay;
 		
 	// functions is an IdentityDictionary with at least two pairs: 1:
 	// [{},{}, ...]  and 0: [{},{}, ...]
@@ -99,28 +122,19 @@ ButtonFunction {
 		level = 0;
 		functions = funcs ? 
 		Dictionary.newFrom([
-			1, Array.fill(4, {|i|
-				{|val|
-					"Button id: ".post; id.postln;
-					"Level: ".post; i.postln;
-					"Value: ON".postln; 
-				}
-			}),
-			0, Array.fill(4, {|i|
-				{|val|
-					"Button id: ".post; id.postln;
-					"Level: ".post; i.postln;
-					"Value: OFF".postln; 
-				}
-			})
+			0, [],
+			1, []
 		]);
-		buttonEvaluator = ButtonEvaluator(this);
+
+		clickCount = 0;
+		clickCountDelay = 0.2;
+		// Double clicking is disabled by default.
+		// This allows fast gestures.
+		this.disableNclick;
 	}
 
 	value {|val, id|
-		buttonEvaluator.value(val, id);
-		// val.if{ level = buttonMode.level; };
-		// functions.at(val).wrapAt(level).value(val, level, id);
+		evalFunc.value(val, id);
 	}
 
 	makeModifier { |bit|
@@ -132,77 +146,49 @@ ButtonFunction {
 		];
 	}
 	
-	enableNclick { |numClick=2, function, levels= #[0], delay=0.1|
-		buttonEvaluator.nClick_(numClick, function, levels, delay)
-	}
-
-	disableNclick { |numClick=2, function, levels= #[0], delay=0.1|
-		buttonEvaluator.removeNclick(numClick);
-	}
-}
-
-ButtonEvaluator {
-	// The button evaluator is used to manage double-clicks (or triple,
-	// quadruple, etc).  It takes care of the waiting mechanism for such a
-	// functionality.  Each ButtonFunction has a ButtonEvaluator.  Multiple
-	// clicks can be activated independantly for eah button.
-
-	var <buttFunc, <buttMode, <evalFunc, maxClickCount, clickCount, routine;
-	
-	*new {|buttonFunction|
-		^super.newCopyArgs(buttonFunction, buttonFunction.buttonMode).init();
-	}
-
-	value {|...args|
-		evalFunc.value(*args);
-	}
-
-	init {
-		clickCount = 0;
+	enableNclick {
 		evalFunc = { |val, id|
-			val.if{ buttFunc.level = buttMode.level; };
-			buttFunc.functions.at(val.asInt).wrapAt(
-				buttFunc.level
-			).value(val, buttFunc.level, id);
-		};
-	}
-	
-	removeNclick { |numClick|
-		buttFunc.functions.removeAt(numClick);
-		maxClickCount = buttFunc.functions.keys.maxItem;
-	}
-
-	nClick_ { |numClick=2, function, levels= #[0], delay=0.2|
-		buttFunc.functions.put(
-			numClick, 
-			Array.fill(levels.maxItem+1, {|i|
-				levels.includes(i).if({
-					function
-				},{
-					nil
-				});
-			});
-		);
-		
-		maxClickCount = buttFunc.functions.keys.maxItem;
-				
-		evalFunc = { |val, id|
-			val.if({
+			val.asBoolean.if({
 				routine.stop;
 				clickCount = clickCount + 1;
-				buttFunc.level = buttMode.level;
+				level = buttonMode.level;
 				routine = {
-					// clickCount.postln;
-					// Wait for delay time then evaluate '1' function
-					(clickCount < maxClickCount).if({
-						delay.wait;
-					});
-					
-					buttFunc.functions.at(clickCount).wrapAt(
-						buttFunc.level
-					).value(val, buttFunc.level, id);
+					clickCountDelay.wait;
 					clickCount = 0;
 				}.fork;
+				// clickCount.postln;
+				functions.at(clickCount).notNil.if({
+					functions.at(clickCount).wrapAt(level).value(
+						val, level, id, clickCount
+					);
+				});
+			}, {
+				// To test: Currently, we have to wait clickCountDelay seconds
+				// with the button pressed if we want the "off" function to be
+				// evaluated.  The other option would be not to wait and
+				// evaluate the "off" function every time, including when
+				// there potentially is a double-click coming.
+				// 
+				// In that last case, the disable and enableNclick functions
+				// are mostly useless and a static evalFunc could be used.
+
+				// Uncomment the if to wait, comment to not wait.
+				// (clickCount == 0).if({
+				   // \off.postln;
+				functions.at(val).notNil.if({
+						functions.at(0).wrapAt(level).value(
+							val, level, id, clickCount
+						);
+				});
+			});
+		};
+	}
+
+	disableNclick { 
+		evalFunc = { |val, id|
+			val.asBoolean.if{ level = buttonMode.level; };
+			functions.at(val).notNil.if({
+				functions.at(val).wrapAt(level).value(val, level, id);
 			});
 		};
 	}
