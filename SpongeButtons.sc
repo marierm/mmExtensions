@@ -52,7 +52,7 @@ ButtonBank {
 
 ButtonMode {
 	// a ButtonMode has a ButtonFunction for each button.  
-	var <bank, <>buttonFunctions, <>level;
+	var <bank, <>buttonFunctions, <>level, <>combos;
 
 	*new { |buttonBank, buttonFuncs|
 		^super.newCopyArgs(buttonBank, buttonFuncs).init();
@@ -65,6 +65,7 @@ ButtonMode {
 				ButtonFunction(this, i, nil);
 			}
 		);
+		combos = Dictionary();
 	}
 
 	value { |val, ids|
@@ -73,7 +74,20 @@ ButtonMode {
 		// guaranteed).
 		ids.asBinaryDigits(bank.size).reverse.indicesOfEqual(1).do({ |i|
 			buttonFunctions[i].value(val.bitTest(i).asInt, i);
+			combos.keysValuesDo({|combo, function|
+				(combo & val == combo).if({
+					function.value(val, i)
+				});
+			})
 		});
+	}
+	
+	addCombo {|comboBits, function|
+		combos.put(comboBits, function);
+	}
+
+	removeCombo {|comboBits|
+		combos.removeAt(comboBits);
 	}
 
 	addFunc { |button=0, function, levels = #[0], buttState=1|
