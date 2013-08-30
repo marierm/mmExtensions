@@ -75,15 +75,30 @@ ButtonMode {
 		ids.asBinaryDigits(bank.size).reverse.indicesOfEqual(1).do({ |i|
 			buttonFunctions[i].value(val.bitTest(i).asInt, i);
 			combos.keysValuesDo({|combo, function|
+				// check if value is a combo.
 				(combo & val == combo).if({
-					function.value(val, i)
+					//check if it was already on.
+					((ids bitXor: val) & combo != combo).if({
+						function[1].value(val, i);
+					});
+				}, {// if not a combo
+					// check if it was one
+					((ids bitXor: val) & combo == combo).if({
+						function[0].value(val, i);
+					});
 				});
-			})
+			});
 		});
 	}
 	
-	addCombo {|comboBits, function|
-		combos.put(comboBits, function);
+	// No levels for combos (no modifier keys).
+	addCombo {|comboBits, function, buttState=1|
+		var array;
+		array = combos[comboBits] ? [nil,nil];
+		combos.put(
+			comboBits,
+			array.put(buttState, function)
+		);
 	}
 
 	removeCombo {|comboBits|
