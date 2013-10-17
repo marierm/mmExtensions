@@ -181,7 +181,7 @@ SpongeEmu : Sponge {
 			var data; 
 			data = Array.fill(9,0);
 			loop {
-				data = Array.rand(9, 0, 1023);
+				data = Array.rand(8, 0, 1023) ++ 0;
 				values = data;
 				action.value(data);
 				0.1.wait;
