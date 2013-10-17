@@ -136,7 +136,7 @@ ButtonFunction {
 	// act as modifier keys and change the "level".
 
 	var <buttonMode, <id, <>functions, <>level, <>evalFunc, clickCount,
-	routine, <>clickCountDelay;
+	routine, <>clickCountDelay, <>clickCountMinDelay, waitMore=false;
 		
 	// functions is an IdentityDictionary with at least two pairs: 1:
 	// [{},{}, ...]  and 0: [{},{}, ...]
@@ -156,7 +156,8 @@ ButtonFunction {
 		]);
 
 		clickCount = 0;
-		clickCountDelay = 0.2;
+		clickCountDelay = 0.25;
+		clickCountMinDelay = 0.05;
 		// Double clicking is disabled by default.
 		// This allows fast gestures.
 		this.disableNclick;
@@ -178,18 +179,28 @@ ButtonFunction {
 	enableNclick {
 		evalFunc = { |val, id|
 			val.asBoolean.if({
-				routine.stop;
-				clickCount = clickCount + 1;
-				level = buttonMode.level;
-				routine = {
-					clickCountDelay.wait;
-					clickCount = 0;
-				}.fork;
-				// clickCount.postln;
-				functions.at(clickCount).notNil.if({
-					functions.at(clickCount).wrapAt(level).value(
-						val, level, id, clickCount
-					);
+				waitMore.not.if({
+					routine.stop;
+					clickCount = clickCount + 1;
+					level = buttonMode.level;
+					routine = {
+						waitMore = true;
+						clickCountMinDelay.wait;
+						waitMore = false;
+						clickCountDelay.wait;
+						clickCount = 0;
+					}.fork;
+					// clickCount.postln;
+					functions.at(clickCount).notNil.if({
+						functions.at(clickCount).wrapAt(level).value(
+							val, level, id, clickCount
+						);
+					});
+				}, {
+
+					"Double click not registered: it was too quick and was
+					considered a rebound.".warn;
+
 				});
 			}, {
 				// To test: Currently, we have to wait clickCountDelay seconds
