@@ -116,7 +116,7 @@ PresetInterpolatorServer : PresetInterpolator {
 			// model.server.sync;
 			p.netAddr_(i.netAddr);
 			p.oscMess_(i.oscMess);
-			p.sendMIDI_(i.sendMIDI);
+			// p.sendMIDI_(i.sendMIDI);
 			p.sendOSC_(i.sendOSC);
 			cursor.add(p);
 		});
