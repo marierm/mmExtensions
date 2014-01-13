@@ -6,7 +6,7 @@ AbstractSponge {
 	*new { arg portName, baudRate=115200;
 		Platform.case(
 			\linux, {
-				SerialPort.devicePattern = "/dev/ttyUSB*"
+				SerialPort.devicePattern = "/dev/tty[A,U]*"
 			},
 			\osx, {
 				SerialPort.devicePattern = "/dev/tty.usb*"
