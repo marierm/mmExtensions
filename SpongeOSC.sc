@@ -327,11 +327,11 @@ SpongePD : AbstractSponge {
 		var pdCommand;
 
 		pdCommand = (
-			"pd -nogui -noaudio -nomidi"
+			"pdextended -nogui -noaudio -nomidi"
 			+ "-send \";udpsend connect 127.0.0.1" + NetAddr.langPort
 			+ ";comport baud" + br ++ ";comport devicename" + portName
 			++ "\"" 
-			+ Platform.userExtensionDir +/+ "mmExtensions/serialSponge.pd"
+			+ Platform.userExtensionDir +/+ "mmExtensions/serialSpongeSLIP.pd"
 		);
 
 		pdProcess = pdCommand.unixCmd({|res,pid| "Pure Data is now dead.".postln;});
