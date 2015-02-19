@@ -37,15 +37,37 @@ Feature {
 					out, HPF.kr(In.kr(in0, 1), freq)
 				);
 			}, metadata:( specs:(freq:[1,1000,\exp]) ) ),
-			\trig -> SynthDef(\featureTrig, {
+			\BP -> SynthDef(\featureBP, {
+				arg out=0, in0 = 0, freq = 10, rq=1.0;
+				Out.kr(
+					out, BPF.kr(In.kr(in0, 1), freq, rq)
+				);
+			}, metadata:( specs:(
+				freq:[1,1000,\exp,0.0,10.0],
+				rq: \rq
+			) ) ),
+			\trig1 -> SynthDef(\featureTrig1, {
 				arg out=0, in0 = 0, thresh = 10, dur = 0.05;
 				var sig, trig;
 				sig = In.kr(in0, 1);
 				trig = Trig1.kr(sig.abs - thresh, dur);
 				SendTrig.kr(trig, 0, sig);
 				Out.kr(out, trig);
-			}, metadata:( specs:(thresh:[0.1,100,\exp], dur:[0.001,1.0,\exp]) ) )
-
+			}, metadata:( specs:(thresh:[0.1,100,\exp], dur:[0.001,1.0,\exp]) ) ),
+			\trig -> SynthDef(\featureTrig, {
+				arg out=0, in0=0, thresh=8, dur=2.0833333333333e-05, scale=0.001;
+				var sig, trig;
+				sig = In.kr(in0, 1);
+				trig = Trig.kr((sig.abs - thresh) * scale, dur);
+				SendTrig.kr(trig, 0, sig);
+				Out.kr(out, trig);
+			}, metadata:(
+				specs:(
+					thresh:[0.1,100,\exp, 0, 8],
+					dur:[2.0833333333333e-05,1.0,\exp, 0, 2.0833333333333e-05],
+					scale:[0.0001,1.0,\exp, 0.001]
+				)
+			))
 		];
 		funcs = IdentityDictionary[
 			\accelGlobal -> { |data| // takes x, y and z as an input.

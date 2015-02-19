@@ -288,9 +288,15 @@ AbstractSponge {
 				).know_(false)
 			);
 			featureList.add(
+				(name:(i ++ \BP).asSymbol, input:[i],
+					func:Feature.synthDefs[\BP], type:\synth,
+					args:[\freq, 4.0, \rq, 1.0]
+				).know_(false)
+			);
+			featureList.add(
 				(name:(i ++ \Trig).asSymbol, input:[(i ++ \HP).asSymbol],
 					func:Feature.synthDefs[\trig], type:\synth,
-					args:[\thresh, 3, \dur, 0.03]
+					args:[\thresh, 8, \dur, 2.0833333333333e-05, \scale, 0.001]
 				).know_(false)
 			);
 		};
@@ -324,22 +330,15 @@ SpongePD : AbstractSponge {
 	var oscDef, <pdProcess;
 
 	init { arg br;
-		var pdCommand;
-
-		pdCommand = (
-			"pdextended -nogui -noaudio -nomidi"
-			+ "-send \";udpsend connect 127.0.0.1" + NetAddr.langPort
-			+ ";comport baud" + br ++ ";comport devicename" + portName
-			++ "\"" 
-			+ Platform.userExtensionDir +/+ "mmExtensions/serialSpongeSLIP.pd"
-		);
-
-		pdProcess = pdCommand.unixCmd({|res,pid| "Pure Data is now dead.".postln;});
+		pdProcess = this.pdCommand(br).unixCmd({|res,pid|
+			"Pure Data is now dead.".postln;
+		});
 		
 		values = Int16Array.newClear(9);
 
 		oscDef = OSCdef(\sponge, {|data|
-			values.putEach((0..8), data[1..]);
+			values = Int16Array.newFrom(data[1..]);
+			// values.putEach((0..8), data[1..]);
 			action.value(values);
 		},"/sponge");
 		
@@ -360,14 +359,22 @@ SpongePD : AbstractSponge {
 		this.class.sponges.add(this);
 	}
 
+	pdCommand { |br|
+		^("pdextended -nogui -noaudio -nomidi"
+		+ "-send \";udpsend connect 127.0.0.1" + NetAddr.langPort
+		+ ";comport baud" + br ++ ";comport devicename" + portName
+		++ "\"" 
+		+ Platform.userExtensionDir +/+ "mmExtensions/serialSpongeSLIP.pd");
+	}
+
 	close {
 		super.close;
 		// features.copy.do{|i|
 		// 	i.remove;
 		// };
 		("kill" + pdProcess).unixCmd;
-		("killall pd").unixCmd;
-		// this.class.sponges.remove(this);
+		// ("killall pdextended").unixCmd;
+		this.class.sponges.remove(this);
 	}
 
 	kill {
@@ -381,16 +388,19 @@ SpongePD : AbstractSponge {
 }
 
 SpongeOSC : AbstractSponge {
-	var oscDef;
+	var oscDef, oscAddr, oscDefName;
 
-	init {
+	init {|oscAddr, oscDefName|
+		oscAddr = "/sponge/mm";
+		oscDefName = \sponge;
 		values = Int16Array.newClear(9);
-		oscDef = OSCdef(\sponge, {|data|
-			0.forBy( 16, 2, {|i, j|
-				values[j] =  data[1][i] << 5 + data[1][i+1] >> 2;
+		oscDef = OSCdef(oscDefName, {|data|
+			data[1].pairsDo({|msb, lsb, i|
+				values[i/2] = ((msb << 3) | (lsb & 7));
 			});
 			action.value(values);
-		},"/sponge/blob");
+		}, oscAddr, nil, 0x6D6D);// 0x6D = 109 = m in ascii. So port = my
+								 // initials.
 
 		features = List[];
 		featureNames = List[];
@@ -417,5 +427,15 @@ SpongeOSC : AbstractSponge {
 	cmdPeriod {
 		this.class.sponges.remove(this);
 		this.close;
+	}
+}
+
+SpongePDOSC : SpongePD {
+
+	pdCommand {
+		^("pdextended -nogui -noaudio -nomidi"
+		+ "-send \";udpsend connect 127.0.0.1" + NetAddr.langPort
+		++ "\"" 
+		+ Platform.userExtensionDir +/+ "mmExtensions/spongeSLIP-OSC.pd");
 	}
 }

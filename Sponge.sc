@@ -52,7 +52,7 @@ SpongeSLIP : Sponge {
 			var slipESC = 8r333;
 			var slipESC_END = 8r334;
 			var slipESC_ESC = 8r335;
-			buffer = Int16Array(maxSize:18);
+			buffer = Int16Array(maxSize:packetSize);
 			{
 				serialByte = port.read;
 				serialByte.switch(
