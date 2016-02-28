@@ -19,6 +19,7 @@ ParameterView {
 	}
 
 	init { |parent, aParameter, id|
+		var maxDecimals = 5;
 		tree = parent;
 		parameter = aParameter;
 		parameter.addDependant(this);
@@ -34,12 +35,13 @@ ParameterView {
 			).action_({ |sl|
 				parameter.value_(sl.value);
 			}),
-			mapped = NumberBox().maxDecimals_(12).value_(
+			mapped = NumberBox().maxDecimals_(maxDecimals).value_(
 				parameter.mapped
 			).action_({ |nb|
+				nb.value.postln;
 				parameter.mapped_(nb.value);
 			}),
-			unmapped = NumberBox().maxDecimals_(12).value_(
+			unmapped = NumberBox().maxDecimals_(maxDecimals).value_(
 				parameter.value
 			).action_({ |nb|
 				parameter.value_(nb.value);

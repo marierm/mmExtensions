@@ -24,6 +24,7 @@ ControlSpecView {
 	}
 
 	init { |parent, aSpec, parameterView|
+		var maxDecimals = 5;
 		parentItem = parent.addChild(["ControlSpec"]);
 		spec = aSpec;
 		paramView = parameterView;
@@ -33,13 +34,13 @@ ControlSpecView {
 		//return = spec.deepCopy;
 		widgets = [
 			NumberBox()
-			.maxDecimals_(12)
+			.maxDecimals_(maxDecimals)
 			.value_(paramView.parameter.spec.minval)
 			.action_({|i|
 				paramView.parameter.spec.minval_(i.value);
 			}),
 			NumberBox()
-			.maxDecimals_(12)
+			.maxDecimals_(maxDecimals)
 			.value_(paramView.parameter.spec.maxval)
 			.action_({|i|
 				paramView.parameter.spec.maxval_(i.value);
@@ -57,13 +58,13 @@ ControlSpecView {
 				}
 			}),
 			NumberBox()
-			.maxDecimals_(12)
+			.maxDecimals_(maxDecimals)
 			.value_(paramView.parameter.spec.step)
 			.action_({|i|
 				paramView.parameter.spec.step_(i.value);
 			}),
 			NumberBox()
-			.maxDecimals_(12)
+			.maxDecimals_(maxDecimals)
 			.value_(paramView.parameter.spec.default)
 			.action_({|i|
 				paramView.parameter.spec.default_(i.value);
