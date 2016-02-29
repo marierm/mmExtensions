@@ -43,8 +43,9 @@ Parameter {
 		spec.addDependant(this);
 		value = value ? spec.unmap(spec.default);
 		netAddr = netAddr ? NetAddr.localAddr;
-		oscMess = oscMess ? ("/" ++ name);
-		sendOSC = sendOSC ? false;
+		oscMess = oscMess ? ("" +/+ name);
+		// sendOSC = sendOSC ? false;
+		this.sendOSC_(sendOSC ? false);
 		this.initBus;
 	}
 	
@@ -74,20 +75,20 @@ Parameter {
 	// }
 
 	sendOSC_ { |bool|
+		oscAction = {netAddr.sendMsg(oscMess, this.mapped);};
 		bool.if({
 			sendOSC = true;
-			oscAction = {netAddr.sendMsg(oscMess, this.mapped);};
 			action = action.addFunc(oscAction);
 			this.changed(\OSC, true);
 		},{
 			sendOSC = false;
-			action = action.removeFunc(oscAction);
+			try { action = action.removeFunc(oscAction) };
 			this.changed(\OSC, false)
 		});
 	}
 	
 	oscMess_ { |string|
-		oscMess = string;
+		oscMess = "" +/+ string;
 		this.changed(\OSC);
 	}
 
@@ -107,8 +108,8 @@ Parameter {
 	prName_ { |na|
 		name = na;
 		this.changed(\name, name);
-		oscMess = oscMess.dirname ++ "/" ++ name;
-		this.changed(\OSC);
+		// oscMess = "" +/+ name;
+		// this.changed(\OSC);
 	}
 
 	remove {
