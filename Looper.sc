@@ -164,6 +164,7 @@ Looper {
 	}
 
 	*initClass {
+		Class.initClassTree(SynthDescLib);
 		16.do{|i|
 			var numChannels;
 			numChannels = i+1;
