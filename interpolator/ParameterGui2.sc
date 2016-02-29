@@ -19,7 +19,7 @@ ParameterView {
 	}
 
 	init { |parent, aParameter, id|
-		var maxDecimals = 5;
+		var maxDecimals = 4;
 		tree = parent;
 		parameter = aParameter;
 		parameter.addDependant(this);

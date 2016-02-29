@@ -24,7 +24,7 @@ ControlSpecView {
 	}
 
 	init { |parent, aSpec, parameterView|
-		var maxDecimals = 5;
+		var maxDecimals = 4;
 		parentItem = parent.addChild(["ControlSpec"]);
 		spec = aSpec;
 		paramView = parameterView;
