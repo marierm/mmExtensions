@@ -13,33 +13,38 @@
 // will probably hang sclang.
 
 JackMatrix {
-	var <>prefix, <autoUpdate,
-	<grid, <inputs, <outputs, <connections, w, sv, uv, routine;
+	var <>prefix, <autoUpdate, <>alias,
+	<grid, <ports, <mousePos, w, sv, uv, routine;
 
-	*new{ |prefix, autoUpdate=2.0|
-		^super.newCopyArgs(prefix, autoUpdate).init;
+	*new{ |prefix, autoUpdate=1.0, alias=2| // alias 0,1 or 2. Can display port
+		// aliases instead of names.  I like to create aliases for my Jack
+		// ports because the ones created automatically are too long and do
+		// not make much sense to me.
+		^super.newCopyArgs(prefix, autoUpdate, alias).init;
 	}
 
 	init {
-		inputs = List[];
-		outputs = List[];
-		connections = List[];
-
-		this.getNames;
-		this.getConnections;
+		mousePos = Point(0,0);
+		this.initPorts;
+		this.initConnections;
 
 		w = Window("JackMatrix",Rect(100,100,700,700));
-		sv = ScrollView(w, Rect(0,0,700,700));
+		w.acceptsMouseOver_(true);
+		sv = ScrollView(w, Rect(
+			0,0,
+			(ports.select({|i| i.props.contains("input")}).size * 20) + 180,
+			(ports.select({|i| i.props.contains("output")}).size * 20) + 180
+		));
 
-		this.updateGui;
+		// this.updateGui;
 		
 		w.onClose_({routine.stop});
 		w.front;
 
 		routine = Routine({
 			{
-				this.getNames;
-				this.getConnections;
+				this.initPorts;
+				this.initConnections;
 				this.updateGui;
 				// \update.postln;
 				autoUpdate.wait;
@@ -56,7 +61,11 @@ JackMatrix {
 	}
 
 	updateGui {
+		var outputs, inputs;
 		var outputsTextWidth=180, inputsTextWidth=180;
+
+		outputs = ports.select({|i| i.props.contains("output")});
+		inputs = ports.select({|i| i.props.contains("input")});
 		
 		{uv.remove}.try;
 		uv = UserView(
@@ -65,10 +74,12 @@ JackMatrix {
 		);
 		uv.drawFunc_({
 			// draw outputs (left)
-			outputs.do{|i, j|
+			outputs.do{|port, j|
+				var name;
+				name = ([port.name] ++ port.aliases).at(alias) ? port.name;
 				Pen.line(Point(0,152 + (j*20)), Point(150,152 + (j*20)));
 				Pen.stroke;
-				i.drawRightJustIn(
+				name.drawRightJustIn(
 					Rect(0,152 + (j*20), 150, 20)
 				);
 			};
@@ -78,11 +89,13 @@ JackMatrix {
 			);
 			Pen.stroke;
 			Pen.translate(155,145);
-			inputs.do{|i|
+			inputs.do{|port|
+				var name;
+				name =  ([port.name] ++ port.aliases).at(alias) ? port.name;
 				Pen.line(-3@8, -69@(-150));
 				Pen.stroke;
 				Pen.rotate(pi/2.7);
-				i.drawRightJustIn(
+				name.drawRightJustIn(
 					Rect(-150,-16, 157, 20)
 				);
 				Pen.rotate(-pi/2.7);
@@ -110,86 +123,118 @@ JackMatrix {
 		inputs.do{|i,j|
 			outputs.do{|k,l|
 				grid.at(j@l).connected = false;
-				grid.at(j@l).boxColor = grid.defaultStyle.boxColor
+				// (mousePos.x == j || mousePos.y == l).if({
+				// 	grid.at(j@l).boxColor = Color.grey(0.9);
+				// },{
+					grid.at(j@l).boxColor = grid.defaultStyle.boxColor;
+				// });
 			};
 		};
 
-		connections.do{|i|
-			// connections is a List of size 2 arrays [output, input];
-			var in, out, box;
-			out = outputs.indexOfEqual(i[0]); // get the index of the output
-			out.notNil.if {
-				in = inputs.indexOfEqual(i[1]); // get the index of the input
-				box = grid.at(in@out); // get the box
+		inputs.do({ |port|
+			var box, in, out;
+			port.connections.do({ |connection|
+				box = grid.at( // get the box
+					Point(
+						inputs.indexOf(port), // id of input
+						outputs.indexOf( // id of output
+							outputs.select({|p| p.name == connection})[0]
+						)
+					)
+				); 
 				box.connected = true;  // and change its attributes
 				box.boxColor = Color.red; // and looks
-			}
-		};
+			});
+		});
 
 		grid.mouseDownAction = { arg box,modifiers,buttonNumber,clickCount;
 			var command;
 			box.connected.if{
 				command = prefix++"jack_disconnect" +
-				outputs[box.point.y] + inputs[box.point.x];
+				outputs[box.point.y].name.shellQuote + inputs[box.point.x].name.shellQuote;
 				command.postln;
 				modifiers.isShift.not.if{
 					command.systemCmd;
-					this.getConnections;
+					this.initConnections;
 					this.updateGui;
 				};
 			} {
 				command = prefix++"jack_connect" +
-				outputs[box.point.y] + inputs[box.point.x];
+				outputs[box.point.y].name.shellQuote + inputs[box.point.x].name.shellQuote;
 				command.postln;
 				modifiers.isShift.not.if{
 					command.systemCmd;
-					this.getConnections;
+					this.initConnections;
 					this.updateGui;
 				};
 			}
 		};
+
+		grid.mouseOverAction_({ |box|
+			mousePos = box.point;
+			// grid.numRows.do({ |i|
+			// 	grid.numCols.do({ |j|
+			// 		(grid.at(i@j).connected == false).if({
+			// 			// box.postln;
+			// 			(i == box.point.x || j == box.point.y).if({
+			// 				grid.at(i@j).boxColor_(Color(0.9,0.9,0.9));
+			// 			},{
+			// 				grid.at(i@j).boxColor_(Color(0.8,0.8,0.8));
+			// 			});
+			// 		});
+			// 	});
+			// });
+		});
 	}	
 
-	getConnections {
-		var stdOut, cons;
+	initConnections {
+		var stdOut;
 		var inc;
 		
-		cons = List[];
+		inc = 0;
+		
 		stdOut = (prefix++"jack_lsp -c").unixCmdGetStdOut.split($\n);
-		stdOut.do { |i,j|
-			i.containsStringAt(0, "   ").if{
-				inc = 1;
-				{stdOut[j - inc].containsStringAt(0, "   ")}.while({ inc = inc+1});
-				cons.add([stdOut[j - inc], i.copyToEnd(3)])
-			}
-		};
-		connections = cons;
+
+		ports.do({ |port|
+			var cons;
+			(port.name == stdOut[inc]).if({
+				inc = inc + 1;
+				{"^   ".matchRegexp(stdOut[inc])}.while({
+					cons = cons ++ [ stdOut[inc][3..] ];
+					inc = inc + 1;
+				});
+			});
+			port.put(\connections, cons);
+		});
 	}
 
-	getNames {
-		var stdOut, ins, outs;
-		ins = List[];
-		outs = List[];
-		stdOut = (prefix++"jack_lsp -p").unixCmdGetStdOut.split($\n);
-		stdOut.do { |i,j|
-			i.contains("input").if {
-				ins.add(stdOut[j-1])
-			};
-			i.contains("output").if {
-				outs.add(stdOut[j-1])
-			};
-		};
-		outputs = outs;
-		inputs = ins;
-
-		// sort things naturally
-		inputs.sort({|a,b|
-			a.asString.naturalCompare(b.asString) < 0;
+	initPorts {
+		var stdOut, i;
+		ports = List[];
+		i = 0;
+		stdOut = "jack_lsp -Ap".unixCmdGetStdOut.split($\n);
+		// stdOut = "jack_lsp -Ap | grep -v \"^Jack: \"".unixCmdGetStdOut.split($\n);
+		// Maybe useful if Jack is verbose.
+		{stdOut[i].notNil && stdOut[i] !=""}.while({
+			var name, aliases, props;
+			("^[a-zA-Z0-9]".matchRegexp(stdOut[i])).if({
+				name = stdOut[i];
+			}, {
+				"Jack port names may be messed up.".warn;
+			});
+			i = i + 1;
+			{"^   ".matchRegexp(stdOut[i])}.while({
+				aliases = aliases ++ [ stdOut[i][3..] ];
+				i = i + 1;
+			});
+			("^\t".matchRegexp(stdOut[i])).if({
+				props = stdOut[i][1..];
+			});
+			ports = ports ++ [(name: name, aliases: aliases, props: props)];
+			i=i+1;
 		});
 
-		outputs.sort({|a,b|
-			a.asString.naturalCompare(b.asString) < 0;
-		});
+
 	}
 	
 }
