@@ -4,7 +4,7 @@ Parameter {
 	oscAction, <>action, <bus, <>mediator;
 	//value is unmapped (between 0 and 1);
 	
-	*new { |name="Parameter", spec, value, preset|
+	*new { |name="param01", spec, value, preset|
 		^super.newCopyArgs(name, spec, value, preset).init;
 	}
 

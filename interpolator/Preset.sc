@@ -70,8 +70,35 @@ Preset {
 	}
 
 	add { |parameter|
-		mediator.add(parameter);
+		parameter.isNil.if({
+			this.addNumbered(parameter);
+		},{
+			mediator.add(parameter);
+		});
 	}
+
+	addNumbered {
+		var lastParam, lastName, newName, prefix, num, id;
+		parameters.last.isNil.if({
+			lastName = "param00";
+		},{
+			lastName = parameters.last.name;
+		});
+		// id is an array with index and the number
+		// found. param00 will give [5, 00]
+		id = lastName.findRegexp("[0-9]+$")[0];
+        // get 02"
+		id.isNil.if({
+			num="00";
+			prefix = lastName;
+		},{
+			num = (id[1].asInteger + 1).asString.padLeft(id[1].size, "0");
+			prefix = lastName[0..(id[0]-1)]; //get "param"
+		});
+		newName = prefix ++ num;
+		mediator.add(name: newName);	
+	}
+    
 
 	prAdd { |parameter|
 		parameters.add(parameter);		

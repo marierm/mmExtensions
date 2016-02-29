@@ -53,11 +53,11 @@ PIMediator {
 		});
 	}
 
-	add { |parameter|
+	add { |parameter, name|
 		parameter.isNil.if({
 			dict.keysDo({|preset, i|
 				preset.prAdd(
-					preset.paramClass.new(preset:preset)
+					preset.paramClass.new(preset:preset, name:name)
 				);
 			});
 		},{
