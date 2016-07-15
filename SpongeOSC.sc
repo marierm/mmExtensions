@@ -176,6 +176,7 @@ AbstractSponge {
 	guiClass { ^SpongeGui }
 
 	*initClass {
+		Class.initClassTree(Feature);
 		sponges = List[]; // A list of all active sponges.
 		
 		// featureList contains a list of predefined features.  They have to
