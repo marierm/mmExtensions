@@ -15,6 +15,10 @@ Circle {
 		};
 		rad = r ? 0;
 	}
+
+	containsPoint { |point|
+		^(point.dist(pos) <= rad)
+	}
 	
 	intersects { |circle|
 		^(this.dist(circle) <= (rad + circle.rad))
