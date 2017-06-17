@@ -1,15 +1,15 @@
 + Server {
 	bootInRoom { arg startAliveThread=true, recover=false, onFailure, room;
 		var resp;
-		if (serverRunning, { "server already running".inform; ^this });
-		if (serverBooting, { "server already booting".inform; ^this });
+		if (statusWatcher.serverRunning, { "server already running".inform; ^this });
+		if (statusWatcher.serverBooting, { "server already booting".inform; ^this });
 
-		serverBooting = true;
+		statusWatcher.serverBooting = true;
 		if(startAliveThread, { this.startAliveThread });
 		if(recover) { this.newNodeAllocators } { this.newAllocators };
-		bootNotifyFirst = true;
+		statusWatcher.bootNotifyFirst = true;
 		this.doWhenBooted({
-			serverBooting = false;
+			statusWatcher.serverBooting = false;
 			if (sendQuit.isNil) {
 				sendQuit = this.inProcess or: {this.isLocal};
 			};
