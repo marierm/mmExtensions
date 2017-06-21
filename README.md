@@ -22,6 +22,7 @@ Dependencies
 - wslib Quark (by Wouter Snoei)
 - ddwGUIEnhancements
 - crucial library
+- lfsaw.de
 
 
 Description
