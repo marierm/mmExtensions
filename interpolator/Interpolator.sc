@@ -22,7 +22,7 @@ Interpolator { //More than 2 dimensions
 				interPoints = [ points.indexOfEqual(cursor) ];
 				weights = [1];
 			}{
-				interPoints = points.selectIndex({ |i,j|
+				interPoints = points.selectIndices({ |i,j|
 					i.dist(cursor) < (cursorRad + rads[j])
 				});
 				weights = points[interPoints].collect({ |i,j|
