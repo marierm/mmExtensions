@@ -237,7 +237,7 @@ SynthFeature : Feature {
 			[(\in ++ j).asSymbol, i.bus.index];
 		}.flatten ++ arguments;
 
-		fork {
+		forkIfNeeded {
 			bus = Bus.control(server);
 			def.add;
 			server.sync;

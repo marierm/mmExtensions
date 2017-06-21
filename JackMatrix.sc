@@ -8,7 +8,7 @@
 // possible to control Jack connections on a remote machine.  Example:
 // JackMatrix("ssh mm@192.168.0.102 /usr/bin/")
 
-// autoUpdate: a time interval in seconds.  The GUI will be update at this
+// autoUpdate: a time interval in seconds.  The GUI will be updated at this
 // rate.  A value of 0 or less will turn off GUI update.  Very small values
 // will probably hang sclang.
 
@@ -44,8 +44,11 @@ JackMatrix {
 		routine = Routine({
 			{
 				this.initPorts;
+				\port.postln;
 				this.initConnections;
+				\connections.postln;
 				this.updateGui;
+				\updateGui.postln;
 				// \update.postln;
 				autoUpdate.wait;
 			}.loop;
@@ -212,7 +215,7 @@ JackMatrix {
 		var stdOut, i;
 		ports = List[];
 		i = 0;
-		stdOut = "jack_lsp -Ap".unixCmdGetStdOut.split($\n);
+		stdOut = (prefix++"jack_lsp -Ap").unixCmdGetStdOut.split($\n);
 		// stdOut = "jack_lsp -Ap | grep -v \"^Jack: \"".unixCmdGetStdOut.split($\n);
 		// Maybe useful if Jack is verbose.
 		{stdOut[i].notNil && stdOut[i] !=""}.while({
