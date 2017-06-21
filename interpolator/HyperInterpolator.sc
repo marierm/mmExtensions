@@ -22,7 +22,7 @@ HyperInterpolator { //More than 2 dimensions (uses KDTree)
 				};
 				weights = [1];
 			}{
-				interPoints = points.selectIndex({ |i,j|
+				interPoints = points.selectIndices({ |i,j|
 					i.dist(currentPoint) <= (currentRad + rads[j])
 				});
 				// if (interPoints.size == 1) {
