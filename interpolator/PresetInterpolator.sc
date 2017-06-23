@@ -113,7 +113,7 @@ PresetInterpolator {
 		};
 		this.initActions;
 	}
-	
+
 	initActions {
 		actions = IdentityDictionary[
 			\weights -> {|model, what, interPoints, weights|
@@ -174,7 +174,7 @@ PresetInterpolator {
 			}
 		];
 	}
-	
+
 	save { |path|
 		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
 		(
@@ -187,6 +187,10 @@ PresetInterpolator {
 	}
 
 	// access to model
+	addPoint { |point|
+		model.add(point);
+	}
+
 	getPresetColor {|i|
 		^model.colors[i];
 	}
