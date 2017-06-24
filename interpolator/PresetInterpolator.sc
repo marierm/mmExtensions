@@ -8,8 +8,7 @@ PresetInterpolator {
 	}
 
 	*newWithDimensions { arg numDim = 2;
-		model = Interpolator(numDim);
-		^super.newCopyArgs(model).init;
+		^super.newCopyArgs(Interpolator(numDim)).init;
 	}
 
 	update { arg theChanger, what ... moreArgs;
