@@ -7,6 +7,11 @@ PresetInterpolator {
 		^super.newCopyArgs(model).init;
 	}
 
+	*newWithDimensions { arg numDim = 2;
+		model = Interpolator(numDim);
+		^super.newCopyArgs(model).init;
+	}
+
 	update { arg theChanger, what ... moreArgs;
 		var action;
 		action = actions.at(what);
@@ -113,7 +118,7 @@ PresetInterpolator {
 		};
 		this.initActions;
 	}
-	
+
 	initActions {
 		actions = IdentityDictionary[
 			\weights -> {|model, what, interPoints, weights|
@@ -174,7 +179,7 @@ PresetInterpolator {
 			}
 		];
 	}
-	
+
 	save { |path|
 		path = path ? (Platform.userAppSupportDir ++"/scratchPreset.pri");
 		(
