@@ -22,6 +22,10 @@ AbstractSponge {
 		^super.newCopyArgs(portName).init(baudRate);
 	}
 
+	*newOSC {
+		^super.new;
+	}
+
 	save { |path|
 		var file, content;
 		path = path ? (Platform.userAppSupportDir ++"/scratch.sponge");
@@ -431,8 +435,81 @@ SpongeOSC : AbstractSponge {
 	}
 }
 
-SpongePDOSC : SpongePD {
+SpongeFeather : AbstractSponge {
+	var oscPath, oscDefName , source, port, envir;
+	*new { arg oscPath, oscDefName , source, port, envir;
+		^super.newOSC.init(oscPath, oscDefName , source, port, envir);
+	}
 
+	init {|path, defName, src, prt, envr|
+		oscPath = "/sponge" ? path;
+		oscDefName = \sponge ? defName;
+		source = NetAddr("192.168.109.102", 50502) ? src;
+		port = 50501 ? prt;
+		envir = envr;
+		values = Array.fill(9, 0);
+		this.createOSCdef;
+
+		features = List[];
+		featureNames = List[];
+		// Add Features for each sensor
+		[
+			\acc1x, \acc1y, \acc1z,
+			\acc2x, \acc2y, \acc2z,
+			\fsr1, \fsr2, \buttons
+		].do{|i,j|
+			Feature.sensor(i,this,j);
+		};
+
+		CmdPeriod.doOnce(this);
+		ShutDown.add({this.close});
+
+		this.class.sponges.add(this);
+	}
+
+	createOSCdef { |envir|
+		OSCdef(oscDefName, {|msg, time, src|
+			// First, 6 acceleromter axis
+			// convert to 1.5g, 10 bits.
+			msg[1..6].do({ |val, i|
+				values[i] = val.linlin( -24576, 24575, 0, 1023);
+			});
+			// Then two FSR.
+			// 12 bits becomes 10 bits for compatibility.
+			msg[7..8].collect({ |val, i|
+				values[i+6] = val >> 2;
+			});
+			// Index 9 is for the buttons.
+			values[8] = msg[9];
+			action.value( values );
+		}.inEnvir(envir), oscPath, srcID: source, recvPort:50501);
+	}
+
+	hold_ { |bool=true|
+		bool.if({
+			OSCdef(oscDefName).free;
+		},{
+			this.createOSCdef(envir);
+		});
+	}
+
+	close {
+		OSCdef(oscDefName).free;
+		this.class.sponges.add(this);
+	}
+
+	free {
+		this.close;
+	}
+
+	cmdPeriod {
+		this.class.sponges.remove(this);
+		this.close;
+	}
+}
+
+
+SpongePDOSC : SpongePD {
 	pdCommand {
 		^("pdextended -nogui -noaudio -nomidi"
 		+ "-send \";udpsend connect 127.0.0.1" + NetAddr.langPort
