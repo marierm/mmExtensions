@@ -1,7 +1,8 @@
 SpongeSLIP : Sponge {
-	var <port, inputThread;
+	var <port, inputThread, <>hold;
 
 	init { arg br;
+		hold = false;
 		port = SerialPort(
 			port:portName,
 			baudrate:br,
@@ -66,7 +67,9 @@ SpongeSLIP : Sponge {
 								);
 								i = i - 1;
 							});
-							action.value(values);
+							hold.not.if({
+								action.value(values);
+							});
 						},{
 							"Irregular sponge packet size".warn;
 							buffer.postln;
