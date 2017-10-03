@@ -436,19 +436,19 @@ SpongeOSC : AbstractSponge {
 }
 
 SpongeFeather : AbstractSponge {
-	var oscPath, oscDefName , source, port, envir;
-	*new { arg oscPath, oscDefName , source, port, envir;
-		^super.newOSC.init(oscPath, oscDefName , source, port, envir);
+	var <oscPath, <oscFunc, <source, <port, envir;
+	*new { arg oscPath, source, port, envir;
+		^super.newOSC.init(oscPath, source, port, envir);
 	}
 
-	init {|path, defName, src, prt, envr|
-		oscPath = "/sponge" ? path;
-		oscDefName = \sponge ? defName;
-		source = NetAddr("192.168.109.102", 50502) ? src;
-		port = 50501 ? prt;
+	init {|path, src, prt, envr|
+		oscPath = path ? "/sponge";
+		// oscDefName = defName ? \sponge;
+		source = src;
+		port = prt ? 50501;
 		envir = envr;
 		values = Array.fill(9, 0);
-		this.createOSCdef;
+		this.createOSCfunc;
 
 		features = List[];
 		featureNames = List[];
@@ -467,8 +467,8 @@ SpongeFeather : AbstractSponge {
 		this.class.sponges.add(this);
 	}
 
-	createOSCdef { |envir|
-		OSCdef(oscDefName, {|msg, time, src|
+	createOSCfunc { |envir|
+		oscFunc = OSCFunc({|msg, time, src|
 			// First, 6 acceleromter axis
 			// convert to 1.5g, 10 bits.
 			msg[1..6].do({ |val, i|
@@ -482,19 +482,19 @@ SpongeFeather : AbstractSponge {
 			// Index 9 is for the buttons.
 			values[8] = msg[9];
 			action.value( values );
-		}.inEnvir(envir), oscPath, srcID: source, recvPort:50501);
+		}.inEnvir(envir), oscPath, srcID: source, recvPort:port);
 	}
 
 	hold_ { |bool=true|
 		bool.if({
-			OSCdef(oscDefName).free;
+			oscFunc.free;
 		},{
-			this.createOSCdef(envir);
+			this.createOSCfunc(envir);
 		});
 	}
 
 	close {
-		OSCdef(oscDefName).free;
+		oscFunc.free;
 		this.class.sponges.add(this);
 	}
 
