@@ -447,7 +447,7 @@ SpongeFeather : AbstractSponge {
 		source = src;
 		port = prt ? 50501;
 		envir = envr;
-		values = Array.fill(9, 0);
+		values = Int16Array.newClear(9);
 		this.createOSCfunc;
 
 		features = List[];
@@ -471,8 +471,11 @@ SpongeFeather : AbstractSponge {
 		oscFunc = OSCFunc({|msg, time, src|
 			// First, 6 acceleromter axis
 			// convert to 1.5g, 10 bits.
+			// msg[1..6].do({ |val, i|
+			// 	values[i] = val.linlin( -24576, 24575, 0, 1023);
+			// });
 			msg[1..6].do({ |val, i|
-				values[i] = val.linlin( -24576, 24575, 0, 1023);
+				values[i] = ((val.clip2(24575) + 24575) * 0.020833333333333).asInteger;
 			});
 			// Then two FSR.
 			// 12 bits becomes 10 bits for compatibility.
