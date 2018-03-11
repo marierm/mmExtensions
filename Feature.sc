@@ -250,10 +250,10 @@ SynthFeature : Feature {
 
 		
 		fullFunc = {
-			bus.get{|value|
-				action.value(value);
-				// netAddr.sendMsg(oscPath, value);
-			};
+			// bus.get{|value|
+			// 	action.value(value);
+			// 	// netAddr.sendMsg(oscPath, value);
+			// };
 		};
 		
 		interface.action_(interface.action.addFunc(fullFunc));
