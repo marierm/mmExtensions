@@ -92,11 +92,11 @@ InterpolatorServer {
 			weightsBus.free;
 			pointsSynthGrp.freeAll;
 
-			server.sync; // Wait for server to be done.
-
 			weightsBus = Bus.control(server, points.size); // with the new
 														   // number of
 														   // points.
+			server.sync; // Wait for server to be done.
+			
 			points.do({|i,j| // Create all the point synths.
 				Synth.tail(
 					pointsSynthGrp,
