@@ -4,13 +4,13 @@ ButtonBank {
 	// to a set of buttons.
 
 	var <input, <modes, <currentMode, function;
-	
+
 	// input is a ButtonInput.
 	// modes is an Array of ButtonMode.
 	*new { |input, modes|
 		^super.newCopyArgs(input, modes).init();
 	}
-	
+
 	init {
 		modes = modes ? [ ButtonMode(this) ];
 		this.mode_(0);
@@ -22,7 +22,7 @@ ButtonBank {
 			modes[currentMode].value(buttVal, ids);
 		});
 	}
-	
+
 	mode {
 		^modes[currentMode];
 	}
@@ -51,7 +51,7 @@ ButtonBank {
 }
 
 ButtonMode {
-	// a ButtonMode has a ButtonFunction for each button.  
+	// a ButtonMode has a ButtonFunction for each button.
 	var <bank, <>buttonFunctions, <>level, <>combos;
 
 	*new { |buttonBank, buttonFuncs|
@@ -73,7 +73,7 @@ ButtonMode {
 		// overall bits that changed (only one should change, but it is not
 		// guaranteed).
 		ids.asBinaryDigits(bank.size).reverse.indicesOfEqual(1).do({ |i|
-			buttonFunctions[i].value(val.bitTest(i).asInt, i);
+			buttonFunctions[i].value(val.bitTest(i).asInteger, i);
 			combos.keysValuesDo({|combo, function|
 				// check if value is a combo.
 				(combo & val == combo).if({
@@ -90,7 +90,7 @@ ButtonMode {
 			});
 		});
 	}
-	
+
 	// No levels for combos (no modifier keys).
 	addCombo {|comboBits, function, buttState=1|
 		var array;
@@ -137,7 +137,7 @@ ButtonFunction {
 
 	var <buttonMode, <id, <>functions, <>level, <>evalFunc, clickCount,
 	routine, <>clickCountDelay, <>clickCountMinDelay, waitMore=false;
-		
+
 	// functions is an IdentityDictionary with at least two pairs: 1:
 	// [{},{}, ...]  and 0: [{},{}, ...]
 	// More pairs can be added for double clicks, triple clicks, etc:
@@ -149,7 +149,7 @@ ButtonFunction {
 
 	init { |funcs|
 		level = 0;
-		functions = funcs ? 
+		functions = funcs ?
 		Dictionary.newFrom([
 			0, [],
 			1, []
@@ -175,7 +175,7 @@ ButtonFunction {
 			{buttonMode.level_(buttonMode.level.setBit(bit,false) )}
 		];
 	}
-	
+
 	enableNclick {
 		evalFunc = { |val, id|
 			val.asBoolean.if({
@@ -208,7 +208,7 @@ ButtonFunction {
 				// evaluated.  The other option would be not to wait and
 				// evaluate the "off" function every time, including when
 				// there potentially is a double-click coming.
-				// 
+				//
 				// In that last case, the disable and enableNclick functions
 				// are mostly useless and a static evalFunc could be used.
 
@@ -224,7 +224,7 @@ ButtonFunction {
 		};
 	}
 
-	disableNclick { 
+	disableNclick {
 		evalFunc = { |val, id|
 			val.asBoolean.if{ level = buttonMode.level; };
 			functions.at(val).notNil.if({
@@ -251,7 +251,7 @@ ButtonInput {
 	*sponge { |sponge|
 		^SpongeButtonInput.new(sponge);
 	}
-	
+
 	init {
 		var oldVal = 0;
 		// size = numButtons;
